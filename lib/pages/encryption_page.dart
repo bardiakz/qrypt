@@ -10,18 +10,33 @@ import 'package:qrypt/providers/encryption_providers.dart';
 import '../models/encryption.dart';
 import '../providers/resource_providers.dart';
 
-class EncryptionPage extends ConsumerWidget {
+class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EncryptionPage> createState() => _EncryptionPageState();
+}
+
+class _EncryptionPageState extends ConsumerState<EncryptionPage> {
+  final inputTextController = TextEditingController();
+
+  @override
+  void dispose() {
+    inputTextController.dispose(); // Proper cleanup
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final AppMode appMode = ref.watch(appModeProvider);
     final Color primaryColor = ref.watch(primaryColorProvider);
     final bool defaultEncryption = ref.watch(defaultEncryptionProvider);
     final autoDetectTag = ref.watch(autoDetectTagProvider);
-    final inputTextController = TextEditingController();
+    final useTagManually = ref.watch(useTagProvider);
+
+
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
@@ -99,10 +114,65 @@ class EncryptionPage extends ConsumerWidget {
                 ),
                 if (!defaultEncryption) ...[
                   const SizedBox(height: 16),
-                  EncryptionsDropdownButtonForm(selectedEncryption: selectedEncryption, primaryColor: primaryColor),
+
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: useTagManually ? primaryColor.withOpacity(0.1) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: useTagManually ? primaryColor.withOpacity(0.3) : Colors.grey[300]!,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Icon(
+                        //   Icons.local_offer_rounded,
+                        //   color: useTagManually ? primaryColor : Colors.grey[600],
+                        //   size: 20,
+                        // ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Include Tag",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                "Add metadata tag for auto-detection",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: useTagManually,
+                          onChanged: (val) => ref.read(useTagProvider.notifier).state = val,
+                          activeColor: primaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
 
                   const SizedBox(height: 16),
-                  ObfsDropdownButtonForm(selectedObfuscation: selectedObfuscation, primaryColor: primaryColor),
+                  EncryptionsDropdownButtonForm(
+                    selectedEncryption: selectedEncryption,
+                    primaryColor: primaryColor,
+                  ),
+
+                  const SizedBox(height: 16),
+                  ObfsDropdownButtonForm(
+                    selectedObfuscation: selectedObfuscation,
+                    primaryColor: primaryColor,
+                  ),
 
                   const SizedBox(height: 16),
                   TextField(
@@ -120,14 +190,16 @@ class EncryptionPage extends ConsumerWidget {
                     ),
                   ),
                 ],
+
+
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
                       // TODO: Encrypt
-                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation);
-                      ref.read(processedCryptProvider.notifier).state = ref.watch(inputQryptProvider);
+                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,useTag: defaultEncryption);
+                      ref.read(processedCryptProvider.notifier).state = ref.read(inputQryptProvider);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
@@ -161,18 +233,25 @@ class EncryptionPage extends ConsumerWidget {
                           return Colors.grey.shade300;
                         }),
                         value: autoDetectTag,
-                        onChanged: (val) => ref
-                            .read(autoDetectTagProvider.notifier)
-                            .state = val,
+                        onChanged: (val) => ref.read(autoDetectTagProvider.notifier).state = val,
                       ),
                     ],
                   ),
-                )],
+                ),
+
                 if (!autoDetectTag) ...[
                   const SizedBox(height: 16),
-                  EncryptionsDropdownButtonForm(selectedEncryption: selectedEncryption, primaryColor: primaryColor),
+                  EncryptionsDropdownButtonForm(
+                    selectedEncryption: selectedEncryption,
+                    primaryColor: primaryColor,
+                  ),
                   const SizedBox(height: 16),
-                  ObfsDropdownButtonForm(selectedObfuscation: selectedObfuscation, primaryColor: primaryColor),
+                  ObfsDropdownButtonForm(
+                    selectedObfuscation: selectedObfuscation,
+                    primaryColor: primaryColor,
+                  ),
+                ],
+
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -188,10 +267,15 @@ class EncryptionPage extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text("Decrypt", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      "Decrypt",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ],
+
+
 
               const SizedBox(height: 32),
               const Divider(),

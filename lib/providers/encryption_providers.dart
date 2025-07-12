@@ -5,6 +5,7 @@ import 'package:qrypt/models/obfuscation.dart';
 import '../models/Qrypt.dart';
 
 final defaultEncryptionProvider = StateProvider<bool>((ref) => true);
+final useTagProvider = StateProvider<bool>((ref) => true);
 
 final autoDetectTagProvider = StateProvider<bool>((ref) => true);
 

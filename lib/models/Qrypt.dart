@@ -7,8 +7,6 @@ class Qrypt{
   late final ObfuscationMethod obfuscation;
   bool useTag=false;
   String? tag;
-  Qrypt.withTag({required this.text,required this.encryption,required this.obfuscation,this.tag}){
-    useTag=true;
-  }
+  Qrypt.withTag({required this.text,required this.encryption,required this.obfuscation,required this.useTag});
   Qrypt({required this.text,required this.encryption,required this.obfuscation});
 }
