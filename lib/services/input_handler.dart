@@ -28,6 +28,10 @@ class InputHandler{
         compText = Compression.lz4Compress(utf8.encode(qrypt.text));
         qrypt.compressedText = compText;
         return qrypt;
+      case CompressionMethod.brotli:
+        compText = Compression.brotliCompress(utf8.encode(qrypt.text));
+        qrypt.compressedText = compText;
+        return qrypt;
     }
   }
   Qrypt handleEncrypt(Qrypt qrypt){

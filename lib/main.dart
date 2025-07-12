@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:es_compression/lz4.dart';
+import 'package:es_compression/brotli.dart';
 import 'package:path/path.dart' as path;
 
 void main() async{
@@ -13,18 +14,30 @@ void main() async{
   Obfuscate.setObfuscationFA2Map();
   Obfuscate.setObfuscationFA1Map();
   final basePath = path.join(Directory.current.path, 'native_libs');
-  String libPath;
 
+  String lz4LibPath;
   if (Platform.isWindows) {
-    libPath = path.join(basePath, 'eslz4-win64.dll');
+    lz4LibPath = path.join(basePath, 'eslz4-win64.dll');
   } else if (Platform.isLinux) {
-    libPath = path.join(basePath, 'eslz4-linux64.so');
+    lz4LibPath = path.join(basePath, 'eslz4-linux64.so');
   } else if (Platform.isMacOS) {
-    libPath = path.join(basePath, 'eslz4-mac64.dylib');
+    lz4LibPath = path.join(basePath, 'eslz4-mac64.dylib');
   } else {
     throw UnsupportedError('Unsupported platform');
   }
-  Lz4Codec.libraryPath = libPath;
+  Lz4Codec.libraryPath = lz4LibPath;
+
+  String brotliLibPath;
+  if (Platform.isWindows) {
+    brotliLibPath = path.join(basePath, 'esbrotli-win64.dll');
+  } else if (Platform.isLinux) {
+    brotliLibPath = path.join(basePath, 'esbrotli-linux64.so');
+  } else if (Platform.isMacOS) {
+    brotliLibPath = path.join(basePath, 'esbrotli-mac64.dylib');
+  } else {
+    throw UnsupportedError('Unsupported platform');
+  }
+  BrotliCodec.libraryPath = brotliLibPath;
   runApp(ProviderScope(child: const MyApp()));
 }
 
