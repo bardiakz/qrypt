@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/Qrypt.dart';
+import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
@@ -191,9 +192,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Encrypt
-                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: defaultEncryption);
-                      ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+                      if(!defaultEncryption){
+                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: useTagManually);
+                        ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+                      }else{
+                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: EncryptionMethod.aes, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: true);
+                        ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
