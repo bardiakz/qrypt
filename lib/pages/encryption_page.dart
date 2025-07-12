@@ -152,19 +152,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ),
 
                   const SizedBox(height: 16),
-                  EncryptionsDropdownButtonForm(
-                    selectedEncryption: selectedEncryption,
+                  CompressionsDropdownButtonForm(
+                    selectedCompression: selectedCompression,
                     primaryColor: primaryColor,
                   ),
 
                   const SizedBox(height: 16),
-                  ObfsDropdownButtonForm(
-                    selectedObfuscation: selectedObfuscation,
+                  EncryptionsDropdownButtonForm(
+                    selectedEncryption: selectedEncryption,
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 16),
-                  CompressionsDropdownButtonForm(
-                    selectedCompression: selectedCompression,
+                  ObfsDropdownButtonForm(
+                    selectedObfuscation: selectedObfuscation,
                     primaryColor: primaryColor,
                   ),
 
