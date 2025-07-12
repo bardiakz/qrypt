@@ -1,13 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/services/obfuscate.dart';
+import 'package:es_compression/lz4.dart';
+import 'package:path/path.dart' as path;
 
 void main() async{
   await dotenv.load();
   Obfuscate.setObfuscationFA2Map();
   Obfuscate.setObfuscationFA1Map();
+  final basePath = path.join(Directory.current.path, 'native_libs');
+  String libPath;
+
+  if (Platform.isWindows) {
+    libPath = path.join(basePath, 'eslz4-win64.dll');
+  } else if (Platform.isLinux) {
+    libPath = path.join(basePath, 'eslz4-linux64.so');
+  } else if (Platform.isMacOS) {
+    libPath = path.join(basePath, 'eslz4-mac64.dylib');
+  } else {
+    throw UnsupportedError('Unsupported platform');
+  }
+  Lz4Codec.libraryPath = libPath;
   runApp(ProviderScope(child: const MyApp()));
 }
 
