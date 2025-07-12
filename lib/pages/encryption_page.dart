@@ -116,7 +116,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   const SizedBox(height: 16),
 
                   Container(
-                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: useTagManually ? primaryColor.withOpacity(0.1) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
@@ -132,25 +131,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         //   size: 20,
                         // ),
                         const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Include Tag",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                "Add metadata tag for auto-detection",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                        Expanded(
+                          child: Text(
+                            "Include Tag",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                         Switch(
