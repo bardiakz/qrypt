@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
+import 'package:qrypt/services/obfuscate.dart';
 
 void main() async{
   await dotenv.load();
+  Obfuscate.setObfuscationFA2Map();
+  Obfuscate.setObfuscationFA1Map();
   runApp(ProviderScope(child: const MyApp()));
 }
 

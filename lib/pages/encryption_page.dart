@@ -188,7 +188,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     onPressed: () {
                       // TODO: Encrypt
                       ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,useTag: defaultEncryption);
-                      ref.read(processedCryptProvider.notifier).state = ih.handleEncrypt(ref.read(inputQryptProvider));
+                      ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,

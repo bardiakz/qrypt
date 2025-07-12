@@ -46,7 +46,7 @@ class Obfuscate {
     return obfuscatedTag;
   }
 
-  static String obfuscateText(String text, Map<String, String> obfuscationMap) {
+  static String obfuscateTextWithTag(String text, Map<String, String> obfuscationMap) {
     // Split by first colon to preserve the tag
     final parts = text.split(':');
     if (parts.length < 2) {
@@ -64,6 +64,19 @@ class Obfuscate {
         .join(' '); // Add space between substituted words
 
     return '$tag:$obfuscatedContent';
+  }
+  static String obfuscateText(String text, Map<String, String> obfuscationMap) {
+
+    // Join remaining parts back with colon in case there are multiple colons
+    final contentToObfuscate = text;
+
+    // Obfuscate with spaces between words
+    final obfuscatedContent = contentToObfuscate
+        .split('')
+        .map((char) => obfuscationMap[char.toLowerCase()] ?? char)
+        .join(' '); // Add space between substituted words
+
+    return obfuscatedContent;
   }
 
   static String deobfuscateText(
