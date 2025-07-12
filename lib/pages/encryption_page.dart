@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/models/Qrypt.dart';
 import 'package:qrypt/models/obfuscation.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
@@ -18,7 +19,7 @@ class EncryptionPage extends ConsumerWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final AppMode appMode = ref.watch(appModeProvider);
     final Color primaryColor = ref.watch(primaryColorProvider);
-    final defaultEncryption = ref.watch(defaultEncryptionProvider);
+    final bool defaultEncryption = ref.watch(defaultEncryptionProvider);
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final inputTextController = TextEditingController();
 
@@ -125,6 +126,8 @@ class EncryptionPage extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       // TODO: Encrypt
+                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation);
+                      ref.read(processedCryptProvider.notifier).state = ref.watch(inputQryptProvider);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
@@ -205,8 +208,8 @@ class EncryptionPage extends ConsumerWidget {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const SelectableText(
-                  "Your encrypted or decrypted output will appear here.",
+                child: SelectableText(
+                  ref.watch(processedCryptProvider).text,
                   style: TextStyle(fontSize: 16),
                 ),
               ),
