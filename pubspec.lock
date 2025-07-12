@@ -257,6 +257,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.3"
+  es_compression:
+    dependency: "direct dev"
+    description:
+      name: es_compression
+      sha256: "174d2cee4e182d1a8df92712eaa6ee56a0adf83d4b8a14838c66380caa4e65a7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.14"
   fake_async:
     dependency: transitive
     description:

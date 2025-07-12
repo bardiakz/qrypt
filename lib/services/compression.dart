@@ -1,6 +1,6 @@
 
 import 'dart:typed_data';
-
+import 'package:es_compression/lz4.dart';
 import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 
@@ -16,5 +16,14 @@ class Compression{
   static List<int> gZipDeCompress(List<int> compressedData) {
     final decoder = GZipDecoder();
     return decoder.decodeBytes(compressedData);
+  }
+  static Uint8List lz4Compress(List<int> data) {
+
+    final encoder = Lz4Codec(level: 16);
+    return Uint8List.fromList(encoder.encode(data));
+  }
+  static List<int> lz4DeCompress(List<int> compressedData) {
+    final decoder = Lz4Codec();
+    return decoder.decode(compressedData);
   }
 }

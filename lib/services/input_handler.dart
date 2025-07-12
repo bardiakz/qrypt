@@ -15,12 +15,17 @@ class InputHandler{
   Qrypt handleCompression(Qrypt qrypt){
     Uint8List compText;
     switch(qrypt.getCompressionMethod()){
+      case CompressionMethod.none:
+        compText = utf8.encode(qrypt.text);
+        qrypt.compressedText = compText;
+        return qrypt;
       case CompressionMethod.gZip:
         compText = Compression.gZipCompress(utf8.encode(qrypt.text));
         qrypt.compressedText = compText;
         return qrypt;
-      case CompressionMethod.none:
-        compText = utf8.encode(qrypt.text);
+
+      case CompressionMethod.lZ4:
+        compText = Compression.lz4Compress(utf8.encode(qrypt.text));
         qrypt.compressedText = compText;
         return qrypt;
     }
@@ -28,18 +33,21 @@ class InputHandler{
   Qrypt handleEncrypt(Qrypt qrypt){
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
+      case EncryptionMethod.none:
+        qrypt.text = qrypt.compressedText.toString();
+        return qrypt;
       case EncryptionMethod.aes:
         encryptedText = '${Aes.encryptMessage(qrypt.compressedText)['ciphertext']}:${Aes.encryptMessage(qrypt.compressedText)['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
-      case EncryptionMethod.none:
-        qrypt.text = qrypt.compressedText.toString();
-        return qrypt;
+
     }
   }
   Qrypt handleObfs(Qrypt qrypt){
     String? obfsText=qrypt.text;
     switch(qrypt.getObfuscationMethod()){
+      case ObfuscationMethod.none:
+        return qrypt;
       case ObfuscationMethod.fa1:
 
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
@@ -50,8 +58,7 @@ class InputHandler{
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
         qrypt.text = obfsText;
         return qrypt;
-      case ObfuscationMethod.none:
-        return qrypt;
+
 
     }
   }
