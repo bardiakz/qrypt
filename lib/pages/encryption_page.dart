@@ -9,6 +9,7 @@ import 'package:qrypt/providers/encryption_providers.dart';
 
 import '../models/encryption.dart';
 import '../providers/resource_providers.dart';
+import '../services/input_handler.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
@@ -19,6 +20,7 @@ class EncryptionPage extends ConsumerStatefulWidget {
 
 class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final inputTextController = TextEditingController();
+  final InputHandler ih = InputHandler();
 
   @override
   void dispose() {
@@ -186,7 +188,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     onPressed: () {
                       // TODO: Encrypt
                       ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,useTag: defaultEncryption);
-                      ref.read(processedCryptProvider.notifier).state = ref.read(inputQryptProvider);
+                      ref.read(processedCryptProvider.notifier).state = ih.handleEncrypt(ref.read(inputQryptProvider));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,

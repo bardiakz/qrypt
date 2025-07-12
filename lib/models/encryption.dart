@@ -3,6 +3,6 @@ abstract class Encryption {
 }
 
 enum EncryptionMethod {
-  aes,
   none,
+  aes,
 }

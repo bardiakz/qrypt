@@ -9,4 +9,12 @@ class Qrypt{
   String? tag;
   Qrypt.withTag({required this.text,required this.encryption,required this.obfuscation,required this.useTag});
   Qrypt({required this.text,required this.encryption,required this.obfuscation});
+
+  EncryptionMethod getEncryptionMethod(){
+    return encryption;
+  }
+  ObfuscationMethod getObfuscationMethod(){
+    return obfuscation;
+  }
+
 }

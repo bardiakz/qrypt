@@ -1,8 +1,21 @@
+import 'package:qrypt/models/encryption.dart';
+
+import '../models/Qrypt.dart';
 import '../models/encryption.dart';
-import '../models/obfuscation.dart';
+import 'aes_encryption.dart';
 
 class InputHandler{
-
+  Qrypt handleEncrypt(Qrypt qrypt){
+    String? encryptedText='';
+    switch(qrypt.getEncryptionMethod()){
+      case EncryptionMethod.aes:
+        encryptedText = Aes.encryptMessage(qrypt.text)['ciphertext'];
+        qrypt.text = encryptedText!;
+        return qrypt;
+      case EncryptionMethod.none:
+        return qrypt;
+      }
+  }
 }
 
 
