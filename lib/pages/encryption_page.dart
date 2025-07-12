@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/models/obfuscation.dart';
+import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 
+import '../models/encryption.dart';
 import '../providers/resource_providers.dart';
 
 class EncryptionPage extends ConsumerWidget {
@@ -17,6 +20,7 @@ class EncryptionPage extends ConsumerWidget {
     final Color primaryColor = ref.watch(primaryColorProvider);
     final defaultEncryption = ref.watch(defaultEncryptionProvider);
     final autoDetectTag = ref.watch(autoDetectTagProvider);
+    final inputTextController = TextEditingController();
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
@@ -43,6 +47,7 @@ class EncryptionPage extends ConsumerWidget {
                   child: Text("Message", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
               const SizedBox(height: 12),
               TextField(
+                controller: inputTextController,
                 maxLines: 4,
                 decoration: InputDecoration(
 
@@ -93,45 +98,11 @@ class EncryptionPage extends ConsumerWidget {
                 ),
                 if (!defaultEncryption) ...[
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedEncryption,
-                    items: ['Kyber', 'AES', 'XOR'].map((alg) {
-                      return DropdownMenuItem(value: alg, child: Text(alg));
-                    }).toList(),
-                    onChanged: (val) => ref
-                        .read(selectedEncryptionProvider.notifier)
-                        .state = val!,
-                    decoration: InputDecoration(
-                      labelText: 'Encryption Algorithm',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: primaryColor, width: 2),
-                      ),
-                    ),
-                  ),
+                  EncryptionsDropdownButtonForm(selectedEncryption: selectedEncryption, primaryColor: primaryColor),
+
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedObfuscation,
-                    items: ['None', 'Persian', 'Emoji'].map((obf) {
-                      return DropdownMenuItem(value: obf, child: Text(obf));
-                    }).toList(),
-                    onChanged: (val) => ref
-                        .read(selectedObfuscationProvider.notifier)
-                        .state = val!,
-                    decoration: InputDecoration(
-                      labelText: 'Obfuscation Method',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: primaryColor, width: 2),
-                      ),
-                    ),
-                  ),
+                  ObfsDropdownButtonForm(selectedObfuscation: selectedObfuscation, primaryColor: primaryColor),
+
                   const SizedBox(height: 16),
                   TextField(
                     onChanged: (val) =>
@@ -193,49 +164,12 @@ class EncryptionPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                ),
+                )],
                 if (!autoDetectTag) ...[
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedEncryption,
-                    items: ['Kyber', 'AES', 'XOR'].map((alg) {
-                      return DropdownMenuItem(value: alg, child: Text(alg));
-                    }).toList(),
-                    onChanged: (val) => ref
-                        .read(selectedEncryptionProvider.notifier)
-                        .state = val!,
-                    decoration: InputDecoration(
-                      labelText: 'Encryption Algorithm',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: primaryColor, width: 2),
-                      ),
-                    ),
-                  ),
+                  EncryptionsDropdownButtonForm(selectedEncryption: selectedEncryption, primaryColor: primaryColor),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedObfuscation,
-                    items: ['None', 'Persian', 'Emoji'].map((obf) {
-                      return DropdownMenuItem(value: obf, child: Text(obf));
-                    }).toList(),
-                    onChanged: (val) => ref
-                        .read(selectedObfuscationProvider.notifier)
-                        .state = val!,
-                    decoration: InputDecoration(
-                      labelText: 'Obfuscation Method',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: primaryColor, width: 2),
-                      ),
-                    ),
-                  ),
-                ],
+                  ObfsDropdownButtonForm(selectedObfuscation: selectedObfuscation, primaryColor: primaryColor),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -284,3 +218,4 @@ class EncryptionPage extends ConsumerWidget {
     );
   }
 }
+

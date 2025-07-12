@@ -5,7 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class Aes {
+import '../models/encryption.dart';
+
+class Aes extends Encryption {
+  @override
+  String get tag => 'aes';
+
   static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
 
   ///Encrypt
@@ -69,4 +74,5 @@ class Aes {
     final decoder = GZipDecoder();
     return decoder.decodeBytes(compressedData);
   }
+
 }
