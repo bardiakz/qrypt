@@ -6,6 +6,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../models/encryption.dart';
+import 'compression.dart';
 
 class Aes extends Encryption {
   @override
@@ -15,7 +16,7 @@ class Aes extends Encryption {
 
   ///Encrypt
   static Map<String, String> encryptMessage(String plaintext) {
-    final compressed = _compress(utf8.encode(plaintext));
+    final compressed = Compression.gZipCompress(utf8.encode(plaintext));
     final iv = encrypt.IV.fromLength(16);
 
     final encrypter = encrypt.Encrypter(
@@ -60,19 +61,7 @@ class Aes extends Encryption {
       iv: iv,
     );
 
-    return utf8.decode(_decompress(decrypted));
-  }
-
-  ///Compresses data using GZip
-  static Uint8List _compress(List<int> data) {
-    final encoder = GZipEncoder();
-    return Uint8List.fromList(encoder.encode(data)!);
-  }
-
-  ///Decompresses data using GZip
-  static List<int> _decompress(List<int> compressedData) {
-    final decoder = GZipDecoder();
-    return decoder.decodeBytes(compressedData);
+    return utf8.decode(Compression.gZipDeCompress(decrypted));
   }
 
 }
