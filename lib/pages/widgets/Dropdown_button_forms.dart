@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/models/compression_method.dart';
 
-import '../../models/encryption.dart';
-import '../../models/obfuscation.dart';
+import '../../models/encryption_method.dart';
+import '../../models/obfuscation_method.dart';
 import '../../providers/encryption_providers.dart';
 
 class ObfsDropdownButtonForm extends ConsumerWidget {
@@ -62,6 +63,39 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
       onChanged: (val) => ref.read(selectedEncryptionProvider.notifier).state = val!,
       decoration: InputDecoration(
         labelText: 'Encryption Algorithm',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class CompressionsDropdownButtonForm extends ConsumerWidget {
+  const CompressionsDropdownButtonForm({
+    super.key,
+    required this.selectedCompression,
+    required this.primaryColor,
+  });
+
+  final CompressionMethod selectedCompression;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context,WidgetRef ref) {
+    return DropdownButtonFormField<CompressionMethod>(
+      value: selectedCompression,
+      items: CompressionMethod.values.map((alg) {
+        return DropdownMenuItem(
+          value: alg,
+          child: Text(alg.name.toUpperCase()),
+        );
+      }).toList(),
+      onChanged: (val) => ref.read(selectedCompressionProvider.notifier).state = val!,
+      decoration: InputDecoration(
+        labelText: 'Compression Algorithm',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

@@ -1,13 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/Qrypt.dart';
-import 'package:qrypt/models/obfuscation.dart';
+import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 
-import '../models/encryption.dart';
+import '../models/encryption_method.dart';
 import '../providers/resource_providers.dart';
 import '../services/input_handler.dart';
 
@@ -42,6 +41,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
+    final selectedCompression = ref.watch(selectedCompressionProvider);
     final publicKey = ref.watch(publicKeyProvider);
 
     return SafeArea(
@@ -162,6 +162,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     selectedObfuscation: selectedObfuscation,
                     primaryColor: primaryColor,
                   ),
+                  const SizedBox(height: 16),
+                  CompressionsDropdownButtonForm(
+                    selectedCompression: selectedCompression,
+                    primaryColor: primaryColor,
+                  ),
 
                   const SizedBox(height: 16),
                   TextField(
@@ -187,7 +192,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       // TODO: Encrypt
-                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,useTag: defaultEncryption);
+                      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: defaultEncryption);
                       ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
                     },
                     style: ElevatedButton.styleFrom(

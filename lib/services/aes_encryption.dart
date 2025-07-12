@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../models/encryption.dart';
+import '../models/encryption_method.dart';
 import 'compression.dart';
 
 class Aes extends Encryption {
@@ -15,8 +15,8 @@ class Aes extends Encryption {
   static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
 
   ///Encrypt
-  static Map<String, String> encryptMessage(String plaintext) {
-    final compressed = Compression.gZipCompress(utf8.encode(plaintext));
+  static Map<String, String> encryptMessage(Uint8List compressed) {
+    // final compressed = Compression.gZipCompress(utf8.encode(plaintext));
     final iv = encrypt.IV.fromLength(16);
 
     final encrypter = encrypt.Encrypter(

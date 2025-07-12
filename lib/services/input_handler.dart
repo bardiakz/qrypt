@@ -1,20 +1,39 @@
-import 'package:qrypt/models/encryption.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:qrypt/models/encryption_method.dart';
+import 'package:qrypt/services/compression.dart';
 
 import '../models/Qrypt.dart';
-import '../models/encryption.dart';
-import '../models/obfuscation.dart';
+import '../models/compression_method.dart';
+import '../models/encryption_method.dart';
+import '../models/obfuscation_method.dart';
 import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
 class InputHandler{
+  Qrypt handleCompression(Qrypt qrypt){
+    Uint8List compText;
+    switch(qrypt.getCompressionMethod()){
+      case CompressionMethod.gZip:
+        compText = Compression.gZipCompress(utf8.encode(qrypt.text));
+        qrypt.compressedText = compText;
+        return qrypt;
+      case CompressionMethod.none:
+        compText = utf8.encode(qrypt.text);
+        qrypt.compressedText = compText;
+        return qrypt;
+    }
+  }
   Qrypt handleEncrypt(Qrypt qrypt){
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.aes:
-        encryptedText = '${Aes.encryptMessage(qrypt.text)['ciphertext']}:${Aes.encryptMessage(qrypt.text)['iv']!}';
+        encryptedText = '${Aes.encryptMessage(qrypt.compressedText)['ciphertext']}:${Aes.encryptMessage(qrypt.compressedText)['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
       case EncryptionMethod.none:
+        qrypt.text = qrypt.compressedText.toString();
         return qrypt;
     }
   }
@@ -37,6 +56,7 @@ class InputHandler{
     }
   }
   Qrypt handleProcess(Qrypt qrypt){
+    qrypt = handleCompression(qrypt);
     qrypt = handleEncrypt(qrypt);
     qrypt = handleObfs(qrypt);
     return qrypt;
