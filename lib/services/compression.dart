@@ -2,6 +2,7 @@
 import 'dart:typed_data';
 import 'package:es_compression/lz4.dart';
 import 'package:es_compression/brotli.dart';
+import 'package:es_compression/zstd.dart';
 import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 
@@ -33,6 +34,15 @@ class Compression{
   }
   static List<int> brotliDeCompress(List<int> compressedData) {
     final decoder = BrotliCodec();
+    return decoder.decode(compressedData);
+  }
+
+  static Uint8List zstdCompress(List<int> data) {
+    final encoder = ZstdCodec(level: 22);
+    return Uint8List.fromList(encoder.encode(data));
+  }
+  static List<int> zstdDeCompress(List<int> compressedData) {
+    final decoder = ZstdCodec();
     return decoder.decode(compressedData);
   }
 }

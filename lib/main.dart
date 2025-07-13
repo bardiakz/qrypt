@@ -7,6 +7,7 @@ import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:es_compression/lz4.dart';
 import 'package:es_compression/brotli.dart';
+import 'package:es_compression/zstd.dart';
 import 'package:path/path.dart' as path;
 
 void main() async{
@@ -38,6 +39,19 @@ void main() async{
     throw UnsupportedError('Unsupported platform');
   }
   BrotliCodec.libraryPath = brotliLibPath;
+
+  String zstdLibPath;
+  if (Platform.isWindows) {
+    zstdLibPath = path.join(basePath, 'eszstd-win64.dll');
+  }else if (Platform.isLinux) {
+    zstdLibPath = path.join(basePath, 'eszstd-linux64.so');
+  } else if (Platform.isMacOS) {
+    zstdLibPath = path.join(basePath, 'eszstd-mac64.dylib');
+  } else {
+    throw UnsupportedError('Unsupported platform');
+  }
+  ZstdCodec.libraryPath = zstdLibPath;
+
   runApp(ProviderScope(child: const MyApp()));
 }
 

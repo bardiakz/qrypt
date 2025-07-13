@@ -3,4 +3,5 @@ enum CompressionMethod {
   gZip,
   lZ4,
   brotli,
+  zstd,
 }
