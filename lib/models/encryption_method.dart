@@ -4,5 +4,18 @@ abstract class Encryption {
 
 enum EncryptionMethod {
   none,
-  aes,
+  aesCbc,
+}
+extension EncryptionMethodName on EncryptionMethod {
+  String get displayName {
+    switch (this) {
+      case EncryptionMethod.none:
+        return 'NONE';
+      case EncryptionMethod.aesCbc:
+        return 'AES-CBC';
+      // case Cipher.AES_GCM:
+      //   return 'AES-GCM';
+
+    }
+  }
 }

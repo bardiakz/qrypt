@@ -57,7 +57,7 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
       items: EncryptionMethod.values.map((alg) {
         return DropdownMenuItem(
           value: alg,
-          child: Text(alg.name.toUpperCase()),
+          child: Text(alg.displayName),
         );
       }).toList(),
       onChanged: (val) => ref.read(selectedEncryptionProvider.notifier).state = val!,

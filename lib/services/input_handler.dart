@@ -44,7 +44,7 @@ class InputHandler{
       case EncryptionMethod.none:
         qrypt.text = qrypt.compressedText.toString();
         return qrypt;
-      case EncryptionMethod.aes:
+      case EncryptionMethod.aesCbc:
         encryptedText = '${Aes.encryptMessage(qrypt.compressedText)['ciphertext']}:${Aes.encryptMessage(qrypt.compressedText)['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;

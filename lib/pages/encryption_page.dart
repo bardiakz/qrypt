@@ -196,7 +196,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: useTagManually);
                         ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
                       }else{
-                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: EncryptionMethod.aes, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: true);
+                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: EncryptionMethod.aesCbc, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: true);
                         ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
                       }
                     },
