@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 
@@ -45,7 +46,8 @@ class InputHandler{
         qrypt.text = qrypt.compressedText.toString();
         return qrypt;
       case EncryptionMethod.aesCbc:
-        encryptedText = '${Aes.encryptMessage(qrypt.compressedText)['ciphertext']}:${Aes.encryptMessage(qrypt.compressedText)['iv']!}';
+        Map<String,String> encMap = Aes.encryptMessage(qrypt.compressedText);
+        encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
 
@@ -76,13 +78,49 @@ class InputHandler{
         return qrypt;
       case ObfuscationMethod.fa1:
 
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
+        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA1Map);
         // print('crypt txt is:${obfsText}');
         qrypt.text = obfsText;
         return qrypt;
       case ObfuscationMethod.fa2:
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
+        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA2Map);
         qrypt.text = obfsText;
+        return qrypt;
+    }
+  }
+  Qrypt handleDecrypt(Qrypt qrypt){
+    switch(qrypt.getEncryptionMethod()){
+      case EncryptionMethod.none:
+        qrypt.deCompressedText = utf8.encode(qrypt.text);
+        return qrypt;
+      case EncryptionMethod.aesCbc:
+        List<String> parts = parseByColon(qrypt.text);
+        if (parts.length != 2) throw FormatException('Invalid AES-CBC format');
+        qrypt.deCompressedText = Aes.decryptMessage(parts[0], parts[1]); //to be decompressed in the next phase
+        return qrypt;
+    }
+  }
+  Qrypt handleDeCompression(Qrypt qrypt){
+    switch(qrypt.getCompressionMethod()){
+      case CompressionMethod.none:
+        qrypt.text = utf8.decode(qrypt.deCompressedText);
+        return qrypt;
+      case CompressionMethod.gZip:
+        qrypt.deCompressedText = Compression.gZipDeCompress(qrypt.deCompressedText);
+        qrypt.text = utf8.decode(qrypt.deCompressedText);
+        return qrypt;
+
+      case CompressionMethod.lZ4:
+        qrypt.deCompressedText = Compression.lz4DeCompress(qrypt.deCompressedText);
+        qrypt.text = utf8.decode(qrypt.deCompressedText);
+        return qrypt;
+      case CompressionMethod.brotli:
+        qrypt.deCompressedText = Compression.brotliDeCompress(qrypt.deCompressedText);
+        qrypt.text = utf8.decode(qrypt.deCompressedText);
+        return qrypt;
+      case CompressionMethod.zstd:
+        qrypt.deCompressedText = Compression.zstdDeCompress(qrypt.deCompressedText);
+        qrypt.text = utf8.decode(qrypt.deCompressedText);
         return qrypt;
     }
   }
@@ -97,15 +135,21 @@ class InputHandler{
 
   Qrypt handleDeProcess(Qrypt qrypt,bool useTag){
     if(!useTag){
-
+      qrypt  = handleDeObfs(qrypt);
+      qrypt  = handleDecrypt(qrypt);
+      qrypt  = handleDeCompression(qrypt);
     }
-    qrypt = handleCompression(qrypt);
-    qrypt = handleEncrypt(qrypt);
-    qrypt.text = qrypt.tag+qrypt.text;
-    qrypt = handleObfs(qrypt);
     return qrypt;
   }
 
+
+
+  static List<String> parseByColon(String input) {
+    List<String> parts;
+    parts= input.split(':');
+    print('parsed the text with size ${parts.length} : ${parts[0]} and ${parts[1]} ');
+    return input.split(':');
+  }
 }
 
 

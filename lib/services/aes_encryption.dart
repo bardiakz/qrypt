@@ -34,7 +34,8 @@ class Aes extends Encryption {
     return {'ciphertext': hexEncrypted, 'iv': hexIV, 'tag': 'qmsa2'};
   }
 
-  static String decryptMessage(String hexCiphertext, String hexIV) {
+  static List<int> decryptMessage(String hexCiphertext, String hexIV) {
+    print('started decrypt');
     // Convert hex back to bytes
     final encryptedBytes = Uint8List.fromList(
       List.generate(
@@ -60,8 +61,8 @@ class Aes extends Encryption {
       encrypt.Encrypted(encryptedBytes),
       iv: iv,
     );
-
-    return utf8.decode(Compression.gZipDeCompress(decrypted));
+    print('ended decrypt');
+    return decrypted;
   }
 
 }
