@@ -39,6 +39,7 @@ dependencies:
   encrypt: ^5.0.3
   archive: ^4.0.7
   flutter_dotenv: ^5.2.1
+  ffi: ^2.1.4
 
 dev_dependencies:
   flutter_test:
@@ -48,7 +49,8 @@ dev_dependencies:
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
+  # rules and activating additional ones..
+  ffigen: ^19.0.0
   flutter_lints: ^5.0.0
   riverpod_generator: ^2.6.5
   build_runner: ^2.5.4
@@ -73,6 +75,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - .env
+    - liboqs/oqs.dll
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
