@@ -66,11 +66,39 @@ class InputHandler{
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
         qrypt.text = obfsText;
         return qrypt;
-
-
     }
   }
+
+  Qrypt handleDeObfs(Qrypt qrypt){
+    String? obfsText=qrypt.text;
+    switch(qrypt.getObfuscationMethod()){
+      case ObfuscationMethod.none:
+        return qrypt;
+      case ObfuscationMethod.fa1:
+
+        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
+        // print('crypt txt is:${obfsText}');
+        qrypt.text = obfsText;
+        return qrypt;
+      case ObfuscationMethod.fa2:
+        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
+        qrypt.text = obfsText;
+        return qrypt;
+    }
+  }
+
   Qrypt handleProcess(Qrypt qrypt){
+    qrypt = handleCompression(qrypt);
+    qrypt = handleEncrypt(qrypt);
+    qrypt.text = qrypt.tag+qrypt.text;
+    qrypt = handleObfs(qrypt);
+    return qrypt;
+  }
+
+  Qrypt handleDeProcess(Qrypt qrypt,bool useTag){
+    if(!useTag){
+
+    }
     qrypt = handleCompression(qrypt);
     qrypt = handleEncrypt(qrypt);
     qrypt.text = qrypt.tag+qrypt.text;

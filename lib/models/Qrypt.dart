@@ -8,6 +8,7 @@ import 'obfuscation_method.dart';
 class Qrypt{
   String text='';
   Uint8List compressedText=utf8.encode('');
+  Uint8List deCompressedText=utf8.encode('');
   late final EncryptionMethod encryption;
   late final ObfuscationMethod obfuscation;
   late final CompressionMethod compression;
@@ -29,5 +30,5 @@ class Qrypt{
   CompressionMethod getCompressionMethod(){
     return compression;
   }
-
 }
+

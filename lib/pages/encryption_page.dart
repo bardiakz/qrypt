@@ -240,6 +240,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                 if (!autoDetectTag) ...[
                   const SizedBox(height: 16),
+                  CompressionsDropdownButtonForm(
+                    selectedCompression: selectedCompression,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 16),
                   EncryptionsDropdownButtonForm(
                     selectedEncryption: selectedEncryption,
                     primaryColor: primaryColor,
@@ -256,7 +261,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Decrypt
+                      if(!autoDetectTag){
+                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: false);
+                        ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),false);
+                      }else{
+                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: EncryptionMethod.aesCbc, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: autoDetectTag);
+                        ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),true);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
