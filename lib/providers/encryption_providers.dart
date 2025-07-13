@@ -18,4 +18,5 @@ final selectedCompressionProvider = StateProvider<CompressionMethod>((ref) => Co
 final publicKeyProvider = StateProvider<String>((ref) => '');
 final inputQryptProvider = StateProvider<Qrypt>((ref) => Qrypt(text: '', encryption: EncryptionMethod.none, obfuscation: ObfuscationMethod.none,compression: CompressionMethod.gZip));
 final processedCryptProvider = StateProvider<Qrypt>((ref) => Qrypt(text: '', encryption: EncryptionMethod.none, obfuscation: ObfuscationMethod.none,compression: CompressionMethod.gZip));
+final processedCryptTextSizeProvider = StateProvider<int>((ref) => ref.watch(processedCryptProvider).text.length);
 

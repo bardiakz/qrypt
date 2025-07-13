@@ -289,9 +289,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
               const SizedBox(height: 32),
               const Divider(),
-              const Align(alignment: Alignment.centerLeft,
-                  child: Text("Output", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 2,right: 12,bottom: 5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [Text("Output", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(ref.read(processedCryptTextSizeProvider).toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300,color: Colors.blueGrey))
+                ],),
+              ),
+              // const SizedBox(height: 2),
               Container(
                 height: screenHeight*0.25,
                 padding: const EdgeInsets.all(16),
