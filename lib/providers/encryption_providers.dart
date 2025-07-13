@@ -17,5 +17,5 @@ final selectedObfuscationProvider = StateProvider<ObfuscationMethod>((ref) => Ob
 final selectedCompressionProvider = StateProvider<CompressionMethod>((ref) => CompressionMethod.gZip);
 final publicKeyProvider = StateProvider<String>((ref) => '');
 final inputQryptProvider = StateProvider<Qrypt>((ref) => Qrypt(text: '', encryption: EncryptionMethod.none, obfuscation: ObfuscationMethod.none,compression: CompressionMethod.gZip));
-final processedCryptProvider = StateProvider<Qrypt>((ref) => Qrypt(text: 'defNotProcessed', encryption: EncryptionMethod.none, obfuscation: ObfuscationMethod.none,compression: CompressionMethod.gZip));
+final processedCryptProvider = StateProvider<Qrypt>((ref) => Qrypt(text: '', encryption: EncryptionMethod.none, obfuscation: ObfuscationMethod.none,compression: CompressionMethod.gZip));
 
