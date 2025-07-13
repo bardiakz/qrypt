@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
+import 'package:qrypt/services/tag_manager.dart';
 
 
 void main() async{
@@ -15,6 +16,7 @@ void main() async{
   if(!(Platform.isAndroid || Platform.isIOS)){
     Compression.setNativeLibPaths();
   }
+  TagManager.initializeTags();
 
   runApp(ProviderScope(child: const MyApp()));
 }

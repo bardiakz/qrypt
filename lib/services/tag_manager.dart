@@ -39,7 +39,7 @@ class TagManager{
     print('Loaded ${knownTags.length} tag combinations');
   }
 
-  static void initialize() {
+  static void initializeTags() {
     knownTags.clear();
     loadAllTags();
   }
