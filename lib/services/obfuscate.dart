@@ -83,15 +83,6 @@ class Obfuscate {
     String text,
     Map<String, String> obfuscationMap,
   ) {
-    // Split by first colon to preserve the tag
-    final parts = text.split(':');
-    if (parts.length < 2) {
-      return text; // Return original text if no colon found
-    }
-
-    final tag = parts[0];
-    // Join remaining parts back with colon in case there are multiple colons
-    final obfuscatedContent = parts.sublist(1).join(':');
 
     // Create reverse mapping
     Map<String, String> reverseMap = obfuscationMap.map(
@@ -99,12 +90,12 @@ class Obfuscate {
     );
 
     // Split by spaces and deobfuscate each word
-    final deobfuscatedContent = obfuscatedContent
+    final deobfuscatedContent = text
         .split(' ')
         .where((word) => word.isNotEmpty) // Filter out empty strings
         .map((word) => reverseMap[word] ?? word)
         .join(''); // Join without spaces
 
-    return '$tag:$deobfuscatedContent';
+    return deobfuscatedContent;
   }
 }
