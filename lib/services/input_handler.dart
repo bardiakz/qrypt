@@ -73,6 +73,7 @@ class InputHandler{
   Qrypt handleProcess(Qrypt qrypt){
     qrypt = handleCompression(qrypt);
     qrypt = handleEncrypt(qrypt);
+    qrypt.text = qrypt.tag+qrypt.text;
     qrypt = handleObfs(qrypt);
     return qrypt;
   }
