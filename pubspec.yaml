@@ -76,6 +76,14 @@ flutter:
   assets:
     - .env
     - liboqs/oqs.dll
+
+
+native_assets:
+    assets:
+      - target: liboqs/oqs.dll
+        platforms:
+          windows:
+            assetId: qrypt
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
