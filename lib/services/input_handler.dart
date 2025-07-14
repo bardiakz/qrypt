@@ -44,7 +44,7 @@ class InputHandler{
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.text = utf8.decode(qrypt.compressedText);
+        qrypt.text = qrypt.compressedText.toString();
         return qrypt;
       case EncryptionMethod.aesCbc:
         Map<String,String> encMap = Aes.encryptMessage(qrypt.compressedText);
