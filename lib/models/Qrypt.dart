@@ -19,6 +19,10 @@ class Qrypt{
       TagManager.setTag(this);
     }
   }
+
+  Qrypt.autoDecrypt({required this.text}){
+    useTag = true;
+  }
   Qrypt({required this.text,required this.encryption,required this.obfuscation,required this.compression});
 
   EncryptionMethod getEncryptionMethod(){

@@ -20,7 +20,7 @@ class TagManager{
     for (var comp in CompressionMethod.values) {
       for (var enc in EncryptionMethod.values) {
         for (var obf in ObfuscationMethod.values) {
-          final rawTag = '${comp.name}${enc.name}${obf.name}:';
+          final rawTag = '${comp.name}${enc.name}${obf.name}';
           final tagHash = Crypto.generateTagHash(rawTag);
 
           String obfsTag = switch (obf) {
@@ -55,9 +55,42 @@ class TagManager{
   ///Returns the tag if matched
   static String? matchedTag(String text) {
     for (final tag in knownTags) {
+      print('checking tag $tag');
       if (text.startsWith(tag)) return tag;
     }
     return null;
   }
+
+  static ({
+  CompressionMethod compression,
+  EncryptionMethod encryption,
+  ObfuscationMethod obfuscation
+  })? getMethodsFromTag(String tag) {
+    for (var comp in CompressionMethod.values) {
+      for (var enc in EncryptionMethod.values) {
+        for (var obf in ObfuscationMethod.values) {
+          final raw = '${comp.name}${enc.name}${obf.name}';
+          final hash = Crypto.generateTagHash(raw);
+
+          final obfsTag = switch (obf) {
+            ObfuscationMethod.none => hash,
+            ObfuscationMethod.fa1 => Obfuscate.obfuscateText(hash, obfuscationFA1Map),
+            ObfuscationMethod.fa2 => Obfuscate.obfuscateText(hash, obfuscationFA2Map),
+          };
+
+          if (tag.startsWith(obfsTag)) {
+            return (
+            compression: comp,
+            encryption: enc,
+            obfuscation: obf
+            );
+          }
+        }
+      }
+    }
+
+    return null; // No match found
+  }
+
 }
 

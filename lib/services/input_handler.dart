@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
+import 'package:qrypt/services/tag_manager.dart';
 
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
@@ -43,7 +44,7 @@ class InputHandler{
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.text = qrypt.compressedText.toString();
+        qrypt.text = utf8.decode(qrypt.compressedText);
         return qrypt;
       case EncryptionMethod.aesCbc:
         Map<String,String> encMap = Aes.encryptMessage(qrypt.compressedText);
@@ -135,6 +136,19 @@ class InputHandler{
 
   Qrypt handleDeProcess(Qrypt qrypt,bool useTag){
     if(!useTag){
+      qrypt  = handleDeObfs(qrypt);
+      qrypt  = handleDecrypt(qrypt);
+      qrypt  = handleDeCompression(qrypt);
+    }else{
+      String? tag = TagManager.matchedTag(qrypt.text);
+      if (tag == null) throw FormatException('Invalid tag format');
+      print('tag is $tag');
+      qrypt.text = qrypt.text.substring(tag.length);
+      print('tag removed text: ${qrypt.text}');
+      final methods = TagManager.getMethodsFromTag(tag);
+      qrypt.obfuscation = methods!.obfuscation;
+      qrypt.encryption = methods.encryption;
+      qrypt.compression = methods.compression;
       qrypt  = handleDeObfs(qrypt);
       qrypt  = handleDecrypt(qrypt);
       qrypt  = handleDeCompression(qrypt);
