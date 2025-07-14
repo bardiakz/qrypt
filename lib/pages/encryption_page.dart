@@ -6,7 +6,7 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
-
+import 'package:flutter/services.dart';
 import '../models/encryption_method.dart';
 import '../providers/resource_providers.dart';
 import '../services/input_handler.dart';
@@ -26,6 +26,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   void dispose() {
     inputTextController.dispose(); // Proper cleanup
     super.dispose();
+  }
+
+  void _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  Future<String?> _pasteFromClipboard() async {
+    final clipboardData = await Clipboard.getData('text/plain');
+    return clipboardData?.text;
   }
 
   @override
@@ -71,7 +80,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: (){},
+                        onTap: (){
+                          inputTextController.clear();
+                        },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
@@ -82,7 +93,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: (){},
+                        onTap: () async {
+                          final pastedText = await _pasteFromClipboard();
+                          if (pastedText != null) {
+                            // Update your text field or state
+                            inputTextController.text = pastedText;
+                          }
+                        },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
@@ -330,7 +347,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: (){},
+                        onTap: ()async{
+                          _copyToClipboard(ref.watch(processedCryptProvider).text);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Copied to clipboard!')),
+                          );
+                        },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
