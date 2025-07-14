@@ -60,11 +60,40 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              // const SizedBox(height: 20),
 
-              const Align(alignment: Alignment.centerLeft,
-                  child: Text("Message", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 2,top: 18),
+                child: Row(
+                  children: [
+                    Text("Message", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                    Spacer(),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: (){},
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.clear, color: primaryColor, size: 20),
+                        ),
+                      ),
+                    ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: (){},
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.content_paste, color: primaryColor, size: 20),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              // const SizedBox(height: 12),
               TextField(
                 controller: inputTextController,
                 maxLines: 4,
@@ -290,11 +319,25 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               const SizedBox(height: 32),
               const Divider(),
               Padding(
-                padding: const EdgeInsets.only(left: 2,right: 12,bottom: 5),
+                padding: const EdgeInsets.only(left: 2,bottom: 5),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [Text("Output", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                  Text(ref.read(processedCryptTextSizeProvider).toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300,color: Colors.blueGrey))
+
+                  Spacer(),
+                  Text(ref.read(processedCryptTextSizeProvider).toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300,color: Colors.blueGrey)),
+                    SizedBox(width: 12,),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: (){},
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.content_copy, color: primaryColor, size: 20),
+                        ),
+                      ),
+                    ),
                 ],),
               ),
               // const SizedBox(height: 2),
