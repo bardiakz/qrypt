@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/providers/encryption_providers.dart';
 import '../../providers/resource_providers.dart';
 
-Widget modeSwitch(AppMode selected, Color primaryColor, WidgetRef ref) {
+Widget modeSwitch(AppMode selected, Color primaryColor, WidgetRef ref,TextEditingController encryptTextController,TextEditingController decryptTextController) {
   return SizedBox(
     height: 48,
     width: 260,
@@ -47,8 +48,11 @@ Widget modeSwitch(AppMode selected, Color primaryColor, WidgetRef ref) {
             return Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                ref.read(appModeProvider.notifier).state = mode,
+                onTap: () {
+                  ref.read(appModeProvider.notifier).state = mode;
+                  ref.read(inputTextProvider.notifier).state = mode == AppMode.encrypt?encryptTextController.text:decryptTextController.text;
+                  },
+
                 child: Container(
                   alignment: Alignment.center,
                   height: 48,

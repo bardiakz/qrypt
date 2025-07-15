@@ -106,6 +106,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   @override
   void initState() {
     super.initState();
+
+  }
+
+  Future<void> _setStartController()async{
+    ref.read(currentTextControllerProvider.notifier).state = _encryptTextController;
   }
 
   @override
@@ -124,6 +129,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
     final publicKey = ref.watch(publicKeyProvider);
+    Future((){ref.read(currentTextControllerProvider.notifier).state = _encryptTextController;});
 
     return SafeArea(
       child: Scaffold(
@@ -135,7 +141,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 alignment: Alignment.center,
                 child: Padding(
                   padding: const EdgeInsets.only(top: AppConstants.defaultPadding),
-                  child: modeSwitch(appMode, primaryColor, ref),
+                  child: modeSwitch(appMode, primaryColor, ref,_encryptTextController,_decryptTextController),
                 ),
               ),
 
