@@ -54,6 +54,16 @@ class InputHandler{
         qrypt.text = encryptedText;
         return qrypt;
 
+      case EncryptionMethod.aesCtr:
+        Map<String,String> encMap = Aes.encryptAesCtr(qrypt.compressedText);
+        encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
+        qrypt.text = encryptedText;
+        return qrypt;
+      case EncryptionMethod.aesGcm:
+        Map<String,String> encMap = Aes.encryptAesGcm(qrypt.compressedText);
+        encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
+        qrypt.text = encryptedText;
+        return qrypt;
     }
   }
   Qrypt handleObfs(Qrypt qrypt){
@@ -100,6 +110,16 @@ class InputHandler{
         List<String> parts = parseByColon(qrypt.text);
         if (parts.length != 2) throw FormatException('Invalid AES-CBC format');
         qrypt.deCompressedText = Aes.decryptAesCbc(parts[0], parts[1]); //to be decompressed in the next phase
+        return qrypt;
+      case EncryptionMethod.aesCtr:
+        List<String> parts = parseByColon(qrypt.text);
+        if (parts.length != 2) throw FormatException('Invalid AES-CTR format');
+        qrypt.deCompressedText = Aes.decryptAesCtr(parts[0], parts[1]); //to be decompressed in the next phase
+        return qrypt;
+      case EncryptionMethod.aesGcm:
+        List<String> parts = parseByColon(qrypt.text);
+        if (parts.length != 2) throw FormatException('Invalid AES-GCM format');
+        qrypt.deCompressedText = Aes.decryptAesGcm(parts[0], parts[1])!; //to be decompressed in the next phase
         return qrypt;
     }
   }

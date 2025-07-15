@@ -5,6 +5,8 @@ abstract class Encryption {
 enum EncryptionMethod {
   none,
   aesCbc,
+  aesCtr,
+  aesGcm,
 }
 extension EncryptionMethodName on EncryptionMethod {
   String get displayName {
@@ -13,9 +15,10 @@ extension EncryptionMethodName on EncryptionMethod {
         return 'NONE';
       case EncryptionMethod.aesCbc:
         return 'AES-CBC';
-      // case Cipher.AES_GCM:
-      //   return 'AES-GCM';
-
+      case EncryptionMethod.aesCtr:
+        return 'AES-CTR';
+      case EncryptionMethod.aesGcm:
+        return 'AES-GCM';
     }
   }
 }

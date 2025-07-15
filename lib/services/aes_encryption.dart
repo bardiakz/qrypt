@@ -1,8 +1,8 @@
-import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/encryption_method.dart';
+
 
 
 class Aes extends Encryption {
@@ -13,7 +13,6 @@ class Aes extends Encryption {
 
   ///Encrypt AES-CBC
   static Map<String, String> encryptAesCbc(Uint8List compressed) {
-    // final compressed = Compression.gZipCompress(utf8.encode(plaintext));
     final iv = encrypt.IV.fromLength(16);
 
     final encrypter = encrypt.Encrypter(
@@ -32,7 +31,6 @@ class Aes extends Encryption {
   }
   ///Decrypt AES-CBC
   static List<int> decryptAesCbc(String hexCiphertext, String hexIV) {
-    print('started decrypt');
     // Convert hex back to bytes
     final encryptedBytes = Uint8List.fromList(
       List.generate(
@@ -58,8 +56,82 @@ class Aes extends Encryption {
       encrypt.Encrypted(encryptedBytes),
       iv: iv,
     );
-    print('ended decrypt');
     return decrypted;
   }
 
+  /// AES-GCM - Encrypt
+  static Map<String, String> encryptAesGcm(Uint8List data) {
+    final iv = encrypt.IV.fromSecureRandom(12);
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(_key, mode: encrypt.AESMode.gcm),
+    );
+
+    final encrypted = encrypter.encryptBytes(data, iv: iv);
+
+    return {
+      'ciphertext': _toHex(encrypted.bytes), // includes auth tag at the end
+      'iv': _toHex(iv.bytes),
+    };
+  }
+
+  ///AES-GCM - Decrypt
+  static List<int>? decryptAesGcm(String hexCiphertext, String hexIV) {
+    try {
+      final encryptedBytes = _fromHex(hexCiphertext);
+      final iv = encrypt.IV(_fromHex(hexIV));
+
+      final encrypter = encrypt.Encrypter(
+        encrypt.AES(_key, mode: encrypt.AESMode.gcm),
+      );
+
+      final decrypted = encrypter.decryptBytes(
+        encrypt.Encrypted(encryptedBytes),
+        iv: iv,
+      );
+
+      return decrypted;
+    } catch (e) {
+      debugPrint('GCM decryption failed: $e');
+      return null;
+    }
+  }
+
+
+  /// AES-CTR - Encrypt
+  static Map<String, String> encryptAesCtr(Uint8List data) {
+    final iv = encrypt.IV.fromLength(16);
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(_key, mode: encrypt.AESMode.ctr),
+    );
+    final encrypted = encrypter.encryptBytes(data, iv: iv);
+    return {
+      'ciphertext': _toHex(encrypted.bytes),
+      'iv': _toHex(iv.bytes),
+    };
+  }
+  /// AES-CTR - Decrypt
+  static List<int> decryptAesCtr(String hexCiphertext, String hexIV) {
+    final encryptedBytes = _fromHex(hexCiphertext);
+    final iv = encrypt.IV(_fromHex(hexIV));
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(_key, mode: encrypt.AESMode.ctr),
+    );
+    return encrypter.decryptBytes(
+      encrypt.Encrypted(encryptedBytes),
+      iv: iv,
+    );
+  }
+
+  //Utility methods
+  static String _toHex(List<int> bytes) =>
+      bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+  static Uint8List _fromHex(String hex) {
+    return Uint8List.fromList(
+      List.generate(
+        hex.length ~/ 2,
+            (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16),
+      ),
+    );
+  }
 }
