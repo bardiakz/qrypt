@@ -3,6 +3,9 @@
 **⚠️ Disclaimer**: This tool is for educational and legitimate use cases only. Users are responsible for compliance with local laws and regulations regarding encryption and data protection.
 
 A comprehensive Flutter application for text encryption, compression, and obfuscation with support for multiple algorithms and customizable processing pipelines.
+**Qrypt** is a flexible and privacy-first Flutter app that allows users to **manually encrypt**, **compress**, and **obfuscate** text — designed for use cases where native SMS encryption is restricted or unavailable. Qrypt puts **full control in the hands of the user**, enabling secure message sharing across any medium (e.g., SMS, chat, email).
+
+
 ## Features ✨
 
 ### 🔒 Encryption Methods
