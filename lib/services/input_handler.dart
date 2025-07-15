@@ -43,10 +43,23 @@ class InputHandler{
     }
   }
   Qrypt handleEncrypt(Qrypt qrypt){
+
+
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.text = base64.encode(qrypt.compressedText);
+        bool usesMappedObfuscation = [
+          ObfuscationMethod.en1,
+          ObfuscationMethod.en2,
+          ObfuscationMethod.fa1,
+          ObfuscationMethod.fa2
+        ].contains(qrypt.getObfuscationMethod());
+        if (usesMappedObfuscation) {
+          qrypt.text = qrypt.compressedText.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
+
+        } else {
+          qrypt.text = base64.encode(qrypt.compressedText);
+        }
         return qrypt;
       case EncryptionMethod.aesCbc:
         Map<String,String> encMap = Aes.encryptAesCbc(qrypt.compressedText);
@@ -161,7 +174,24 @@ class InputHandler{
   Qrypt handleDecrypt(Qrypt qrypt){
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.deCompressedText = base64.decode(qrypt.text);
+        bool usesMappedObfuscation = [
+          ObfuscationMethod.en1,
+          ObfuscationMethod.en2,
+          ObfuscationMethod.fa1,
+          ObfuscationMethod.fa2
+        ].contains(qrypt.getObfuscationMethod());
+
+        if (usesMappedObfuscation) {
+          List<int> bytes = [];
+          for (int i = 0; i < qrypt.text.length; i += 2) {
+            String hexByte = qrypt.text.substring(i, i + 2);
+            bytes.add(int.parse(hexByte, radix: 16));
+          }
+          qrypt.deCompressedText = Uint8List.fromList(bytes);
+
+        } else {
+          qrypt.deCompressedText = base64.decode(qrypt.text);
+        }
         return qrypt;
       case EncryptionMethod.aesCbc:
         List<String> parts = parseByColon(qrypt.text);

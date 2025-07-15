@@ -108,17 +108,30 @@ class Obfuscate {
     return '$tag:$obfuscatedContent';
   }
   static String obfuscateText(String text, Map<String, String> obfuscationMap) {
-
-    // Join remaining parts back with colon in case there are multiple colons
     final contentToObfuscate = text;
 
-    // Obfuscate with spaces between words
-    final obfuscatedContent = contentToObfuscate
-        .split('')
-        .map((char) => obfuscationMap[char.toLowerCase()] ?? char)
-        .join(' '); // Add space between substituted words
+    // Check if we're dealing with base64-like content
+    bool isBase64Like = RegExp(r'^[A-Za-z0-9+/]*={0,2}$').hasMatch(text);
 
-    return obfuscatedContent;
+    if (isBase64Like) {
+      // For base64 content, only obfuscate characters that exist in the map
+      final obfuscatedContent = contentToObfuscate
+          .split('')
+          .where((char) => obfuscationMap.containsKey(char.toLowerCase()))
+          .map((char) => obfuscationMap[char.toLowerCase()]!)
+          .join(' ');
+
+      // If no characters were obfuscated, return original
+      return obfuscatedContent.isEmpty ? text : obfuscatedContent;
+    } else {
+      // Original logic for regular text
+      final obfuscatedContent = contentToObfuscate
+          .split('')
+          .map((char) => obfuscationMap[char.toLowerCase()] ?? char)
+          .join(' ');
+
+      return obfuscatedContent;
+    }
   }
 
   static String deobfuscateText(

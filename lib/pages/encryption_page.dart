@@ -560,9 +560,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       } else {
         ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
           text: _encryptTextController.text,
-          encryption: EncryptionMethod.aesCbc,
-          obfuscation: ObfuscationMethod.fa2,
-          compression: CompressionMethod.gZip,
+          encryption: EncryptionMethod.aesGcm,
+          obfuscation: ObfuscationMethod.en2,
+          compression: CompressionMethod.brotli,
           useTag: true,
         );
         ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
