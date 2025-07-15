@@ -5,5 +5,4 @@ enum ObfuscationMethod {
   none,
   fa1,
   fa2,
-
 }

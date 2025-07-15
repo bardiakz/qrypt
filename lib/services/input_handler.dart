@@ -49,7 +49,7 @@ class InputHandler{
         qrypt.text = qrypt.compressedText.toString();
         return qrypt;
       case EncryptionMethod.aesCbc:
-        Map<String,String> encMap = Aes.encryptMessage(qrypt.compressedText);
+        Map<String,String> encMap = Aes.encryptAesCbc(qrypt.compressedText);
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
@@ -99,7 +99,7 @@ class InputHandler{
       case EncryptionMethod.aesCbc:
         List<String> parts = parseByColon(qrypt.text);
         if (parts.length != 2) throw FormatException('Invalid AES-CBC format');
-        qrypt.deCompressedText = Aes.decryptMessage(parts[0], parts[1]); //to be decompressed in the next phase
+        qrypt.deCompressedText = Aes.decryptAesCbc(parts[0], parts[1]); //to be decompressed in the next phase
         return qrypt;
     }
   }

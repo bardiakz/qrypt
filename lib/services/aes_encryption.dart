@@ -14,8 +14,8 @@ class Aes extends Encryption {
 
   static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
 
-  ///Encrypt
-  static Map<String, String> encryptMessage(Uint8List compressed) {
+  ///Encrypt AES-CBC
+  static Map<String, String> encryptAesCbc(Uint8List compressed) {
     // final compressed = Compression.gZipCompress(utf8.encode(plaintext));
     final iv = encrypt.IV.fromLength(16);
 
@@ -31,10 +31,10 @@ class Aes extends Encryption {
         .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
         .join('');
 
-    return {'ciphertext': hexEncrypted, 'iv': hexIV, 'tag': 'qmsa2'};
+    return {'ciphertext': hexEncrypted, 'iv': hexIV};
   }
-
-  static List<int> decryptMessage(String hexCiphertext, String hexIV) {
+  ///Decrypt AES-CBC
+  static List<int> decryptAesCbc(String hexCiphertext, String hexIV) {
     print('started decrypt');
     // Convert hex back to bytes
     final encryptedBytes = Uint8List.fromList(
