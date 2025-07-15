@@ -11,6 +11,7 @@ final useTagProvider = StateProvider<bool>((ref) => true);
 
 final autoDetectTagProvider = StateProvider<bool>((ref) => true);
 final inputTextProvider = StateProvider<String>((ref) => '');
+final isProcessingProvider = StateProvider<bool>((ref) => false);
 
 // Advanced settings
 final publicKeyRequiredProvider = StateProvider<bool>((ref) => false);

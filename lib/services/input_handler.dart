@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/tag_manager.dart';
@@ -10,6 +11,7 @@ import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/encryption_method.dart';
 import '../models/obfuscation_method.dart';
+import '../providers/encryption_providers.dart';
 import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
@@ -141,17 +143,22 @@ class InputHandler{
       qrypt  = handleDeCompression(qrypt);
     }else{
       String? tag = TagManager.matchedTag(qrypt.text);
-      if (tag == null) throw FormatException('Invalid tag format');
-      print('tag is $tag');
-      qrypt.text = qrypt.text.substring(tag.length);
-      print('tag removed text: ${qrypt.text}');
-      final methods = TagManager.getMethodsFromTag(tag);
-      qrypt.obfuscation = methods!.obfuscation;
-      qrypt.encryption = methods.encryption;
-      qrypt.compression = methods.compression;
-      qrypt  = handleDeObfs(qrypt);
-      qrypt  = handleDecrypt(qrypt);
-      qrypt  = handleDeCompression(qrypt);
+      if (tag == null) {
+        qrypt.text = 'Invalid tag format';
+        // throw FormatException('Invalid tag format');
+      }else{
+        print('tag is $tag');
+        qrypt.text = qrypt.text.substring(tag.length);
+        print('tag removed text: ${qrypt.text}');
+        final methods = TagManager.getMethodsFromTag(tag);
+        qrypt.obfuscation = methods!.obfuscation;
+        qrypt.encryption = methods.encryption;
+        qrypt.compression = methods.compression;
+        qrypt  = handleDeObfs(qrypt);
+        qrypt  = handleDecrypt(qrypt);
+        qrypt  = handleDeCompression(qrypt);
+      }
+
     }
     return qrypt;
   }
