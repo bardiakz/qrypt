@@ -10,8 +10,10 @@ final defaultEncryptionProvider = StateProvider<bool>((ref) => true);
 final useTagProvider = StateProvider<bool>((ref) => true);
 
 final autoDetectTagProvider = StateProvider<bool>((ref) => true);
+final inputTextProvider = StateProvider<String>((ref) => '');
 
 // Advanced settings
+
 final selectedEncryptionProvider = StateProvider<EncryptionMethod>((ref) => EncryptionMethod.none);
 final selectedObfuscationProvider = StateProvider<ObfuscationMethod>((ref) => ObfuscationMethod.none);
 final selectedCompressionProvider = StateProvider<CompressionMethod>((ref) => CompressionMethod.gZip);

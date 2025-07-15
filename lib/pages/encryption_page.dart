@@ -19,12 +19,40 @@ class EncryptionPage extends ConsumerStatefulWidget {
 }
 
 class _EncryptionPageState extends ConsumerState<EncryptionPage> {
-  final inputTextController = TextEditingController();
+  final _inputTextController = TextEditingController();
   final InputHandler ih = InputHandler();
+
+  // void _onTextChanged() {
+  //   final appMode = ref.read(appModeProvider);
+  //   final defaultEncryption = ref.read(defaultEncryptionProvider);
+  //   final selectedEncryption = ref.read(selectedEncryptionProvider);
+  //   final selectedObfuscation = ref.read(selectedObfuscationProvider);
+  //   final selectedCompression = ref.read(selectedCompressionProvider);
+  //   final autoDetectTag = ref.read(autoDetectTagProvider);
+  //   final useTagManually = ref.read(useTagProvider);
+  //
+  //   if (appMode == AppMode.encrypt) {
+  //     _encrypt(
+  //       defaultEncryption,
+  //       selectedEncryption,
+  //       selectedObfuscation,
+  //       selectedCompression,
+  //       useTagManually,
+  //     );
+  //   } else {
+  //     _decrypt(
+  //       autoDetectTag,
+  //       selectedEncryption,
+  //       selectedObfuscation,
+  //       selectedCompression,
+  //     );
+  //   }
+  // }
+
 
   @override
   void dispose() {
-    inputTextController.dispose(); // Proper cleanup
+    _inputTextController.dispose(); // Proper cleanup
     super.dispose();
   }
 
@@ -36,6 +64,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final clipboardData = await Clipboard.getData('text/plain');
     return clipboardData?.text;
   }
+
+  @override
+  void initState() {
+    super.initState();
+    // _inputTextController.addListener(_onTextChanged);
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +89,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
     final publicKey = ref.watch(publicKeyProvider);
+
 
     return SafeArea(
       child: Scaffold(
@@ -77,11 +114,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   children: [
                     Text("Message", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                     Spacer(),
+                    Text(ref.watch(inputTextProvider).length.toString(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300,color: Colors.blueGrey)),
+                    SizedBox(width: 12),
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: (){
-                          inputTextController.clear();
+                          _inputTextController.clear();
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
@@ -97,7 +136,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           final pastedText = await _pasteFromClipboard();
                           if (pastedText != null) {
                             // Update your text field or state
-                            inputTextController.text = pastedText;
+                            _inputTextController.text = pastedText;
                           }
                         },
                         borderRadius: BorderRadius.circular(20),
@@ -112,7 +151,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               ),
               // const SizedBox(height: 12),
               TextField(
-                controller: inputTextController,
+                onChanged: (text){ ref.read(inputTextProvider.notifier).state = text;},
+                controller: _inputTextController,
                 maxLines: 4,
                 decoration: InputDecoration(
 
@@ -238,13 +278,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if(!defaultEncryption){
-                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: useTagManually);
-                        ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
-                      }else{
-                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: EncryptionMethod.aesCbc, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: true);
-                        ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
-                      }
+                      _encrypt(defaultEncryption, selectedEncryption, selectedObfuscation, selectedCompression, useTagManually);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
@@ -307,13 +341,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if(!autoDetectTag){
-                        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: false);
-                        ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),false);
-                      }else{
-                        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(text:inputTextController.text);
-                        ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),true);
-                      }
+                      _decrypt(autoDetectTag, selectedEncryption, selectedObfuscation, selectedCompression);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -384,6 +412,26 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         ),
       ),
     );
+  }
+
+  void _decrypt(bool autoDetectTag, EncryptionMethod selectedEncryption, ObfuscationMethod selectedObfuscation, CompressionMethod selectedCompression) {
+    if(!autoDetectTag){
+      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: _inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: false);
+      ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),false);
+    }else{
+      ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(text:_inputTextController.text);
+      ref.read(processedCryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider),true);
+    }
+  }
+
+  void _encrypt(bool defaultEncryption, EncryptionMethod selectedEncryption, ObfuscationMethod selectedObfuscation, CompressionMethod selectedCompression, bool useTagManually) {
+    if(!defaultEncryption){
+      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: _inputTextController.text, encryption: selectedEncryption, obfuscation: selectedObfuscation,compression: selectedCompression,useTag: useTagManually);
+      ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+    }else{
+      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(text: _inputTextController.text, encryption: EncryptionMethod.aesCbc, obfuscation: ObfuscationMethod.fa2,compression: CompressionMethod.gZip,useTag: true);
+      ref.read(processedCryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+    }
   }
 }
 
