@@ -14,6 +14,7 @@ A comprehensive Flutter application for text encryption, compression, and obfusc
 - **AES-CTR**: AES with Counter mode for streaming encryption
 - **AES-GCM**: AES with Galois/Counter Mode for authenticated encryption
 - **None**: Base64 encoding without encryption
+- Planned support for PQC algorithms using liboqs for quantum-safe encryption
 
 ### 🗜️ Compression Algorithms
 - **GZip**: Industry-standard compression
