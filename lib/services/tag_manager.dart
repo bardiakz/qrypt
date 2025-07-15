@@ -29,6 +29,10 @@ class TagManager{
                 Obfuscate.obfuscateText(tagHash, obfuscationFA1Map),
             ObfuscationMethod.fa2 =>
                 Obfuscate.obfuscateText(tagHash, obfuscationFA2Map),
+            ObfuscationMethod.b64 => Obfuscate.obfuscateBase64(tagHash),
+            ObfuscationMethod.rot13 => Obfuscate.obfuscateROT13(tagHash),
+            ObfuscationMethod.xor => Obfuscate.obfuscateXOR(tagHash, 42), // Use same key as handleObfs
+            ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(tagHash),
           };
 
           knownTags.add(obfsTag);
@@ -76,6 +80,10 @@ class TagManager{
             ObfuscationMethod.none => hash,
             ObfuscationMethod.fa1 => Obfuscate.obfuscateText(hash, obfuscationFA1Map),
             ObfuscationMethod.fa2 => Obfuscate.obfuscateText(hash, obfuscationFA2Map),
+            ObfuscationMethod.b64 => Obfuscate.obfuscateBase64(hash),
+            ObfuscationMethod.rot13 => Obfuscate.obfuscateROT13(hash),
+            ObfuscationMethod.xor => Obfuscate.obfuscateXOR(hash, 42), // Use same key as handleObfs
+            ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(hash),
           };
 
           if (tag.startsWith(obfsTag)) {

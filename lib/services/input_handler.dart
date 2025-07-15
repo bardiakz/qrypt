@@ -46,7 +46,7 @@ class InputHandler{
     String? encryptedText=qrypt.text;
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.text = qrypt.compressedText.toString();
+        qrypt.text = base64.encode(qrypt.compressedText);
         return qrypt;
       case EncryptionMethod.aesCbc:
         Map<String,String> encMap = Aes.encryptAesCbc(qrypt.compressedText);
@@ -81,6 +81,25 @@ class InputHandler{
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
         qrypt.text = obfsText;
         return qrypt;
+      case ObfuscationMethod.b64:
+        obfsText = Obfuscate.obfuscateBase64(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.rot13:
+        obfsText = Obfuscate.obfuscateROT13(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.xor:
+        obfsText = Obfuscate.obfuscateXOR(qrypt.text, 42);
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.reverse:
+        obfsText = Obfuscate.obfuscateReverse(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
     }
   }
 
@@ -99,12 +118,32 @@ class InputHandler{
         obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA2Map);
         qrypt.text = obfsText;
         return qrypt;
+      case ObfuscationMethod.b64:
+        obfsText = Obfuscate.deobfuscateBase64(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.rot13:
+        obfsText = Obfuscate.deobfuscateROT13(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.xor:
+      // Use the same key as obfuscation
+        obfsText = Obfuscate.deobfuscateXOR(qrypt.text, 42); // Same key
+        qrypt.text = obfsText;
+        return qrypt;
+
+      case ObfuscationMethod.reverse:
+        obfsText = Obfuscate.deobfuscateReverse(qrypt.text);
+        qrypt.text = obfsText;
+        return qrypt;
     }
   }
   Qrypt handleDecrypt(Qrypt qrypt){
     switch(qrypt.getEncryptionMethod()){
       case EncryptionMethod.none:
-        qrypt.deCompressedText = utf8.encode(qrypt.text);
+        qrypt.deCompressedText = base64.decode(qrypt.text);
         return qrypt;
       case EncryptionMethod.aesCbc:
         List<String> parts = parseByColon(qrypt.text);
