@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
-import 'package:archive/archive.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import '../models/encryption_method.dart';
-import 'compression.dart';
+
 
 class Aes extends Encryption {
   @override
