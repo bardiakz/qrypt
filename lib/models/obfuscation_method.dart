@@ -3,6 +3,8 @@ abstract class Obfuscation {
 }
 enum ObfuscationMethod {
   none,
+  en1,
+  en2,
   fa1,
   fa2,
   b64,

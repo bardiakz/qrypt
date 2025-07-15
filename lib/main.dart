@@ -11,8 +11,7 @@ import 'package:qrypt/services/tag_manager.dart';
 
 void main() async{
   await dotenv.load();
-  Obfuscate.setObfuscationFA2Map();
-  Obfuscate.setObfuscationFA1Map();
+  Obfuscate.setAllMaps();
   if(!(Platform.isAndroid || Platform.isIOS)){
     Compression.setNativeLibPaths();
   }

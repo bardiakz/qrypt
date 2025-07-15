@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Map<String, String> obfuscationFA2Map = {};
 Map<String, String> obfuscationFA1Map = {};
+Map<String, String> obfuscationEN2Map = {};
+Map<String, String> obfuscationEN1Map = {};
 
 class Obfuscate {
   static Map<String, String> loadObfuscationFA2Map() {
@@ -28,16 +30,54 @@ class Obfuscate {
           .map(
             (entry) =>
                 MapEntry(entry.key.substring(8).toLowerCase(), entry.value),
-          ), // Remove "OBF_FA2_" prefix
+          ),
+    );
+  }
+
+  static Map<String, String> loadObfuscationEN2Map() {
+    return Map.fromEntries(
+      dotenv.env.entries
+          .where(
+            (entry) => entry.key.startsWith("OBF_EN2_"),
+      ) // Filter obfuscation keys
+          .map(
+            (entry) =>
+            MapEntry(entry.key.substring(8).toLowerCase(), entry.value),
+      ),
+    );
+  }
+
+  static Map<String, String> loadObfuscationEN1Map() {
+    return Map.fromEntries(
+      dotenv.env.entries
+          .where(
+            (entry) => entry.key.startsWith("OBF_EN1_"),
+      ) // Filter obfuscation keys
+          .map(
+            (entry) =>
+            MapEntry(entry.key.substring(8).toLowerCase(), entry.value),
+      ),
     );
   }
 
   static void setObfuscationFA2Map() {
     obfuscationFA2Map = loadObfuscationFA2Map();
   }
-
   static void setObfuscationFA1Map() {
     obfuscationFA1Map = loadObfuscationFA1Map();
+  }
+  static void setObfuscationEN2Map() {
+    obfuscationEN2Map = loadObfuscationEN2Map();
+  }
+  static void setObfuscationEN1Map() {
+    obfuscationEN1Map = loadObfuscationEN1Map();
+  }
+
+  static void setAllMaps(){
+    setObfuscationFA2Map();
+    setObfuscationFA1Map();
+    setObfuscationEN2Map();
+    setObfuscationEN1Map();
   }
 
   static String obfuscateFA1Tag(String tag) {

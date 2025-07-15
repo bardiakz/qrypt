@@ -71,6 +71,14 @@ class InputHandler{
     switch(qrypt.getObfuscationMethod()){
       case ObfuscationMethod.none:
         return qrypt;
+      case ObfuscationMethod.en1:
+        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationEN1Map);
+        qrypt.text = obfsText;
+        return qrypt;
+      case ObfuscationMethod.en2:
+        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationEN2Map);
+        qrypt.text = obfsText;
+        return qrypt;
       case ObfuscationMethod.fa1:
 
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
@@ -100,6 +108,7 @@ class InputHandler{
         obfsText = Obfuscate.obfuscateReverse(qrypt.text);
         qrypt.text = obfsText;
         return qrypt;
+
     }
   }
 
@@ -107,6 +116,14 @@ class InputHandler{
     String? obfsText=qrypt.text;
     switch(qrypt.getObfuscationMethod()){
       case ObfuscationMethod.none:
+        return qrypt;
+      case ObfuscationMethod.en1:
+        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationEN1Map);
+        qrypt.text = obfsText;
+        return qrypt;
+      case ObfuscationMethod.en2:
+        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationEN2Map);
+        qrypt.text = obfsText;
         return qrypt;
       case ObfuscationMethod.fa1:
 
@@ -138,6 +155,7 @@ class InputHandler{
         obfsText = Obfuscate.deobfuscateReverse(qrypt.text);
         qrypt.text = obfsText;
         return qrypt;
+
     }
   }
   Qrypt handleDecrypt(Qrypt qrypt){
