@@ -13,7 +13,7 @@ final autoDetectTagProvider = StateProvider<bool>((ref) => true);
 final inputTextProvider = StateProvider<String>((ref) => '');
 
 // Advanced settings
-
+final publicKeyRequiredProvider = StateProvider<bool>((ref) => false);
 final selectedEncryptionProvider = StateProvider<EncryptionMethod>((ref) => EncryptionMethod.none);
 final selectedObfuscationProvider = StateProvider<ObfuscationMethod>((ref) => ObfuscationMethod.none);
 final selectedCompressionProvider = StateProvider<CompressionMethod>((ref) => CompressionMethod.gZip);

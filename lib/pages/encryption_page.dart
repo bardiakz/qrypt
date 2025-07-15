@@ -269,7 +269,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ),
 
                   const SizedBox(height: 16),
-                  TextField(
+                  ref.read(publicKeyRequiredProvider)?TextField(
                     onChanged: (val) =>
                     ref.read(publicKeyProvider.notifier).state = val,
                     decoration: InputDecoration(
@@ -282,7 +282,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         borderSide: BorderSide(color: primaryColor, width: 2),
                       ),
                     ),
-                  ),
+                  ):const SizedBox.shrink(),
                 ],
 
 
