@@ -11,24 +11,20 @@ class ObfsDropdownButtonForm extends ConsumerWidget {
     super.key,
     required this.selectedObfuscation,
     required this.primaryColor,
-
   });
 
   final ObfuscationMethod selectedObfuscation;
   final Color primaryColor;
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<ObfuscationMethod>(
       value: selectedObfuscation,
       items: ObfuscationMethod.values.map((obf) {
-        return DropdownMenuItem(
-          value: obf,
-          child: Text(obf.name.toUpperCase()),
-        );
+        return DropdownMenuItem(value: obf, child: Text(obf.displayName));
       }).toList(),
-      onChanged: (val) => ref.read(selectedObfuscationProvider.notifier).state = val!,
+      onChanged: (val) =>
+          ref.read(selectedObfuscationProvider.notifier).state = val!,
       decoration: InputDecoration(
         labelText: 'Obfuscation Method',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -52,16 +48,14 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
   final Color primaryColor;
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<EncryptionMethod>(
       value: selectedEncryption,
       items: EncryptionMethod.values.map((alg) {
-        return DropdownMenuItem(
-          value: alg,
-          child: Text(alg.displayName),
-        );
+        return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),
-      onChanged: (val) => ref.read(selectedEncryptionProvider.notifier).state = val!,
+      onChanged: (val) =>
+          ref.read(selectedEncryptionProvider.notifier).state = val!,
       decoration: InputDecoration(
         labelText: 'Encryption Algorithm',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -85,7 +79,7 @@ class CompressionsDropdownButtonForm extends ConsumerWidget {
   final Color primaryColor;
 
   @override
-  Widget build(BuildContext context,WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<CompressionMethod>(
       value: selectedCompression,
       items: CompressionMethod.values.map((alg) {
@@ -94,7 +88,8 @@ class CompressionsDropdownButtonForm extends ConsumerWidget {
           child: Text(alg.name.toUpperCase()),
         );
       }).toList(),
-      onChanged: (val) => ref.read(selectedCompressionProvider.notifier).state = val!,
+      onChanged: (val) =>
+          ref.read(selectedCompressionProvider.notifier).state = val!,
       decoration: InputDecoration(
         labelText: 'Compression Algorithm',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
