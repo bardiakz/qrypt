@@ -1,17 +1,11 @@
 name: qrypt
 description: "Qrypt is a flexible and privacy-first app that allows users to manually encrypt, compress, and obfuscate text — designed for use cases when encryption doesn't exist, restricted or unavailable. Qrypt puts full control in the hands of the user, enabling secure message sharing across any medium (e.g., SMS, chat, email)."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.8.0+3
+version: 1.8.2+4
 
 environment:
   sdk: ^3.8.1
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
@@ -26,6 +20,9 @@ dependencies:
   flutter_dotenv: ^5.2.1
   ffi: ^2.1.4
 
+  es_compression: any
+  path: any
+  crypto: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -41,7 +38,6 @@ dev_dependencies:
   build_runner: ^2.5.4
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.5
-  es_compression: ^2.0.14
   msix: ^3.16.9
 
 # For information on the generic Dart part of this file, see the

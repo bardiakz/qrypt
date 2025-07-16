@@ -25,8 +25,6 @@ class AppConstants {
   static const double switchBorderRadius = 20.0;
 }
 
-
-
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
 
@@ -38,6 +36,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _encryptTextController = TextEditingController();
   final _decryptTextController = TextEditingController();
   final InputHandler ih = InputHandler();
+
   @override
   void dispose() {
     _encryptTextController.dispose();
@@ -49,9 +48,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     try {
       await Clipboard.setData(ClipboardData(text: text));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Copied to clipboard!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
       }
     } catch (e) {
       if (mounted) {
@@ -106,11 +105,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   @override
   void initState() {
     super.initState();
-
   }
 
-  Future<void> _setStartController()async{
-    ref.read(currentTextControllerProvider.notifier).state = _encryptTextController;
+  Future<void> _setStartController() async {
+    ref.read(currentTextControllerProvider.notifier).state =
+        _encryptTextController;
   }
 
   @override
@@ -129,7 +128,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
     final publicKey = ref.watch(publicKeyProvider);
-    Future((){ref.read(currentTextControllerProvider.notifier).state = _encryptTextController;});
+    Future(() {
+      ref.read(currentTextControllerProvider.notifier).state =
+          _encryptTextController;
+    });
 
     return SafeArea(
       child: Scaffold(
@@ -140,8 +142,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               Align(
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: AppConstants.defaultPadding),
-                  child: modeSwitch(appMode, primaryColor, ref,_encryptTextController,_decryptTextController),
+                  padding: const EdgeInsets.only(
+                    top: AppConstants.defaultPadding,
+                  ),
+                  child: modeSwitch(
+                    appMode,
+                    primaryColor,
+                    ref,
+                    _encryptTextController,
+                    _decryptTextController,
+                  ),
                 ),
               ),
 
@@ -149,11 +159,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 padding: const EdgeInsets.only(left: 2, top: 18),
                 child: Row(
                   children: [
-                    const Text("Message", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                    const Text(
+                      "Message",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const Spacer(),
                     Text(
                       ref.watch(inputTextProvider).length.toString(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Colors.blueGrey),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.blueGrey,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Material(
@@ -162,15 +182,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         onTap: () {
                           if (isEncryptMode) {
                             _encryptTextController.clear();
-                            ref.read(inputTextProvider.notifier).state = _encryptTextController.text;
+                            ref.read(inputTextProvider.notifier).state =
+                                _encryptTextController.text;
                           } else {
                             _decryptTextController.clear();
-                            ref.read(inputTextProvider.notifier).state = _decryptTextController.text;
+                            ref.read(inputTextProvider.notifier).state =
+                                _decryptTextController.text;
                           }
                         },
-                        borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.switchBorderRadius,
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.all(AppConstants.smallPadding),
+                          padding: const EdgeInsets.all(
+                            AppConstants.smallPadding,
+                          ),
                           child: Icon(
                             Icons.clear,
                             color: primaryColor,
@@ -188,16 +214,22 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           if (pastedText != null) {
                             if (isEncryptMode) {
                               _encryptTextController.text = pastedText;
-                              ref.read(inputTextProvider.notifier).state = _encryptTextController.text;
+                              ref.read(inputTextProvider.notifier).state =
+                                  _encryptTextController.text;
                             } else {
                               _decryptTextController.text = pastedText;
-                              ref.read(inputTextProvider.notifier).state = _decryptTextController.text;
+                              ref.read(inputTextProvider.notifier).state =
+                                  _decryptTextController.text;
                             }
                           }
                         },
-                        borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.switchBorderRadius,
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.all(AppConstants.smallPadding),
+                          padding: const EdgeInsets.all(
+                            AppConstants.smallPadding,
+                          ),
                           child: Icon(
                             Icons.content_paste,
                             color: primaryColor,
@@ -206,7 +238,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -215,16 +247,25 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 onChanged: (text) {
                   ref.read(inputTextProvider.notifier).state = text;
                 },
-                controller: isEncryptMode ? _encryptTextController : _decryptTextController,
+                controller: isEncryptMode
+                    ? _encryptTextController
+                    : _decryptTextController,
                 maxLines: AppConstants.maxInputLines,
                 decoration: InputDecoration(
                   hintText: "Enter or paste text...",
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                    borderSide: BorderSide(color: primaryColor, width: AppConstants.borderWidth),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
+                    borderSide: BorderSide(
+                      color: primaryColor,
+                      width: AppConstants.borderWidth,
+                    ),
                   ),
                   filled: true,
                   fillColor: Colors.grey[50],
@@ -238,13 +279,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   padding: const EdgeInsets.all(AppConstants.defaultPadding),
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
                     border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Use Default Encryption", style: TextStyle(fontWeight: FontWeight.w500)),
+                      const Text(
+                        "Use Default Encryption",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       Switch(
                         thumbColor: WidgetStateProperty.all(Colors.white),
                         trackColor: WidgetStateProperty.resolveWith((states) {
@@ -254,7 +300,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           return Colors.grey.shade300;
                         }),
                         value: defaultEncryption,
-                        onChanged: (val) => ref.read(defaultEncryptionProvider.notifier).state = val,
+                        onChanged: (val) =>
+                            ref.read(defaultEncryptionProvider.notifier).state =
+                                val,
                       ),
                     ],
                   ),
@@ -264,10 +312,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   Container(
                     padding: const EdgeInsets.all(AppConstants.defaultPadding),
                     decoration: BoxDecoration(
-                      color: useTagManually ? primaryColor.withOpacity(0.1) : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                      color: useTagManually
+                          ? primaryColor.withOpacity(0.1)
+                          : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.borderRadius,
+                      ),
                       border: Border.all(
-                        color: useTagManually ? primaryColor.withOpacity(0.3) : Colors.grey[300]!,
+                        color: useTagManually
+                            ? primaryColor.withOpacity(0.3)
+                            : Colors.grey[300]!,
                       ),
                     ),
                     child: Row(
@@ -284,7 +338,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                         Switch(
                           value: useTagManually,
-                          onChanged: (val) => ref.read(useTagProvider.notifier).state = val,
+                          onChanged: (val) =>
+                              ref.read(useTagProvider.notifier).state = val,
                           activeColor: primaryColor,
                         ),
                       ],
@@ -311,18 +366,26 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   const SizedBox(height: AppConstants.defaultPadding),
                   ref.read(publicKeyRequiredProvider)
                       ? TextField(
-                    onChanged: (val) => ref.read(publicKeyProvider.notifier).state = val,
-                    decoration: InputDecoration(
-                      labelText: 'Public Key (optional)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                        borderSide: BorderSide(color: primaryColor, width: AppConstants.borderWidth),
-                      ),
-                    ),
-                  )
+                          onChanged: (val) =>
+                              ref.read(publicKeyProvider.notifier).state = val,
+                          decoration: InputDecoration(
+                            labelText: 'Public Key (optional)',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                              borderSide: BorderSide(
+                                color: primaryColor,
+                                width: AppConstants.borderWidth,
+                              ),
+                            ),
+                          ),
+                        )
                       : const SizedBox.shrink(),
                 ],
 
@@ -330,27 +393,52 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isProcessing ? null : () {
-                      _encrypt(defaultEncryption, selectedEncryption, selectedObfuscation, selectedCompression, useTagManually);
-                    },
+                    onPressed: isProcessing
+                        ? null
+                        : () {
+                            _encrypt(
+                              defaultEncryption,
+                              selectedEncryption,
+                              selectedObfuscation,
+                              selectedCompression,
+                              useTagManually,
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: AppConstants.defaultPadding),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppConstants.defaultPadding,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
                       ),
                     ),
                     child: isProcessing
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : const Text("Encrypt", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.lock),
+                              SizedBox(width: 5),
+                              Text(
+                                "Encrypt",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ] else ...[
@@ -358,13 +446,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   padding: const EdgeInsets.all(AppConstants.defaultPadding),
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
                     border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Auto-detect Settings (from Tag)", style: TextStyle(fontWeight: FontWeight.w500)),
+                      const Text(
+                        "Auto-detect Settings (from Tag)",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       Switch(
                         thumbColor: WidgetStateProperty.all(Colors.white),
                         trackColor: WidgetStateProperty.resolveWith((states) {
@@ -374,7 +467,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           return Colors.grey.shade300;
                         }),
                         value: autoDetectTag,
-                        onChanged: (val) => ref.read(autoDetectTagProvider.notifier).state = val,
+                        onChanged: (val) =>
+                            ref.read(autoDetectTagProvider.notifier).state =
+                                val,
                       ),
                     ],
                   ),
@@ -402,30 +497,51 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isProcessing ? null : () {
-                      _decrypt(autoDetectTag, selectedEncryption, selectedObfuscation, selectedCompression);
-                    },
+                    onPressed: isProcessing
+                        ? null
+                        : () {
+                            _decrypt(
+                              autoDetectTag,
+                              selectedEncryption,
+                              selectedObfuscation,
+                              selectedCompression,
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: AppConstants.defaultPadding),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppConstants.defaultPadding,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
                       ),
                     ),
                     child: isProcessing
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : const Text(
-                      "Decrypt",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.lock_open),
+                              SizedBox(width: 5),
+                              Text(
+                                "Decrypt",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -437,13 +553,31 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Output", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                    const Text(
+                      "Output",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const Spacer(),
                     Text(
                       isEncryptMode
-                          ? ref.watch(processedEncryptProvider).text.length.toString()
-                          : ref.watch(processedDecryptProvider).text.length.toString(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w300, color: Colors.blueGrey),
+                          ? ref
+                                .watch(processedEncryptProvider)
+                                .text
+                                .length
+                                .toString()
+                          : ref
+                                .watch(processedDecryptProvider)
+                                .text
+                                .length
+                                .toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.blueGrey,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Material(
@@ -457,13 +591,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             _copyToClipboard(outputText);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('No output to copy')),
+                              const SnackBar(
+                                content: Text('No output to copy'),
+                              ),
                             );
                           }
                         },
-                        borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.switchBorderRadius,
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.all(AppConstants.smallPadding),
+                          padding: const EdgeInsets.all(
+                            AppConstants.smallPadding,
+                          ),
                           child: Icon(
                             Icons.content_copy,
                             color: primaryColor,
@@ -484,7 +624,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
                   border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
                 child: SelectableText(
                   isEncryptMode
@@ -500,7 +642,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
-  void _decrypt(bool autoDetectTag, EncryptionMethod selectedEncryption, ObfuscationMethod selectedObfuscation, CompressionMethod selectedCompression) async {
+  void _decrypt(
+    bool autoDetectTag,
+    EncryptionMethod selectedEncryption,
+    ObfuscationMethod selectedObfuscation,
+    CompressionMethod selectedCompression,
+  ) async {
     // Input validation
     if (_decryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -520,10 +667,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: selectedCompression,
           useTag: false,
         );
-        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider), false);
+        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(
+          ref.read(inputQryptProvider),
+          false,
+        );
       } else {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(text: _decryptTextController.text);
-        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(ref.read(inputQryptProvider), true);
+        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
+          text: _decryptTextController.text,
+        );
+        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(
+          ref.read(inputQryptProvider),
+          true,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -536,7 +691,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
-  void _encrypt(bool defaultEncryption, EncryptionMethod selectedEncryption, ObfuscationMethod selectedObfuscation, CompressionMethod selectedCompression, bool useTagManually) async {
+  void _encrypt(
+    bool defaultEncryption,
+    EncryptionMethod selectedEncryption,
+    ObfuscationMethod selectedObfuscation,
+    CompressionMethod selectedCompression,
+    bool useTagManually,
+  ) async {
     // Input validation
     if (_encryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -556,7 +717,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: selectedCompression,
           useTag: useTagManually,
         );
-        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(
+          ref.read(inputQryptProvider),
+        );
       } else {
         ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
           text: _encryptTextController.text,
@@ -565,7 +728,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: CompressionMethod.brotli,
           useTag: true,
         );
-        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(ref.read(inputQryptProvider));
+        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(
+          ref.read(inputQryptProvider),
+        );
       }
     } catch (e) {
       if (mounted) {
