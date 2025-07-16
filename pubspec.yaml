@@ -23,6 +23,7 @@ dependencies:
   es_compression: any
   path: any
   crypto: any
+  flutter_launcher_icons: ^0.14.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -61,11 +62,11 @@ flutter:
 
 
 native_assets:
-    assets:
-      - target: liboqs/oqs.dll
-        platforms:
-          windows:
-            assetId: qrypt
+  assets:
+    - target: liboqs/oqs.dll
+      platforms:
+        windows:
+          assetId: qrypt
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -91,3 +92,16 @@ native_assets:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  ios: true
+  image_path: "assets/icon/qrypt_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/qrypt_icon.png"
+  android:
+    generate: true
+    adaptive_icon_background: "#ffffff"
+    adaptive_icon_foreground: "assets/icon/icon.png"
+  macos:
+    generate: true
+    image_path: "assets/icon/qrypt_icon.png"
