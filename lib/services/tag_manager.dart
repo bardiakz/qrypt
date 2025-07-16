@@ -6,9 +6,12 @@ import '../models/obfuscation_method.dart';
 import 'crypto.dart';
 import 'obfuscate.dart';
 
-class TagManager{
-  static Qrypt setTag(Qrypt q){
-    String tag = q.getCompressionMethod().name+q.getEncryptionMethod().name+q.getObfuscationMethod().name;
+class TagManager {
+  static Qrypt setTag(Qrypt q) {
+    String tag =
+        q.getCompressionMethod().name +
+        q.getEncryptionMethod().name +
+        q.getObfuscationMethod().name;
     q.tag = Crypto.generateTagHash(tag);
     // q.tag += ':'; //no longer needed since its checking with startsWith
     return q;
@@ -25,16 +28,26 @@ class TagManager{
 
           String obfsTag = switch (obf) {
             ObfuscationMethod.none => tagHash,
-            ObfuscationMethod.fa1 =>
-                Obfuscate.obfuscateText(tagHash, obfuscationFA1Map),
-            ObfuscationMethod.fa2 =>
-                Obfuscate.obfuscateText(tagHash, obfuscationFA2Map),
+            ObfuscationMethod.fa1 => Obfuscate.obfuscateText(
+              tagHash,
+              obfuscationFA1Map,
+            ),
+            ObfuscationMethod.fa2 => Obfuscate.obfuscateText(
+              tagHash,
+              obfuscationFA2Map,
+            ),
             ObfuscationMethod.b64 => Obfuscate.obfuscateBase64(tagHash),
             ObfuscationMethod.rot13 => Obfuscate.obfuscateROT13(tagHash),
             ObfuscationMethod.xor => Obfuscate.obfuscateXOR(tagHash, 42),
-            ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(tagHash),
-            ObfuscationMethod.en1 => Obfuscate.obfuscateText(tagHash, obfuscationEN1Map),
-            ObfuscationMethod.en2 => Obfuscate.obfuscateText(tagHash, obfuscationEN2Map),
+            // ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(tagHash),
+            ObfuscationMethod.en1 => Obfuscate.obfuscateText(
+              tagHash,
+              obfuscationEN1Map,
+            ),
+            ObfuscationMethod.en2 => Obfuscate.obfuscateText(
+              tagHash,
+              obfuscationEN2Map,
+            ),
           };
 
           knownTags.add(obfsTag);
@@ -68,10 +81,11 @@ class TagManager{
   }
 
   static ({
-  CompressionMethod compression,
-  EncryptionMethod encryption,
-  ObfuscationMethod obfuscation
-  })? getMethodsFromTag(String tag) {
+    CompressionMethod compression,
+    EncryptionMethod encryption,
+    ObfuscationMethod obfuscation,
+  })?
+  getMethodsFromTag(String tag) {
     for (var comp in CompressionMethod.values) {
       for (var enc in EncryptionMethod.values) {
         for (var obf in ObfuscationMethod.values) {
@@ -80,22 +94,33 @@ class TagManager{
 
           final obfsTag = switch (obf) {
             ObfuscationMethod.none => hash,
-            ObfuscationMethod.fa1 => Obfuscate.obfuscateText(hash, obfuscationFA1Map),
-            ObfuscationMethod.fa2 => Obfuscate.obfuscateText(hash, obfuscationFA2Map),
+            ObfuscationMethod.fa1 => Obfuscate.obfuscateText(
+              hash,
+              obfuscationFA1Map,
+            ),
+            ObfuscationMethod.fa2 => Obfuscate.obfuscateText(
+              hash,
+              obfuscationFA2Map,
+            ),
             ObfuscationMethod.b64 => Obfuscate.obfuscateBase64(hash),
             ObfuscationMethod.rot13 => Obfuscate.obfuscateROT13(hash),
-            ObfuscationMethod.xor => Obfuscate.obfuscateXOR(hash, 42), // Use same key as handleObfs
-            ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(hash),
-            ObfuscationMethod.en1 => Obfuscate.obfuscateText(hash, obfuscationEN1Map),
-            ObfuscationMethod.en2 => Obfuscate.obfuscateText(hash, obfuscationEN2Map),
+            ObfuscationMethod.xor => Obfuscate.obfuscateXOR(
+              hash,
+              42,
+            ), // Use same key as handleObfs
+            // ObfuscationMethod.reverse => Obfuscate.obfuscateReverse(hash),
+            ObfuscationMethod.en1 => Obfuscate.obfuscateText(
+              hash,
+              obfuscationEN1Map,
+            ),
+            ObfuscationMethod.en2 => Obfuscate.obfuscateText(
+              hash,
+              obfuscationEN2Map,
+            ),
           };
 
           if (tag.startsWith(obfsTag)) {
-            return (
-            compression: comp,
-            encryption: enc,
-            obfuscation: obf
-            );
+            return (compression: comp, encryption: enc, obfuscation: obf);
           }
         }
       }
@@ -103,6 +128,4 @@ class TagManager{
 
     return null; // No match found
   }
-
 }
-

@@ -1,6 +1,7 @@
 abstract class Obfuscation {
   String get tag;
 }
+
 enum ObfuscationMethod {
   none,
   en1,
@@ -10,5 +11,5 @@ enum ObfuscationMethod {
   b64,
   rot13,
   xor,
-  reverse,
+  // reverse,
 }
