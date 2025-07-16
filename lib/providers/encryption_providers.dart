@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
-import 'package:qrypt/services/compression.dart';
 
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
