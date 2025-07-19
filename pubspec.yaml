@@ -50,7 +50,6 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - .env
-    - liboqs/oqs.dll
 
 flutter_launcher_icons:
   ios: true
