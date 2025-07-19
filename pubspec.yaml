@@ -18,7 +18,6 @@ dependencies:
   encrypt: ^5.0.3
   archive: ^4.0.7
   flutter_dotenv: ^5.2.1
-  ffi: ^2.1.4
 
   es_compression: any
   path: any
@@ -27,13 +26,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones..
-  ffigen: ^19.0.0
   flutter_lints: ^5.0.0
   riverpod_generator: ^2.6.5
   build_runner: ^2.5.4
@@ -60,38 +52,6 @@ flutter:
     - .env
     - liboqs/oqs.dll
 
-
-native_assets:
-  assets:
-    - target: liboqs/oqs.dll
-      platforms:
-        windows:
-          assetId: qrypt
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
 flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/qrypt_icon.png"
@@ -105,3 +65,14 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/icon/qrypt_icon.png"
+
+msix_config:
+  display_name: Qrypt
+  publisher_display_name: bardiakz
+  identity_name: com.bardiakz.qrypt
+  logo_path: assets/icon/qrypt_icon.png
+  start_menu_icon_path: assets/icon/qrypt_icon.png
+  tile_icon_path: assets/icon/qrypt_icon.png
+  vs_generated_images_folder_path: windows/runner/resources
+  icons_background_color: transparent
+  architecture: x64
