@@ -5,6 +5,7 @@ import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
+import 'package:qrypt/pages/widgets/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
 import '../models/encryption_method.dart';
@@ -421,6 +422,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       selectedObfuscation: selectedObfuscation,
                       primaryColor: primaryColor,
                     ),
+                    const SizedBox(height: AppConstants.defaultPadding),
+                    if (selectedEncryption == EncryptionMethod.rsa) ...[
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      RSAKeySelector(primaryColor: primaryColor),
+                    ],
 
                     const SizedBox(height: AppConstants.defaultPadding),
                     ref.read(publicKeyRequiredProvider)

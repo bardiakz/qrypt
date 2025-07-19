@@ -2,12 +2,8 @@ abstract class Encryption {
   String get tag;
 }
 
-enum EncryptionMethod {
-  none,
-  aesCbc,
-  aesCtr,
-  aesGcm,
-}
+enum EncryptionMethod { none, aesCbc, aesCtr, aesGcm, rsa }
+
 extension EncryptionMethodName on EncryptionMethod {
   String get displayName {
     switch (this) {
@@ -19,6 +15,8 @@ extension EncryptionMethodName on EncryptionMethod {
         return 'AES-CTR';
       case EncryptionMethod.aesGcm:
         return 'AES-GCM';
+      case EncryptionMethod.rsa:
+        return 'RSA';
     }
   }
 }
