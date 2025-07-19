@@ -77,7 +77,7 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
                   hintText: 'Paste private key here',
                 ),
                 maxLines: 4,
-                obscureText: true,
+                // obscureText: true,
               ),
             ],
           ],

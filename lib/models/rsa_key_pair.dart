@@ -28,4 +28,13 @@ class RSAKeyPair {
     privateKey: json['privateKey'],
     createdAt: DateTime.parse(json['createdAt']),
   );
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is RSAKeyPair && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
