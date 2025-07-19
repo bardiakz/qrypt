@@ -424,38 +424,35 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
                     if (selectedEncryption == EncryptionMethod.rsa) ...[
-                      const SizedBox(height: AppConstants.defaultPadding),
+                      // const SizedBox(height: AppConstants.defaultPadding),
                       RSAKeySelector(primaryColor: primaryColor),
+                      const SizedBox(height: AppConstants.largePadding / 2),
+                      TextField(
+                        onChanged: (val) =>
+                            ref.read(publicKeyProvider.notifier).state = val,
+                        decoration: InputDecoration(
+                          labelText: 'Public Key',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: AppConstants.borderWidth,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
 
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    ref.read(publicKeyRequiredProvider)
-                        ? TextField(
-                            onChanged: (val) =>
-                                ref.read(publicKeyProvider.notifier).state =
-                                    val,
-                            decoration: InputDecoration(
-                              labelText: 'Public Key (optional)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.borderRadius,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.borderRadius,
-                                ),
-                                borderSide: BorderSide(
-                                  color: primaryColor,
-                                  width: AppConstants.borderWidth,
-                                ),
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
+                    const SizedBox(height: AppConstants.largePadding),
                   ],
 
-                  const SizedBox(height: AppConstants.largePadding),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
