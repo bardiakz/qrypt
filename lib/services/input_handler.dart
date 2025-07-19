@@ -82,6 +82,9 @@ class InputHandler {
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
+      case EncryptionMethod.rsa:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -227,6 +230,9 @@ class InputHandler {
           parts[1],
         )!; //to be decompressed in the next phase
         return qrypt;
+      case EncryptionMethod.rsa:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
