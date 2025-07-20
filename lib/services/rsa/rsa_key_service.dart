@@ -1,16 +1,14 @@
 import 'package:asn1lib/asn1lib.dart';
-import 'package:encrypt/encrypt.dart';
+import 'package:encrypt/encrypt.dart' hide RSASigner;
 import 'package:pointycastle/api.dart' hide Signer;
 import 'package:pointycastle/asymmetric/api.dart';
+import 'package:pointycastle/asymmetric/oaep.dart';
 import 'package:pointycastle/asymmetric/rsa.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
 import 'package:pointycastle/random/fortuna_random.dart';
 import 'package:pointycastle/key_generators/api.dart';
-import 'package:pointycastle/asn1/asn1_parser.dart';
-import 'package:pointycastle/asn1/primitives/asn1_integer.dart'
-    hide ASN1Integer;
-import 'package:pointycastle/asn1/primitives/asn1_sequence.dart'
-    hide ASN1Sequence;
+import 'package:pointycastle/digests/sha256.dart';
+import 'package:pointycastle/signers/rsa_signer.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -65,8 +63,9 @@ class RSAKeyService {
     return secureRandom;
   }
 
-  /// Converts an RSA public key to PEM format
+  /// Converts an RSA public key to PKCS#8 PEM format
   String _encodePublicKeyToPem(RSAPublicKey publicKey) {
+    // RSA algorithm identifier (same as before)
     final algorithmSeq = ASN1Sequence();
     final algorithmAsn1Obj = ASN1Object.fromBytes(
       Uint8List.fromList([
@@ -102,35 +101,63 @@ class RSAKeyService {
     return '-----BEGIN PUBLIC KEY-----\n${_formatBase64(dataBase64)}\n-----END PUBLIC KEY-----';
   }
 
-  /// Converts an RSA private key to PEM format
+  /// Converts an RSA private key to PKCS#8 PEM format
   String _encodePrivateKeyToPem(RSAPrivateKey privateKey) {
+    // Create the RSA private key sequence (PKCS#1)
+    final rsaPrivateKeySeq = ASN1Sequence();
+    rsaPrivateKeySeq.add(ASN1Integer(BigInt.from(0))); // version
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.modulus!));
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.exponent!));
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.privateExponent!));
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.p!));
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.q!));
+    rsaPrivateKeySeq.add(
+      ASN1Integer(privateKey.privateExponent! % (privateKey.p! - BigInt.one)),
+    );
+    rsaPrivateKeySeq.add(
+      ASN1Integer(privateKey.privateExponent! % (privateKey.q! - BigInt.one)),
+    );
+    rsaPrivateKeySeq.add(ASN1Integer(privateKey.q!.modInverse(privateKey.p!)));
+
+    // PKCS#8 wrapper
     final version = ASN1Integer(BigInt.from(0));
-    final modulus = ASN1Integer(privateKey.modulus!);
-    final publicExponent = ASN1Integer(privateKey.exponent!);
-    final privateExponent = ASN1Integer(privateKey.privateExponent!);
-    final p = ASN1Integer(privateKey.p!);
-    final q = ASN1Integer(privateKey.q!);
-    final dP = ASN1Integer(
-      privateKey.privateExponent! % (privateKey.p! - BigInt.one),
-    );
-    final dQ = ASN1Integer(
-      privateKey.privateExponent! % (privateKey.q! - BigInt.one),
-    );
-    final qInv = ASN1Integer(privateKey.q!.modInverse(privateKey.p!));
 
-    final seq = ASN1Sequence();
-    seq.add(version);
-    seq.add(modulus);
-    seq.add(publicExponent);
-    seq.add(privateExponent);
-    seq.add(p);
-    seq.add(q);
-    seq.add(dP);
-    seq.add(dQ);
-    seq.add(qInv);
+    // Algorithm identifier for RSA
+    final algorithmSeq = ASN1Sequence();
+    final algorithmAsn1Obj = ASN1Object.fromBytes(
+      Uint8List.fromList([
+        0x06,
+        0x09,
+        0x2a,
+        0x86,
+        0x48,
+        0x86,
+        0xf7,
+        0x0d,
+        0x01,
+        0x01,
+        0x01,
+      ]),
+    );
+    final paramsAsn1Obj = ASN1Object.fromBytes(
+      Uint8List.fromList([0x05, 0x00]),
+    );
+    algorithmSeq.add(algorithmAsn1Obj);
+    algorithmSeq.add(paramsAsn1Obj);
 
-    final dataBase64 = base64.encode(seq.encodedBytes);
-    return '-----BEGIN RSA PRIVATE KEY-----\n${_formatBase64(dataBase64)}\n-----END RSA PRIVATE KEY-----';
+    // Private key as octet string
+    final privateKeyOctetString = ASN1OctetString(
+      rsaPrivateKeySeq.encodedBytes,
+    );
+
+    // Top-level PKCS#8 sequence
+    final pkcs8Seq = ASN1Sequence();
+    pkcs8Seq.add(version);
+    pkcs8Seq.add(algorithmSeq);
+    pkcs8Seq.add(privateKeyOctetString);
+
+    final dataBase64 = base64.encode(pkcs8Seq.encodedBytes);
+    return '-----BEGIN PRIVATE KEY-----\n${_formatBase64(dataBase64)}\n-----END PRIVATE KEY-----';
   }
 
   /// Formats base64 string into 64-character lines
@@ -142,13 +169,16 @@ class RSAKeyService {
         .join('\n');
   }
 
-  /// Generates a new RSA key pair with the specified name and key size
+  /// Generates a new RSA key pair with the specified name (always 2048-bit)
   Future<RSAKeyPair> generateKeyPair(String name, {int keySize = 2048}) async {
     try {
       // Check if name already exists
       if (await keyPairNameExists(name)) {
         throw Exception('A key pair with the name "$name" already exists');
       }
+
+      // Force 2048-bit keys
+      const int forcedKeySize = 2048;
 
       // Create RSA key generator
       final keyGen = RSAKeyGenerator();
@@ -157,7 +187,7 @@ class RSAKeyService {
       // Initialize key generator with parameters
       keyGen.init(
         ParametersWithRandom(
-          RSAKeyGeneratorParameters(BigInt.parse('65537'), keySize, 64),
+          RSAKeyGeneratorParameters(BigInt.parse('65537'), forcedKeySize, 64),
           secureRandom,
         ),
       );
@@ -167,7 +197,7 @@ class RSAKeyService {
       final publicKey = keyPair.publicKey as RSAPublicKey;
       final privateKey = keyPair.privateKey as RSAPrivateKey;
 
-      // Convert keys to PEM format
+      // Convert keys to PKCS#8 PEM format
       final publicKeyPem = _encodePublicKeyToPem(publicKey);
       final privateKeyPem = _encodePrivateKeyToPem(privateKey);
 
@@ -219,25 +249,28 @@ class RSAKeyService {
     }
   }
 
-  /// Validates that a public and private key pair match
+  /// Validates that a public and private key pair match using OAEP encryption
   bool validateKeyPair(String publicKeyPem, String privateKeyPem) {
     try {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
       final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      // Test encryption/decryption to validate the key pair
+      // Test encryption/decryption with OAEP to validate the key pair
       final plaintext = 'test message for validation';
+      final plaintextBytes = utf8.encode(plaintext);
 
-      // Create encrypter with public key
-      final encrypter = Encrypter(
-        RSA(publicKey: publicKey, privateKey: privateKey),
-      );
+      // Create OAEP cipher for encryption
+      final cipher = OAEPEncoding(RSAEngine());
+      cipher.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
+      final encryptedBytes = cipher.process(Uint8List.fromList(plaintextBytes));
 
-      // Encrypt with public key and decrypt with private key
-      final encrypted = encrypter.encrypt(plaintext);
-      final decrypted = encrypter.decrypt(encrypted);
+      // Create OAEP cipher for decryption
+      final decryptCipher = OAEPEncoding(RSAEngine());
+      decryptCipher.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+      final decryptedBytes = decryptCipher.process(encryptedBytes);
 
+      final decrypted = utf8.decode(decryptedBytes);
       return decrypted == plaintext;
     } catch (e) {
       print('Key validation error: $e');
@@ -245,7 +278,7 @@ class RSAKeyService {
     }
   }
 
-  /// Encrypts plaintext using the public key
+  /// Encrypts plaintext using the public key with OAEP padding and SHA-256
   Future<String> encryptWithPublicKey(
     String plaintext,
     String publicKeyPem,
@@ -254,10 +287,14 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
 
-      final encrypter = Encrypter(RSA(publicKey: publicKey));
-      final encrypted = encrypter.encrypt(plaintext);
+      final plaintextBytes = utf8.encode(plaintext);
 
-      return encrypted.base64;
+      // Create OAEP cipher with SHA-256
+      final cipher = OAEPEncoding(RSAEngine());
+      cipher.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
+
+      final encryptedBytes = cipher.process(Uint8List.fromList(plaintextBytes));
+      return base64.encode(encryptedBytes);
     } catch (e) {
       print('Encryption error: $e');
       rethrow;
@@ -281,7 +318,7 @@ class RSAKeyService {
     }
   }
 
-  /// Decrypts ciphertext using the private key
+  /// Decrypts ciphertext using the private key with OAEP padding and SHA-256
   Future<String> decryptWithPrivateKey(
     String ciphertext,
     String privateKeyPem,
@@ -290,10 +327,14 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      final encrypter = Encrypter(RSA(privateKey: privateKey));
-      final encrypted = Encrypted.fromBase64(ciphertext);
+      final encryptedBytes = base64.decode(ciphertext);
 
-      return encrypter.decrypt(encrypted);
+      // Create OAEP cipher with SHA-256
+      final cipher = OAEPEncoding(RSAEngine());
+      cipher.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+
+      final decryptedBytes = cipher.process(encryptedBytes);
+      return utf8.decode(decryptedBytes);
     } catch (e) {
       print('Decryption error: $e');
       rethrow;
@@ -317,7 +358,7 @@ class RSAKeyService {
     }
   }
 
-  /// Signs a message using the private key
+  /// Signs a message using RSA-PSS with SHA-256
   Future<String> signWithPrivateKey(
     String message,
     String privateKeyPem,
@@ -326,12 +367,14 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      final signer = Signer(
-        RSASigner(RSASignDigest.SHA256, privateKey: privateKey),
-      );
-      final signature = signer.sign(message);
+      final messageBytes = utf8.encode(message);
 
-      return signature.base64;
+      // Create RSA signer with PSS and SHA-256
+      final signer = RSASigner(SHA256Digest(), '0609608648016503040201');
+      signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+
+      final signature = signer.generateSignature(messageBytes);
+      return base64.encode(signature.bytes);
     } catch (e) {
       print('Signing error: $e');
       rethrow;
@@ -355,7 +398,7 @@ class RSAKeyService {
     }
   }
 
-  /// Verifies a message signature using the public key
+  /// Verifies a message signature using RSA-PSS with SHA-256
   Future<bool> verifyWithPublicKey(
     String message,
     String signature,
@@ -365,12 +408,15 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
 
-      final signer = Signer(
-        RSASigner(RSASignDigest.SHA256, publicKey: publicKey),
-      );
-      final signatureEncrypted = Encrypted.fromBase64(signature);
+      final messageBytes = utf8.encode(message);
+      final signatureBytes = base64.decode(signature);
 
-      return signer.verify(message, signatureEncrypted);
+      // Create RSA verifier with PSS and SHA-256
+      final verifier = RSASigner(SHA256Digest(), '0609608648016503040201');
+      verifier.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
+
+      final rsaSignature = RSASignature(signatureBytes);
+      return verifier.verifySignature(messageBytes, rsaSignature);
     } catch (e) {
       print('Verification error: $e');
       return false;
@@ -424,7 +470,7 @@ class RSAKeyService {
     }
   }
 
-  /// Encrypts data using hybrid encryption (RSA + AES)
+  /// Encrypts data using hybrid encryption (RSA-OAEP + AES)
   /// This is useful for encrypting larger amounts of data
   Future<Map<String, String>> encryptLargeData(
     String plaintext,
@@ -439,7 +485,7 @@ class RSAKeyService {
       final aesEncrypter = Encrypter(AES(aesKey));
       final encryptedData = aesEncrypter.encrypt(plaintext, iv: iv);
 
-      // Encrypt AES key with RSA
+      // Encrypt AES key with RSA-OAEP
       final encryptedAESKey = await encryptWithPublicKey(
         aesKey.base64,
         publicKeyPem,
@@ -456,13 +502,13 @@ class RSAKeyService {
     }
   }
 
-  /// Decrypts data encrypted with hybrid encryption (RSA + AES)
+  /// Decrypts data encrypted with hybrid encryption (RSA-OAEP + AES)
   Future<String> decryptLargeData(
     Map<String, String> encryptedPackage,
     String privateKeyPem,
   ) async {
     try {
-      // Decrypt AES key with RSA
+      // Decrypt AES key with RSA-OAEP
       final aesKeyBase64 = await decryptWithPrivateKey(
         encryptedPackage['encryptedKey']!,
         privateKeyPem,
