@@ -10,4 +10,8 @@ final primaryColorProvider = Provider<Color>((ref) {
   return mode == AppMode.encrypt ? Colors.blue : Colors.green;
 });
 
-final currentTextControllerProvider = StateProvider<TextEditingController>((ref) => TextEditingController());
+final currentTextControllerProvider = StateProvider<TextEditingController>(
+  (ref) => TextEditingController(),
+);
+
+final isDarkModeProvider = StateProvider<bool>((ref) => false);
