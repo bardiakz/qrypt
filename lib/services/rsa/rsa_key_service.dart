@@ -1,14 +1,20 @@
-import 'package:encrypt/encrypt.dart' hide SecureRandom, Signer;
-import 'package:flutter/foundation.dart';
-import 'package:pointycastle/asymmetric/oaep.dart';
+import 'package:asn1lib/asn1lib.dart';
+import 'package:encrypt/encrypt.dart';
+import 'package:pointycastle/api.dart' hide Signer;
+import 'package:pointycastle/asymmetric/api.dart';
 import 'package:pointycastle/asymmetric/rsa.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
+import 'package:pointycastle/random/fortuna_random.dart';
+import 'package:pointycastle/key_generators/api.dart';
+import 'package:pointycastle/asn1/asn1_parser.dart';
+import 'package:pointycastle/asn1/primitives/asn1_integer.dart'
+    hide ASN1Integer;
+import 'package:pointycastle/asn1/primitives/asn1_sequence.dart'
+    hide ASN1Sequence;
+import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:uuid/uuid.dart';
-import 'package:pointycastle/pointycastle.dart';
-import 'package:asn1lib/asn1lib.dart' as asn1lib;
 
 import '../../models/rsa_key_pair.dart';
 import 'rsa_key_storage_service.dart';
@@ -47,6 +53,95 @@ class RSAKeyService {
   Future<List<RSAKeyPair>> searchKeyPairsByName(String searchTerm) =>
       _storageService.searchKeyPairsByName(searchTerm);
 
+  /// Helper method to create a secure random number generator
+  FortunaRandom _createSecureRandom() {
+    final secureRandom = FortunaRandom();
+    final random = Random.secure();
+    final seeds = <int>[];
+    for (int i = 0; i < 32; i++) {
+      seeds.add(random.nextInt(256));
+    }
+    secureRandom.seed(KeyParameter(Uint8List.fromList(seeds)));
+    return secureRandom;
+  }
+
+  /// Converts an RSA public key to PEM format
+  String _encodePublicKeyToPem(RSAPublicKey publicKey) {
+    final algorithmSeq = ASN1Sequence();
+    final algorithmAsn1Obj = ASN1Object.fromBytes(
+      Uint8List.fromList([
+        0x06,
+        0x09,
+        0x2a,
+        0x86,
+        0x48,
+        0x86,
+        0xf7,
+        0x0d,
+        0x01,
+        0x01,
+        0x01,
+      ]),
+    );
+    final paramsAsn1Obj = ASN1Object.fromBytes(
+      Uint8List.fromList([0x05, 0x00]),
+    );
+    algorithmSeq.add(algorithmAsn1Obj);
+    algorithmSeq.add(paramsAsn1Obj);
+
+    final publicKeySeq = ASN1Sequence();
+    publicKeySeq.add(ASN1Integer(publicKey.modulus!));
+    publicKeySeq.add(ASN1Integer(publicKey.exponent!));
+    final publicKeySeqBitString = ASN1BitString(publicKeySeq.encodedBytes);
+
+    final topLevelSeq = ASN1Sequence();
+    topLevelSeq.add(algorithmSeq);
+    topLevelSeq.add(publicKeySeqBitString);
+
+    final dataBase64 = base64.encode(topLevelSeq.encodedBytes);
+    return '-----BEGIN PUBLIC KEY-----\n${_formatBase64(dataBase64)}\n-----END PUBLIC KEY-----';
+  }
+
+  /// Converts an RSA private key to PEM format
+  String _encodePrivateKeyToPem(RSAPrivateKey privateKey) {
+    final version = ASN1Integer(BigInt.from(0));
+    final modulus = ASN1Integer(privateKey.modulus!);
+    final publicExponent = ASN1Integer(privateKey.exponent!);
+    final privateExponent = ASN1Integer(privateKey.privateExponent!);
+    final p = ASN1Integer(privateKey.p!);
+    final q = ASN1Integer(privateKey.q!);
+    final dP = ASN1Integer(
+      privateKey.privateExponent! % (privateKey.p! - BigInt.one),
+    );
+    final dQ = ASN1Integer(
+      privateKey.privateExponent! % (privateKey.q! - BigInt.one),
+    );
+    final qInv = ASN1Integer(privateKey.q!.modInverse(privateKey.p!));
+
+    final seq = ASN1Sequence();
+    seq.add(version);
+    seq.add(modulus);
+    seq.add(publicExponent);
+    seq.add(privateExponent);
+    seq.add(p);
+    seq.add(q);
+    seq.add(dP);
+    seq.add(dQ);
+    seq.add(qInv);
+
+    final dataBase64 = base64.encode(seq.encodedBytes);
+    return '-----BEGIN RSA PRIVATE KEY-----\n${_formatBase64(dataBase64)}\n-----END RSA PRIVATE KEY-----';
+  }
+
+  /// Formats base64 string into 64-character lines
+  String _formatBase64(String base64String) {
+    final regex = RegExp('.{1,64}');
+    return regex
+        .allMatches(base64String)
+        .map((match) => match.group(0))
+        .join('\n');
+  }
+
   /// Generates a new RSA key pair with the specified name and key size
   Future<RSAKeyPair> generateKeyPair(String name, {int keySize = 2048}) async {
     try {
@@ -55,10 +150,11 @@ class RSAKeyService {
         throw Exception('A key pair with the name "$name" already exists');
       }
 
-      // Generate RSA key pair using pointycastle
+      // Create RSA key generator
       final keyGen = RSAKeyGenerator();
-      final secureRandom = _getSecureRandom();
+      final secureRandom = _createSecureRandom();
 
+      // Initialize key generator with parameters
       keyGen.init(
         ParametersWithRandom(
           RSAKeyGeneratorParameters(BigInt.parse('65537'), keySize, 64),
@@ -66,15 +162,16 @@ class RSAKeyService {
         ),
       );
 
-      final pair = keyGen.generateKeyPair();
-      final publicKey = pair.publicKey as RSAPublicKey;
-      final privateKey = pair.privateKey as RSAPrivateKey;
+      // Generate the key pair
+      final keyPair = keyGen.generateKeyPair();
+      final publicKey = keyPair.publicKey as RSAPublicKey;
+      final privateKey = keyPair.privateKey as RSAPrivateKey;
 
-      // Convert to PEM format
+      // Convert keys to PEM format
       final publicKeyPem = _encodePublicKeyToPem(publicKey);
       final privateKeyPem = _encodePrivateKeyToPem(privateKey);
 
-      final keyPair = RSAKeyPair(
+      final rsaKeyPair = RSAKeyPair(
         id: const Uuid().v4(),
         name: name,
         publicKey: publicKeyPem,
@@ -82,8 +179,8 @@ class RSAKeyService {
         createdAt: DateTime.now(),
       );
 
-      await saveKeyPair(keyPair);
-      return keyPair;
+      await saveKeyPair(rsaKeyPair);
+      return rsaKeyPair;
     } catch (e) {
       print('Error generating key pair: $e');
       rethrow;
@@ -125,29 +222,23 @@ class RSAKeyService {
   /// Validates that a public and private key pair match
   bool validateKeyPair(String publicKeyPem, String privateKeyPem) {
     try {
-      final publicKey = _parsePublicKey(publicKeyPem);
-      final privateKey = _parsePrivateKey(privateKeyPem);
-
-      if (publicKey == null || privateKey == null) {
-        return false;
-      }
+      final parser = RSAKeyParser();
+      final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
+      final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
       // Test encryption/decryption to validate the key pair
-      final plaintext = 'test message';
-      final plaintextBytes = Uint8List.fromList(utf8.encode(plaintext));
+      final plaintext = 'test message for validation';
 
-      // Encrypt with public key
-      final encryptor = OAEPEncoding(RSAEngine());
-      encryptor.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
-      final encrypted = encryptor.process(plaintextBytes);
+      // Create encrypter with public key
+      final encrypter = Encrypter(
+        RSA(publicKey: publicKey, privateKey: privateKey),
+      );
 
-      // Decrypt with private key
-      final decryptor = OAEPEncoding(RSAEngine());
-      decryptor.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
-      final decrypted = decryptor.process(encrypted);
+      // Encrypt with public key and decrypt with private key
+      final encrypted = encrypter.encrypt(plaintext);
+      final decrypted = encrypter.decrypt(encrypted);
 
-      final decryptedText = utf8.decode(decrypted);
-      return decryptedText == plaintext;
+      return decrypted == plaintext;
     } catch (e) {
       print('Key validation error: $e');
       return false;
@@ -160,16 +251,13 @@ class RSAKeyService {
     String publicKeyPem,
   ) async {
     try {
-      final publicKey = _parsePublicKey(publicKeyPem);
-      if (publicKey == null) {
-        throw Exception('Invalid public key format');
-      }
+      final parser = RSAKeyParser();
+      final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
 
-      final plaintextBytes = Uint8List.fromList(utf8.encode(plaintext));
-      final encryptor = OAEPEncoding(RSAEngine());
-      encryptor.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
-      final encrypted = encryptor.process(plaintextBytes);
-      return base64.encode(encrypted);
+      final encrypter = Encrypter(RSA(publicKey: publicKey));
+      final encrypted = encrypter.encrypt(plaintext);
+
+      return encrypted.base64;
     } catch (e) {
       print('Encryption error: $e');
       rethrow;
@@ -199,16 +287,13 @@ class RSAKeyService {
     String privateKeyPem,
   ) async {
     try {
-      final privateKey = _parsePrivateKey(privateKeyPem);
-      if (privateKey == null) {
-        throw Exception('Invalid private key format');
-      }
+      final parser = RSAKeyParser();
+      final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      final ciphertextBytes = base64.decode(ciphertext);
-      final decryptor = OAEPEncoding(RSAEngine());
-      decryptor.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
-      final decrypted = decryptor.process(ciphertextBytes);
-      return utf8.decode(decrypted);
+      final encrypter = Encrypter(RSA(privateKey: privateKey));
+      final encrypted = Encrypted.fromBase64(ciphertext);
+
+      return encrypter.decrypt(encrypted);
     } catch (e) {
       print('Decryption error: $e');
       rethrow;
@@ -238,19 +323,15 @@ class RSAKeyService {
     String privateKeyPem,
   ) async {
     try {
-      final privateKey = _parsePrivateKey(privateKeyPem);
-      if (privateKey == null) {
-        throw Exception('Invalid private key format');
-      }
+      final parser = RSAKeyParser();
+      final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      final messageBytes = Uint8List.fromList(utf8.encode(message));
+      final signer = Signer(
+        RSASigner(RSASignDigest.SHA256, privateKey: privateKey),
+      );
+      final signature = signer.sign(message);
 
-      // Create PKCS1 signer with SHA-256
-      final signer = Signer('SHA-256/RSA');
-      signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey));
-      final signature = signer.generateSignature(messageBytes) as RSASignature;
-
-      return base64.encode(signature.bytes);
+      return signature.base64;
     } catch (e) {
       print('Signing error: $e');
       rethrow;
@@ -281,20 +362,15 @@ class RSAKeyService {
     String publicKeyPem,
   ) async {
     try {
-      final publicKey = _parsePublicKey(publicKeyPem);
-      if (publicKey == null) {
-        return false;
-      }
+      final parser = RSAKeyParser();
+      final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
 
-      final messageBytes = Uint8List.fromList(utf8.encode(message));
-      final signatureBytes = base64.decode(signature);
+      final signer = Signer(
+        RSASigner(RSASignDigest.SHA256, publicKey: publicKey),
+      );
+      final signatureEncrypted = Encrypted.fromBase64(signature);
 
-      // Create PKCS1 verifier with SHA-256
-      final verifier = Signer('SHA-256/RSA');
-      verifier.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
-
-      final rsaSignature = RSASignature(signatureBytes);
-      return verifier.verifySignature(messageBytes, rsaSignature);
+      return signer.verify(message, signatureEncrypted);
     } catch (e) {
       print('Verification error: $e');
       return false;
@@ -322,11 +398,12 @@ class RSAKeyService {
   /// Gets the key size in bits for a given public key
   int getKeySize(String publicKeyPem) {
     try {
-      final publicKey = _parsePublicKey(publicKeyPem);
-      if (publicKey == null) {
-        throw Exception('Invalid public key format');
-      }
-      return publicKey.modulus!.bitLength;
+      final parser = RSAKeyParser();
+      final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
+
+      // Get the modulus from the key and calculate bit length
+      final modulus = publicKey.n;
+      return modulus?.bitLength ?? 0;
     } catch (e) {
       print('Error getting key size: $e');
       rethrow;
@@ -347,511 +424,97 @@ class RSAKeyService {
     }
   }
 
-  // Private helper methods for cryptographic operations
+  /// Encrypts data using hybrid encryption (RSA + AES)
+  /// This is useful for encrypting larger amounts of data
+  Future<Map<String, String>> encryptLargeData(
+    String plaintext,
+    String publicKeyPem,
+  ) async {
+    try {
+      // Generate a random AES key
+      final aesKey = Key.fromSecureRandom(32);
+      final iv = IV.fromSecureRandom(16);
 
-  SecureRandom _getSecureRandom() {
-    final secureRandom = SecureRandom('Fortuna')
-      ..seed(
-        KeyParameter(
-          Uint8List.fromList(
-            List.generate(32, (i) => Random.secure().nextInt(256)),
-          ),
-        ),
+      // Encrypt data with AES
+      final aesEncrypter = Encrypter(AES(aesKey));
+      final encryptedData = aesEncrypter.encrypt(plaintext, iv: iv);
+
+      // Encrypt AES key with RSA
+      final encryptedAESKey = await encryptWithPublicKey(
+        aesKey.base64,
+        publicKeyPem,
       );
-    return secureRandom;
-  }
 
-  String _encodePublicKeyToPem(RSAPublicKey publicKey) {
-    var algorithmSeq = asn1lib.ASN1Sequence();
-    var algorithmAsn1Obj = asn1lib.ASN1Object.fromBytes(
-      Uint8List.fromList([
-        0x6,
-        0x9,
-        0x2a,
-        0x86,
-        0x48,
-        0x86,
-        0xf7,
-        0xd,
-        0x1,
-        0x1,
-        0x1,
-      ]),
-    );
-    var paramsAsn1Obj = asn1lib.ASN1Object.fromBytes(
-      Uint8List.fromList([0x5, 0x0]),
-    );
-    algorithmSeq.add(algorithmAsn1Obj);
-    algorithmSeq.add(paramsAsn1Obj);
-
-    var publicKeySeq = asn1lib.ASN1Sequence();
-    publicKeySeq.add(asn1lib.ASN1Integer(publicKey.modulus!));
-    publicKeySeq.add(asn1lib.ASN1Integer(publicKey.exponent!));
-    var publicKeySeqBitString = asn1lib.ASN1BitString(
-      publicKeySeq.encodedBytes,
-    );
-
-    var topLevelSeq = asn1lib.ASN1Sequence();
-    topLevelSeq.add(algorithmSeq);
-    topLevelSeq.add(publicKeySeqBitString);
-
-    var dataBase64 = base64.encode(topLevelSeq.encodedBytes);
-    var chunks = <String>[];
-    for (var i = 0; i < dataBase64.length; i += 64) {
-      var end = (i + 64 < dataBase64.length) ? i + 64 : dataBase64.length;
-      chunks.add(dataBase64.substring(i, end));
-    }
-
-    return "-----BEGIN PUBLIC KEY-----\n${chunks.join('\n')}\n-----END PUBLIC KEY-----";
-  }
-
-  String _encodePrivateKeyToPem(RSAPrivateKey privateKey) {
-    // Create PKCS#8 PrivateKeyInfo structure
-    var version = asn1lib.ASN1Integer(BigInt.from(0));
-
-    // Algorithm identifier for RSA
-    var algorithmSeq = asn1lib.ASN1Sequence();
-    var algorithmAsn1Obj = asn1lib.ASN1Object.fromBytes(
-      Uint8List.fromList([
-        0x6,
-        0x9,
-        0x2a,
-        0x86,
-        0x48,
-        0x86,
-        0xf7,
-        0xd,
-        0x1,
-        0x1,
-        0x1,
-      ]),
-    );
-    var paramsAsn1Obj = asn1lib.ASN1Object.fromBytes(
-      Uint8List.fromList([0x5, 0x0]),
-    );
-    algorithmSeq.add(algorithmAsn1Obj);
-    algorithmSeq.add(paramsAsn1Obj);
-
-    // Create the RSA private key structure (PKCS#1)
-    var rsaPrivateKeySeq = asn1lib.ASN1Sequence();
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(BigInt.from(0))); // version
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.n!)); // modulus
-    rsaPrivateKeySeq.add(
-      asn1lib.ASN1Integer(privateKey.exponent!),
-    ); // publicExponent
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.d!)); // privateExponent
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.p!)); // prime1
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.q!)); // prime2
-
-    var dP = privateKey.d! % (privateKey.p! - BigInt.one);
-    var dQ = privateKey.d! % (privateKey.q! - BigInt.one);
-    var qInv = privateKey.q!.modInverse(privateKey.p!);
-
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(dP)); // exponent1
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(dQ)); // exponent2
-    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(qInv)); // coefficient
-
-    // Wrap in PKCS#8 structure
-    var privateKeyInfo = asn1lib.ASN1Sequence();
-    privateKeyInfo.add(version);
-    privateKeyInfo.add(algorithmSeq);
-    privateKeyInfo.add(asn1lib.ASN1OctetString(rsaPrivateKeySeq.encodedBytes));
-
-    var dataBase64 = base64.encode(privateKeyInfo.encodedBytes);
-    var chunks = <String>[];
-    for (var i = 0; i < dataBase64.length; i += 64) {
-      var end = (i + 64 < dataBase64.length) ? i + 64 : dataBase64.length;
-      chunks.add(dataBase64.substring(i, end));
-    }
-
-    return "-----BEGIN PRIVATE KEY-----\n${chunks.join('\n')}\n-----END PRIVATE KEY-----";
-  }
-
-  // RSAPublicKey? _parsePublicKey(String pemString) {
-  //   try {
-  //     final publicKeyDER = _decodePEM(pemString);
-  //     if (publicKeyDER.isEmpty) {
-  //       print('Empty DER data after PEM decoding');
-  //       return null;
-  //     }
-  //
-  //     var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
-  //     var topLevelSeq = asn1Parser.nextObject();
-  //
-  //     if (topLevelSeq is! asn1lib.ASN1Sequence) {
-  //       print('Top level object is not an ASN1Sequence');
-  //       return null;
-  //     }
-  //
-  //     // Handle both PKCS#8 SubjectPublicKeyInfo and raw PKCS#1 formats
-  //     if (topLevelSeq.elements.length == 2) {
-  //       // PKCS#8 SubjectPublicKeyInfo format
-  //       var algorithmSeq = topLevelSeq.elements[0];
-  //       var publicKeyBitString = topLevelSeq.elements[1];
-  //
-  //       if (publicKeyBitString is! asn1lib.ASN1BitString) {
-  //         print('Second element is not an ASN1BitString');
-  //         return null;
-  //       }
-  //
-  //       var publicKeyBytes = publicKeyBitString.valueBytes();
-  //       if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
-  //         print('Empty public key bytes');
-  //         return null;
-  //       }
-  //
-  //       var publicKeyAsn = asn1lib.ASN1Parser(publicKeyBytes);
-  //       var publicKeySeq = publicKeyAsn.nextObject();
-  //
-  //       if (publicKeySeq is! asn1lib.ASN1Sequence) {
-  //         print('Public key sequence is not an ASN1Sequence');
-  //         return null;
-  //       }
-  //
-  //       if (publicKeySeq.elements.length < 2) {
-  //         print('Public key sequence has insufficient elements');
-  //         return null;
-  //       }
-  //
-  //       var modulusElement = publicKeySeq.elements[0];
-  //       var exponentElement = publicKeySeq.elements[1];
-  //
-  //       if (modulusElement is! asn1lib.ASN1Integer ||
-  //           exponentElement is! asn1lib.ASN1Integer) {
-  //         print('Modulus or exponent is not an ASN1Integer');
-  //         return null;
-  //       }
-  //
-  //       var modulus = modulusElement.valueAsBigInteger;
-  //       var exponent = exponentElement.valueAsBigInteger;
-  //
-  //       if (modulus == null || exponent == null) {
-  //         print('Null modulus or exponent');
-  //         return null;
-  //       }
-  //
-  //       return RSAPublicKey(modulus, exponent);
-  //     } else if (topLevelSeq.elements.length >= 2) {
-  //       // Try raw PKCS#1 RSAPublicKey format
-  //       var modulusElement = topLevelSeq.elements[0];
-  //       var exponentElement = topLevelSeq.elements[1];
-  //
-  //       if (modulusElement is! asn1lib.ASN1Integer ||
-  //           exponentElement is! asn1lib.ASN1Integer) {
-  //         print('Raw format: Modulus or exponent is not an ASN1Integer');
-  //         return null;
-  //       }
-  //
-  //       var modulus = modulusElement.valueAsBigInteger;
-  //       var exponent = exponentElement.valueAsBigInteger;
-  //
-  //       if (modulus == null || exponent == null) {
-  //         print('Raw format: Null modulus or exponent');
-  //         return null;
-  //       }
-  //
-  //       return RSAPublicKey(modulus, exponent);
-  //     } else {
-  //       print(
-  //         'Unexpected number of elements in top level sequence: ${topLevelSeq.elements.length}',
-  //       );
-  //       return null;
-  //     }
-  //   } catch (e, stackTrace) {
-  //     print('Error parsing public key: $e');
-  //     print('Stack trace: $stackTrace');
-  //     return null;
-  //   }
-  // }
-  // RSAPublicKey? _parsePublicKey(String pemString) {
-  //   try {
-  //     final publicKeyDER = _decodePEM(pemString);
-  //     if (publicKeyDER.isEmpty) {
-  //       print('Empty DER data after PEM decoding');
-  //       return null;
-  //     }
-  //
-  //     var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
-  //     var topLevelSeq = asn1Parser.nextObject();
-  //
-  //     if (topLevelSeq is! asn1lib.ASN1Sequence ||
-  //         topLevelSeq.elements.length != 2) {
-  //       print('Invalid top-level sequence');
-  //       return null;
-  //     }
-  //
-  //     var publicKeyBitString = topLevelSeq.elements[1];
-  //     if (publicKeyBitString is! asn1lib.ASN1BitString) {
-  //       print('Second element is not an ASN1BitString');
-  //       return null;
-  //     }
-  //
-  //     var publicKeyBytes = publicKeyBitString.valueBytes();
-  //     if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
-  //       print('Empty public key bytes');
-  //       return null;
-  //     }
-  //
-  //     // Skip the unused bits byte if present and unusedbits is 0
-  //     if (publicKeyBytes[0] == 0x00 && publicKeyBitString.unusedbits == 0) {
-  //       publicKeyBytes = publicKeyBytes.sublist(1);
-  //     }
-  //
-  //     var parser = asn1lib.ASN1Parser(publicKeyBytes);
-  //     var publicKeySeq = parser.nextObject();
-  //
-  //     if (publicKeySeq is! asn1lib.ASN1Sequence ||
-  //         publicKeySeq.elements.length < 2) {
-  //       print('Invalid RSAPublicKey sequence');
-  //       return null;
-  //     }
-  //
-  //     var modulusElement = publicKeySeq.elements[0];
-  //     var exponentElement = publicKeySeq.elements[1];
-  //
-  //     if (modulusElement is! asn1lib.ASN1Integer ||
-  //         exponentElement is! asn1lib.ASN1Integer) {
-  //       print('Modulus or exponent is not an ASN1Integer');
-  //       return null;
-  //     }
-  //
-  //     var modulus = modulusElement.valueAsBigInteger;
-  //     var exponent = exponentElement.valueAsBigInteger;
-  //
-  //     if (modulus == null || exponent == null) {
-  //       print('Null modulus or exponent');
-  //       return null;
-  //     }
-  //
-  //     return RSAPublicKey(modulus, exponent);
-  //   } catch (e, stackTrace) {
-  //     print('Error parsing public key: $e');
-  //     print('Stack trace: $stackTrace');
-  //     return null;
-  //   }
-  // }
-  RSAPublicKey? _parsePublicKey(String pemString) {
-    try {
-      final parser = RSAKeyParser();
-      final key = parser.parse(pemString);
-      if (key is RSAPublicKey) {
-        return key;
-      }
-      print('Parsed key is not an RSAPublicKey');
-      return null;
-    } catch (e, stackTrace) {
-      print('Error parsing public key with encrypt: $e');
-      print('Stack trace: $stackTrace');
-      return null;
-    }
-  }
-
-  Uint8List _decodePEM(String pem) {
-    try {
-      if (pem.trim().isEmpty) {
-        throw FormatException('Empty PEM string');
-      }
-
-      String normalizedPem = pem
-          .replaceAll('\r\n', '\n')
-          .replaceAll('\r', '\n')
-          .trim();
-      int startMarkerStart = normalizedPem.indexOf('-----BEGIN');
-      if (startMarkerStart == -1) {
-        throw FormatException('Invalid PEM format: missing BEGIN marker');
-      }
-
-      int startMarkerEnd = normalizedPem.indexOf('-----', startMarkerStart + 5);
-      if (startMarkerEnd == -1) {
-        throw FormatException('Invalid PEM format: malformed BEGIN marker');
-      }
-
-      int endMarkerStart = normalizedPem.indexOf('-----END');
-      if (endMarkerStart == -1) {
-        throw FormatException('Invalid PEM format: missing END marker');
-      }
-
-      String base64Content = normalizedPem
-          .substring(startMarkerEnd + 5, endMarkerStart)
-          .trim();
-      base64Content = base64Content.replaceAll(RegExp(r'\s+'), '');
-
-      if (base64Content.isEmpty) {
-        throw FormatException('Invalid PEM format: empty content');
-      }
-
-      if (!RegExp(r'^[A-Za-z0-9+/]*={0,2}$').hasMatch(base64Content)) {
-        throw FormatException('Invalid PEM format: invalid base64 characters');
-      }
-
-      return base64.decode(base64Content);
+      return {
+        'encryptedData': encryptedData.base64,
+        'encryptedKey': encryptedAESKey,
+        'iv': iv.base64,
+      };
     } catch (e) {
-      print('PEM decode error: $e');
+      print('Large data encryption error: $e');
       rethrow;
     }
   }
 
-  RSAPrivateKey? _parsePrivateKey(String pemString) {
+  /// Decrypts data encrypted with hybrid encryption (RSA + AES)
+  Future<String> decryptLargeData(
+    Map<String, String> encryptedPackage,
+    String privateKeyPem,
+  ) async {
     try {
-      final privateKeyDER = _decodePEM(pemString);
-      if (privateKeyDER.isEmpty) {
-        if (kDebugMode) {
-          print('Empty DER data after PEM decoding');
-        }
-        return null;
-      }
+      // Decrypt AES key with RSA
+      final aesKeyBase64 = await decryptWithPrivateKey(
+        encryptedPackage['encryptedKey']!,
+        privateKeyPem,
+      );
 
-      var asn1Parser = asn1lib.ASN1Parser(privateKeyDER);
-      var pkSeq = asn1Parser.nextObject();
+      // Reconstruct AES components
+      final aesKey = Key.fromBase64(aesKeyBase64);
+      final iv = IV.fromBase64(encryptedPackage['iv']!);
+      final encryptedData = Encrypted.fromBase64(
+        encryptedPackage['encryptedData']!,
+      );
 
-      if (pkSeq is! asn1lib.ASN1Sequence) {
-        if (kDebugMode) {
-          print('Private key top level is not an ASN1Sequence');
-        }
-        return null;
-      }
-
-      // Check if this is PKCS#8 or PKCS#1 format
-      if (pkSeq.elements.length >= 9 &&
-          pkSeq.elements[0] is asn1lib.ASN1Integer) {
-        // Check first element - if it's 0, this might be PKCS#1
-        var firstElement = pkSeq.elements[0] as asn1lib.ASN1Integer;
-        if (firstElement.valueAsBigInteger == BigInt.zero &&
-            pkSeq.elements.length == 9) {
-          // PKCS#1 format
-          var modulus =
-              (pkSeq.elements[1] as asn1lib.ASN1Integer).valueAsBigInteger;
-          var publicExponent =
-              (pkSeq.elements[2] as asn1lib.ASN1Integer).valueAsBigInteger;
-          var privateExponent =
-              (pkSeq.elements[3] as asn1lib.ASN1Integer).valueAsBigInteger;
-          var p = (pkSeq.elements[4] as asn1lib.ASN1Integer).valueAsBigInteger;
-          var q = (pkSeq.elements[5] as asn1lib.ASN1Integer).valueAsBigInteger;
-
-          return RSAPrivateKey(modulus, privateExponent, p, q);
-        }
-      }
-
-      // PKCS#8 format
-      if (pkSeq.elements.length >= 3) {
-        var privateKeyOctetString = pkSeq.elements[2];
-
-        if (privateKeyOctetString is! asn1lib.ASN1OctetString) {
-          if (kDebugMode) {
-            print('PKCS#8: Third element is not an ASN1OctetString');
-          }
-          return null;
-        }
-
-        var privateKeyBytes = privateKeyOctetString.valueBytes();
-        if (privateKeyBytes.isEmpty) {
-          if (kDebugMode) {
-            print('PKCS#8: Empty private key bytes');
-          }
-          return null;
-        }
-
-        var privateKeyParser = asn1lib.ASN1Parser(privateKeyBytes);
-        var rsaPrivateKeySeq = privateKeyParser.nextObject();
-
-        if (rsaPrivateKeySeq is! asn1lib.ASN1Sequence) {
-          if (kDebugMode) {
-            print('PKCS#8: RSA private key is not an ASN1Sequence');
-          }
-          return null;
-        }
-
-        if (rsaPrivateKeySeq.elements.length < 6) {
-          if (kDebugMode) {
-            print('PKCS#8: Insufficient elements in RSA private key sequence');
-          }
-          return null;
-        }
-
-        var modulus = (rsaPrivateKeySeq.elements[1] as asn1lib.ASN1Integer)
-            .valueAsBigInteger;
-        var publicExponent =
-            (rsaPrivateKeySeq.elements[2] as asn1lib.ASN1Integer)
-                .valueAsBigInteger;
-        var privateExponent =
-            (rsaPrivateKeySeq.elements[3] as asn1lib.ASN1Integer)
-                .valueAsBigInteger;
-        var p = (rsaPrivateKeySeq.elements[4] as asn1lib.ASN1Integer)
-            .valueAsBigInteger;
-        var q = (rsaPrivateKeySeq.elements[5] as asn1lib.ASN1Integer)
-            .valueAsBigInteger;
-
-        return RSAPrivateKey(modulus, privateExponent, p, q);
-      }
-
-      if (kDebugMode) {
-        print('Unsupported private key format');
-      }
-      return null;
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        print('Error parsing private key: $e');
-      }
-      if (kDebugMode) {
-        print('Stack trace: $stackTrace');
-      }
-      return null;
+      // Decrypt data with AES
+      final aesEncrypter = Encrypter(AES(aesKey));
+      return aesEncrypter.decrypt(encryptedData, iv: iv);
+    } catch (e) {
+      print('Large data decryption error: $e');
+      rethrow;
     }
   }
 
-  // Uint8List _decodePEM(String pem) {
-  //   try {
-  //     if (pem.trim().isEmpty) {
-  //       throw FormatException('Empty PEM string');
-  //     }
-  //
-  //     // Normalize line endings and remove any extra whitespace
-  //     String normalizedPem = pem
-  //         .replaceAll('\r\n', '\n')
-  //         .replaceAll('\r', '\n')
-  //         .trim();
-  //
-  //     // Find the start and end markers
-  //     int startMarkerStart = normalizedPem.indexOf('-----BEGIN');
-  //     if (startMarkerStart == -1) {
-  //       throw FormatException('Invalid PEM format: missing BEGIN marker');
-  //     }
-  //
-  //     int startMarkerEnd = normalizedPem.indexOf('-----', startMarkerStart + 5);
-  //     if (startMarkerEnd == -1) {
-  //       throw FormatException('Invalid PEM format: malformed BEGIN marker');
-  //     }
-  //
-  //     int endMarkerStart = normalizedPem.indexOf('-----END');
-  //     if (endMarkerStart == -1) {
-  //       throw FormatException('Invalid PEM format: missing END marker');
-  //     }
-  //
-  //     // Extract the base64 content between the markers
-  //     String base64Content = normalizedPem
-  //         .substring(startMarkerEnd + 5, endMarkerStart)
-  //         .trim();
-  //
-  //     // Remove any whitespace and newlines from the base64 content
-  //     base64Content = base64Content.replaceAll(RegExp(r'\s+'), '');
-  //
-  //     if (base64Content.isEmpty) {
-  //       throw FormatException('Invalid PEM format: empty content');
-  //     }
-  //
-  //     // Validate base64 format
-  //     if (!RegExp(r'^[A-Za-z0-9+/]*={0,2}$').hasMatch(base64Content)) {
-  //       throw FormatException('Invalid PEM format: invalid base64 characters');
-  //     }
-  //
-  //     return base64.decode(base64Content);
-  //   } catch (e) {
-  //     print('PEM decode error: $e');
-  //     print('PEM content length: ${pem.length}');
-  //     print(
-  //       'PEM content preview: ${pem.length > 100 ? pem.substring(0, 100) + '...' : pem}',
-  //     );
-  //     rethrow;
-  //   }
-  // }
+  /// Encrypts large data using a stored public key
+  Future<Map<String, String>> encryptLargeDataWithStoredKey(
+    String plaintext,
+    String keyPairId,
+  ) async {
+    try {
+      final keyPair = await getKeyPairById(keyPairId);
+      if (keyPair == null) {
+        throw Exception('Key pair not found');
+      }
+      return await encryptLargeData(plaintext, keyPair.publicKey);
+    } catch (e) {
+      print('Large data encryption with stored key error: $e');
+      rethrow;
+    }
+  }
+
+  /// Decrypts large data using a stored private key
+  Future<String> decryptLargeDataWithStoredKey(
+    Map<String, String> encryptedPackage,
+    String keyPairId,
+  ) async {
+    try {
+      final keyPair = await getKeyPairById(keyPairId);
+      if (keyPair == null) {
+        throw Exception('Key pair not found');
+      }
+      return await decryptLargeData(encryptedPackage, keyPair.privateKey);
+    } catch (e) {
+      print('Large data decryption with stored key error: $e');
+      rethrow;
+    }
+  }
 }
