@@ -49,14 +49,51 @@ class RSAKeySelector extends ConsumerWidget {
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () => _showCreateKeyDialog(context, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Create Key Pair'),
                     ),
                   ],
                 );
               }
 
+              // Remove duplicates based on id to prevent dropdown issues
+              final uniqueKeyPairs = <String, RSAKeyPair>{};
+              for (final keyPair in keyPairs) {
+                uniqueKeyPairs[keyPair.id] = keyPair;
+              }
+              final deduplicatedKeyPairs = uniqueKeyPairs.values.toList();
+
+              // Find the currently selected key pair by ID in the fresh list
+              RSAKeyPair? currentSelectedKeyPair;
+
+              if (selectedKeyPair != null) {
+                // Look for a key pair with the same ID in the current list
+                try {
+                  currentSelectedKeyPair = deduplicatedKeyPairs.firstWhere(
+                    (kp) => kp.id == selectedKeyPair.id,
+                  );
+                } catch (e) {
+                  // If the selected key pair is not found, it might have been deleted
+                  currentSelectedKeyPair = null;
+                }
+              }
+
+              // If no valid selection, default to the first key pair
+              if (currentSelectedKeyPair == null &&
+                  deduplicatedKeyPairs.isNotEmpty) {
+                currentSelectedKeyPair = deduplicatedKeyPairs.first;
+                // Update the provider to reflect this default selection
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(selectedRSAKeyPairProvider.notifier).state =
+                      deduplicatedKeyPairs.first;
+                });
+              }
+
               return DropdownButtonFormField<RSAKeyPair>(
-                value: selectedKeyPair,
+                value: currentSelectedKeyPair,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(
@@ -67,8 +104,8 @@ class RSAKeySelector extends ConsumerWidget {
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
                 ),
-                items: keyPairs.map((keyPair) {
-                  return DropdownMenuItem(
+                items: deduplicatedKeyPairs.map((keyPair) {
+                  return DropdownMenuItem<RSAKeyPair>(
                     value: keyPair,
                     child: Text(keyPair.name),
                   );
