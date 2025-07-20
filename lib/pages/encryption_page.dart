@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -425,9 +427,22 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       const SizedBox(height: AppConstants.largePadding / 2),
                       TextField(
                         onChanged: (val) {
-                          ref.read(publicKeyProvider.notifier).state = val;
-                          if (kDebugMode) {
-                            print('saved public key $val');
+                          try {
+                            // Normalize the input PEM string
+                            String normalized = val.trim().replaceAll(
+                              RegExp(r'\r\n|\r|\n'),
+                              '\n',
+                            );
+                            ref.read(publicKeyProvider.notifier).state =
+                                normalized;
+                            if (kDebugMode) {
+                              print('Saved normalized public key: $normalized');
+                              print('Key code units: ${normalized.codeUnits}');
+                            }
+                          } catch (e) {
+                            if (kDebugMode) {
+                              print('Error normalizing public key: $e');
+                            }
                           }
                         },
                         decoration: InputDecoration(
@@ -446,7 +461,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               width: AppConstants.borderWidth,
                             ),
                           ),
+                          errorText: ref.watch(publicKeyProvider).isEmpty
+                              ? null
+                              : (RegExp(
+                                      r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                    ).hasMatch(ref.watch(publicKeyProvider))
+                                    ? null
+                                    : 'Invalid PEM format'),
                         ),
+                        maxLines: 4,
                       ),
                     ],
                   ],
@@ -782,7 +805,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         // Handle RSA encryption separately with proper validation
         if (selectedEncryption == EncryptionMethod.rsa) {
           final selectedKeyPair = ref.read(selectedRSAEncryptKeyPairProvider);
-          final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
+          String rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
 
           // Validate RSA requirements
           if (selectedKeyPair == null) {
