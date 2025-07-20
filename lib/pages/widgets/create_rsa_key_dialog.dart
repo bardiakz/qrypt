@@ -149,6 +149,7 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
           return;
         }
 
+        // For manual input, create the key pair object and save it
         keyPair = RSAKeyPair(
           id: const Uuid().v4(),
           name: _nameController.text.trim(),
@@ -156,11 +157,16 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
           privateKey: _privateKeyController.text.trim(),
           createdAt: DateTime.now(),
         );
+
+        // Save manually created key pair
+        await service.saveKeyPair(keyPair);
       } else {
+        // For generation, generateKeyPair() already saves it internally
         keyPair = await service.generateKeyPair(_nameController.text.trim());
+        // ❌ REMOVE THIS LINE: await service.saveKeyPair(keyPair);
       }
 
-      await service.saveKeyPair(keyPair);
+      // Refresh the provider to update the UI
       ref.refresh(rsaKeyPairsProvider);
 
       if (mounted) {

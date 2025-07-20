@@ -170,9 +170,15 @@ class RSAKeyService {
         .join('\n');
   }
 
+  bool _isGenerating = false;
+
   /// Generates a new RSA key pair with the specified name (always 2048-bit)
   Future<RSAKeyPair> generateKeyPair(String name, {int keySize = 2048}) async {
+    if (_isGenerating) {
+      throw Exception('Key generation already in progress');
+    }
     try {
+      _isGenerating = true;
       // Check if name already exists
       if (await keyPairNameExists(name)) {
         throw Exception('A key pair with the name "$name" already exists');
@@ -213,8 +219,11 @@ class RSAKeyService {
       await saveKeyPair(rsaKeyPair);
       return rsaKeyPair;
     } catch (e) {
+      _isGenerating = false;
       print('Error generating key pair: $e');
       rethrow;
+    } finally {
+      _isGenerating = false;
     }
   }
 
