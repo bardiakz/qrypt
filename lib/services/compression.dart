@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:es_compression/lz4.dart';
@@ -8,8 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 
-
-class Compression{
+class Compression {
   ///Compresses data using GZip
   static Uint8List gZipCompress(List<int> data) {
     final encoder = GZipEncoder();
@@ -21,10 +19,12 @@ class Compression{
     final decoder = GZipDecoder();
     return decoder.decodeBytes(compressedData);
   }
+
   static Uint8List lz4Compress(List<int> data) {
     final encoder = Lz4Codec(level: 16);
     return Uint8List.fromList(encoder.encode(data));
   }
+
   static List<int> lz4DeCompress(List<int> compressedData) {
     final decoder = Lz4Codec();
     return decoder.decode(compressedData);
@@ -34,6 +34,7 @@ class Compression{
     final encoder = BrotliCodec(level: 11);
     return Uint8List.fromList(encoder.encode(data));
   }
+
   static List<int> brotliDeCompress(List<int> compressedData) {
     final decoder = BrotliCodec();
     return decoder.decode(compressedData);
@@ -43,13 +44,25 @@ class Compression{
     final encoder = ZstdCodec(level: 22);
     return Uint8List.fromList(encoder.encode(data));
   }
+
   static List<int> zstdDeCompress(List<int> compressedData) {
     final decoder = ZstdCodec();
     return decoder.decode(compressedData);
   }
 
-  static void setNativeLibPaths(){
-    final basePath = path.join(Directory.current.path, 'native_libs');
+  static String getExecutableDir() {
+    final execPath = Platform.resolvedExecutable;
+    return File(execPath).parent.path;
+  }
+
+  static void setNativeLibPaths() {
+    final String basePath;
+    // if (kDebugMode) {
+    //   basePath = path.join(Directory.current.path, 'native_libs');
+    // } else {
+    //   basePath = path.join(getExecutableDir());
+    // }
+    basePath = path.join(getExecutableDir());
 
     String lz4LibPath;
     if (Platform.isWindows) {
@@ -78,7 +91,7 @@ class Compression{
     String zstdLibPath;
     if (Platform.isWindows) {
       zstdLibPath = path.join(basePath, 'eszstd-win64.dll');
-    }else if (Platform.isLinux) {
+    } else if (Platform.isLinux) {
       zstdLibPath = path.join(basePath, 'eszstd-linux64.so');
     } else if (Platform.isMacOS) {
       zstdLibPath = path.join(basePath, 'eszstd-mac64.dylib');
