@@ -13,7 +13,13 @@ class Qrypt {
   late final EncryptionMethod encryption;
   late final ObfuscationMethod obfuscation;
   late final CompressionMethod compression;
-  RSAKeyPair? rsaKeyPair;
+  RSAKeyPair rsaKeyPair = RSAKeyPair(
+    id: '',
+    name: '',
+    publicKey: '',
+    privateKey: '',
+    createdAt: DateTime.now(),
+  );
   String rsaReceiverPublicKey = 'noPublicKey';
   bool useTag = false;
   String tag = '';

@@ -17,10 +17,10 @@ void main() async {
     Compression.setNativeLibPaths();
   }
   TagManager.initializeTags();
-  if (kDebugMode) {
-    final storage = FlutterSecureStorage();
-    await storage.deleteAll(); // Wipe all secure data in debug mode
-  }
+  // if (kDebugMode) {
+  //   final storage = FlutterSecureStorage();
+  //   await storage.deleteAll();
+  // }
 
   runApp(ProviderScope(child: const MyApp()));
 }
