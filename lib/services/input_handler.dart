@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
@@ -11,6 +14,8 @@ import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
 import '../models/rsa_key_pair.dart';
+import '../pages/widgets/RSA_key_selection_dialog.dart';
+import '../pages/widgets/rsa_key_management_dialog.dart';
 import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
@@ -44,18 +49,17 @@ class InputHandler {
 
   Future<Qrypt> handleEncrypt(Qrypt qrypt) async {
     String? encryptedText = qrypt.text;
+    bool usesMappedObfuscation = [
+      ObfuscationMethod.en1,
+      ObfuscationMethod.en2,
+      ObfuscationMethod.fa1,
+      ObfuscationMethod.fa2,
+    ].contains(qrypt.getObfuscationMethod());
+
+    bool usesBase64Obfuscation =
+        qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
-        bool usesMappedObfuscation = [
-          ObfuscationMethod.en1,
-          ObfuscationMethod.en2,
-          ObfuscationMethod.fa1,
-          ObfuscationMethod.fa2,
-        ].contains(qrypt.getObfuscationMethod());
-
-        bool usesBase64Obfuscation =
-            qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
-
         if (usesMappedObfuscation) {
           // For mapped obfuscations, convert to hex
           qrypt.text = qrypt.compressedText
@@ -101,7 +105,23 @@ class InputHandler {
             textToEncrypt,
             qrypt.rsaReceiverPublicKey,
           );
-          qrypt.text = encryptedResult;
+
+          // FIXED: Convert RSA result to appropriate format for obfuscation
+          if (usesMappedObfuscation) {
+            // Convert base64 RSA result to hex for mapped obfuscations
+            Uint8List rsaBytes = base64.decode(encryptedResult);
+            qrypt.text = rsaBytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join('');
+          } else if (usesBase64Obfuscation) {
+            // For b64 obfuscation, decode base64 to raw string
+            Uint8List rsaBytes = base64.decode(encryptedResult);
+            qrypt.text = String.fromCharCodes(rsaBytes);
+          } else {
+            // For other obfuscations, keep as base64
+            qrypt.text = encryptedResult;
+          }
+
           return qrypt;
         } catch (e) {
           if (kDebugMode) {
@@ -202,18 +222,17 @@ class InputHandler {
   }
 
   Future<Qrypt> handleDecrypt(Qrypt qrypt) async {
+    bool usesMappedObfuscation = [
+      ObfuscationMethod.en1,
+      ObfuscationMethod.en2,
+      ObfuscationMethod.fa1,
+      ObfuscationMethod.fa2,
+    ].contains(qrypt.getObfuscationMethod());
+
+    bool usesBase64Obfuscation =
+        qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
-        bool usesMappedObfuscation = [
-          ObfuscationMethod.en1,
-          ObfuscationMethod.en2,
-          ObfuscationMethod.fa1,
-          ObfuscationMethod.fa2,
-        ].contains(qrypt.getObfuscationMethod());
-
-        bool usesBase64Obfuscation =
-            qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
-
         if (usesMappedObfuscation) {
           // Convert hex back to bytes
           List<int> bytes = [];
@@ -263,9 +282,26 @@ class InputHandler {
           }
 
           RSAKeyService rsa = RSAKeyService();
+          String rsaInputText;
+          if (usesMappedObfuscation) {
+            // Convert hex back to base64
+            List<int> bytes = [];
+            for (int i = 0; i < qrypt.text.length; i += 2) {
+              String hexByte = qrypt.text.substring(i, i + 2);
+              bytes.add(int.parse(hexByte, radix: 16));
+            }
+            rsaInputText = base64.encode(bytes);
+          } else if (usesBase64Obfuscation) {
+            // Convert raw string back to base64
+            rsaInputText = base64.encode(qrypt.text.codeUnits);
+          } else {
+            // Already in base64 format
+            rsaInputText = qrypt.text;
+          }
+
           // Decrypt the RSA encrypted text
           String decryptedResult = await rsa.decryptWithPrivateKey(
-            qrypt.text,
+            rsaInputText,
             qrypt.rsaKeyPair.privateKey,
           );
 
@@ -322,7 +358,12 @@ class InputHandler {
     return qrypt;
   }
 
-  Future<Qrypt> handleDeProcess(Qrypt qrypt, bool useTag) async {
+  Future<Qrypt> handleDeProcess(
+    BuildContext context,
+    Qrypt qrypt,
+    bool useTag,
+  ) async {
+    Color primaryColor = Colors.blue;
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
       qrypt = await handleDecrypt(qrypt);
@@ -341,6 +382,19 @@ class InputHandler {
         qrypt.encryption = methods.encryption;
         qrypt.compression = methods.compression;
         qrypt = handleDeObfs(qrypt);
+        if (qrypt.encryption == EncryptionMethod.rsa) {
+          final selectedKeyPair = await showRSAKeySelectionDialog(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Select Decryption Key',
+            message:
+                'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
+          );
+          if (selectedKeyPair == null) {
+            throw Exception('Decryption cancelled: No key pair selected');
+          }
+          qrypt.rsaKeyPair = selectedKeyPair;
+        }
         qrypt = await handleDecrypt(qrypt);
         qrypt = handleDeCompression(qrypt);
       }
