@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/Qrypt.dart';
@@ -8,6 +9,7 @@ import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
+import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
 import '../providers/resource_providers.dart';
 import '../services/input_handler.dart';
@@ -106,11 +108,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<void> _setStartController() async {
-    ref.read(currentTextControllerProvider.notifier).state =
-        _encryptTextController;
   }
 
   void _onSwipeLeft() {
@@ -428,8 +425,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       RSAKeySelector(primaryColor: primaryColor),
                       const SizedBox(height: AppConstants.largePadding / 2),
                       TextField(
-                        onChanged: (val) =>
-                            ref.read(publicKeyProvider.notifier).state = val,
+                        onChanged: (val) {
+                          ref.read(publicKeyProvider.notifier).state = val;
+                          if (kDebugMode) {
+                            print('saved public key $val');
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: 'Public Key',
                           border: OutlineInputBorder(
@@ -773,27 +774,95 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
     try {
       if (!defaultEncryption) {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-          text: _encryptTextController.text,
-          encryption: selectedEncryption,
-          obfuscation: selectedObfuscation,
-          compression: selectedCompression,
-          useTag: useTagManually,
-        );
-        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(
-          ref.read(inputQryptProvider),
-        );
+        // Handle RSA encryption separately with proper validation
+        if (selectedEncryption == EncryptionMethod.rsa) {
+          final selectedKeyPair = ref.read(selectedRSAKeyPairProvider);
+          final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
+
+          // Validate RSA requirements
+          if (selectedKeyPair == null) {
+            throw Exception('Please select an RSA key pair');
+          }
+
+          if (rsaReceiversPublicKey.isEmpty) {
+            throw Exception('Please enter the receiver\'s public key');
+          }
+
+          if (!rsaReceiversPublicKey.contains('BEGIN PUBLIC KEY')) {
+            throw Exception(
+              'Invalid public key format. Please ensure it\'s in PEM format.',
+            );
+          }
+
+          // Create Qrypt object with RSA parameters
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
+            text: _encryptTextController.text,
+            encryption: selectedEncryption,
+            obfuscation: selectedObfuscation,
+            compression: selectedCompression,
+            useTag: useTagManually,
+            rsaKeyPair: selectedKeyPair,
+            rsaReceiverPublicKey: rsaReceiversPublicKey,
+          );
+        } else {
+          // Non-RSA encryption
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+            text: _encryptTextController.text,
+            encryption: selectedEncryption,
+            obfuscation: selectedObfuscation,
+            compression: selectedCompression,
+            useTag: useTagManually,
+          );
+        }
+
+        ref.read(processedEncryptProvider.notifier).state = await ih
+            .handleProcess(ref.read(inputQryptProvider));
       } else {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-          text: _encryptTextController.text,
-          encryption: EncryptionMethod.aesGcm,
-          obfuscation: ObfuscationMethod.en2,
-          compression: CompressionMethod.brotli,
-          useTag: true,
-        );
-        ref.read(processedEncryptProvider.notifier).state = ih.handleProcess(
-          ref.read(inputQryptProvider),
-        );
+        // Default encryption logic
+        if (selectedEncryption == EncryptionMethod.rsa) {
+          final selectedKeyPair = ref.read(selectedRSAKeyPairProvider);
+          final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
+
+          if (selectedKeyPair == null) {
+            throw Exception('Please select an RSA key pair');
+          }
+
+          if (rsaReceiversPublicKey.isEmpty) {
+            throw Exception('Please enter the receiver\'s public key');
+          }
+
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
+            text: _encryptTextController.text,
+            encryption:
+                selectedEncryption, // Use selected encryption instead of default
+            obfuscation: ObfuscationMethod.en2,
+            compression: CompressionMethod.brotli,
+            useTag: true,
+            rsaKeyPair: selectedKeyPair,
+            rsaReceiverPublicKey: rsaReceiversPublicKey,
+          );
+        } else {
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+            text: _encryptTextController.text,
+            encryption: EncryptionMethod.aesGcm,
+            obfuscation: ObfuscationMethod.en2,
+            compression: CompressionMethod.brotli,
+            useTag: true,
+          );
+        }
+
+        if (kDebugMode) {
+          print('created input qrypt');
+          print(
+            'RSA Key Pair: ${ref.read(inputQryptProvider).rsaKeyPair?.name}',
+          );
+          print(
+            'RSA Public Key length: ${ref.read(inputQryptProvider).rsaReceiverPublicKey.length}',
+          );
+        }
+
+        ref.read(processedEncryptProvider.notifier).state = await ih
+            .handleProcess(ref.read(inputQryptProvider));
       }
     } catch (e) {
       if (mounted) {
