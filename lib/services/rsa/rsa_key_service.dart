@@ -396,28 +396,58 @@ class RSAKeyService {
   }
 
   String _encodePrivateKeyToPem(RSAPrivateKey privateKey) {
+    // Create PKCS#8 PrivateKeyInfo structure
     var version = asn1lib.ASN1Integer(BigInt.from(0));
-    var modulus = asn1lib.ASN1Integer(privateKey.n!);
-    var publicExponent = asn1lib.ASN1Integer(privateKey.exponent!);
-    var privateExponent = asn1lib.ASN1Integer(privateKey.d!);
-    var p = asn1lib.ASN1Integer(privateKey.p!);
-    var q = asn1lib.ASN1Integer(privateKey.q!);
+
+    // Algorithm identifier for RSA
+    var algorithmSeq = asn1lib.ASN1Sequence();
+    var algorithmAsn1Obj = asn1lib.ASN1Object.fromBytes(
+      Uint8List.fromList([
+        0x6,
+        0x9,
+        0x2a,
+        0x86,
+        0x48,
+        0x86,
+        0xf7,
+        0xd,
+        0x1,
+        0x1,
+        0x1,
+      ]),
+    );
+    var paramsAsn1Obj = asn1lib.ASN1Object.fromBytes(
+      Uint8List.fromList([0x5, 0x0]),
+    );
+    algorithmSeq.add(algorithmAsn1Obj);
+    algorithmSeq.add(paramsAsn1Obj);
+
+    // Create the RSA private key structure (PKCS#1)
+    var rsaPrivateKeySeq = asn1lib.ASN1Sequence();
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(BigInt.from(0))); // version
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.n!)); // modulus
+    rsaPrivateKeySeq.add(
+      asn1lib.ASN1Integer(privateKey.exponent!),
+    ); // publicExponent
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.d!)); // privateExponent
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.p!)); // prime1
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(privateKey.q!)); // prime2
+
     var dP = privateKey.d! % (privateKey.p! - BigInt.one);
     var dQ = privateKey.d! % (privateKey.q! - BigInt.one);
     var qInv = privateKey.q!.modInverse(privateKey.p!);
 
-    var seq = asn1lib.ASN1Sequence();
-    seq.add(version);
-    seq.add(modulus);
-    seq.add(publicExponent);
-    seq.add(privateExponent);
-    seq.add(p);
-    seq.add(q);
-    seq.add(asn1lib.ASN1Integer(dP));
-    seq.add(asn1lib.ASN1Integer(dQ));
-    seq.add(asn1lib.ASN1Integer(qInv));
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(dP)); // exponent1
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(dQ)); // exponent2
+    rsaPrivateKeySeq.add(asn1lib.ASN1Integer(qInv)); // coefficient
 
-    var dataBase64 = base64.encode(seq.encodedBytes);
+    // Wrap in PKCS#8 structure
+    var privateKeyInfo = asn1lib.ASN1Sequence();
+    privateKeyInfo.add(version);
+    privateKeyInfo.add(algorithmSeq);
+    privateKeyInfo.add(asn1lib.ASN1OctetString(rsaPrivateKeySeq.encodedBytes));
+
+    var dataBase64 = base64.encode(privateKeyInfo.encodedBytes);
     var chunks = <String>[];
     for (var i = 0; i < dataBase64.length; i += 64) {
       var end = (i + 64 < dataBase64.length) ? i + 64 : dataBase64.length;
@@ -427,58 +457,374 @@ class RSAKeyService {
     return "-----BEGIN PRIVATE KEY-----\n${chunks.join('\n')}\n-----END PRIVATE KEY-----";
   }
 
+  // RSAPublicKey? _parsePublicKey(String pemString) {
+  //   try {
+  //     final publicKeyDER = _decodePEM(pemString);
+  //     if (publicKeyDER.isEmpty) {
+  //       print('Empty DER data after PEM decoding');
+  //       return null;
+  //     }
+  //
+  //     var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
+  //     var topLevelSeq = asn1Parser.nextObject();
+  //
+  //     if (topLevelSeq is! asn1lib.ASN1Sequence) {
+  //       print('Top level object is not an ASN1Sequence');
+  //       return null;
+  //     }
+  //
+  //     // Handle both PKCS#8 SubjectPublicKeyInfo and raw PKCS#1 formats
+  //     if (topLevelSeq.elements.length == 2) {
+  //       // PKCS#8 SubjectPublicKeyInfo format
+  //       var algorithmSeq = topLevelSeq.elements[0];
+  //       var publicKeyBitString = topLevelSeq.elements[1];
+  //
+  //       if (publicKeyBitString is! asn1lib.ASN1BitString) {
+  //         print('Second element is not an ASN1BitString');
+  //         return null;
+  //       }
+  //
+  //       var publicKeyBytes = publicKeyBitString.valueBytes();
+  //       if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
+  //         print('Empty public key bytes');
+  //         return null;
+  //       }
+  //
+  //       var publicKeyAsn = asn1lib.ASN1Parser(publicKeyBytes);
+  //       var publicKeySeq = publicKeyAsn.nextObject();
+  //
+  //       if (publicKeySeq is! asn1lib.ASN1Sequence) {
+  //         print('Public key sequence is not an ASN1Sequence');
+  //         return null;
+  //       }
+  //
+  //       if (publicKeySeq.elements.length < 2) {
+  //         print('Public key sequence has insufficient elements');
+  //         return null;
+  //       }
+  //
+  //       var modulusElement = publicKeySeq.elements[0];
+  //       var exponentElement = publicKeySeq.elements[1];
+  //
+  //       if (modulusElement is! asn1lib.ASN1Integer ||
+  //           exponentElement is! asn1lib.ASN1Integer) {
+  //         print('Modulus or exponent is not an ASN1Integer');
+  //         return null;
+  //       }
+  //
+  //       var modulus = modulusElement.valueAsBigInteger;
+  //       var exponent = exponentElement.valueAsBigInteger;
+  //
+  //       if (modulus == null || exponent == null) {
+  //         print('Null modulus or exponent');
+  //         return null;
+  //       }
+  //
+  //       return RSAPublicKey(modulus, exponent);
+  //     } else if (topLevelSeq.elements.length >= 2) {
+  //       // Try raw PKCS#1 RSAPublicKey format
+  //       var modulusElement = topLevelSeq.elements[0];
+  //       var exponentElement = topLevelSeq.elements[1];
+  //
+  //       if (modulusElement is! asn1lib.ASN1Integer ||
+  //           exponentElement is! asn1lib.ASN1Integer) {
+  //         print('Raw format: Modulus or exponent is not an ASN1Integer');
+  //         return null;
+  //       }
+  //
+  //       var modulus = modulusElement.valueAsBigInteger;
+  //       var exponent = exponentElement.valueAsBigInteger;
+  //
+  //       if (modulus == null || exponent == null) {
+  //         print('Raw format: Null modulus or exponent');
+  //         return null;
+  //       }
+  //
+  //       return RSAPublicKey(modulus, exponent);
+  //     } else {
+  //       print(
+  //         'Unexpected number of elements in top level sequence: ${topLevelSeq.elements.length}',
+  //       );
+  //       return null;
+  //     }
+  //   } catch (e, stackTrace) {
+  //     print('Error parsing public key: $e');
+  //     print('Stack trace: $stackTrace');
+  //     return null;
+  //   }
+  // }
   RSAPublicKey? _parsePublicKey(String pemString) {
     try {
       final publicKeyDER = _decodePEM(pemString);
+      if (publicKeyDER.isEmpty) {
+        print('Empty DER data after PEM decoding');
+        return null;
+      }
+
       var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
-      var topLevelSeq = asn1Parser.nextObject() as asn1lib.ASN1Sequence;
+      var topLevelSeq = asn1Parser.nextObject();
 
-      var publicKeyBitString = topLevelSeq.elements[1] as asn1lib.ASN1BitString;
-      var publicKeyAsn = asn1lib.ASN1Parser(publicKeyBitString.valueBytes());
-      var publicKeySeq = publicKeyAsn.nextObject() as asn1lib.ASN1Sequence;
+      if (topLevelSeq is! asn1lib.ASN1Sequence ||
+          topLevelSeq.elements.length != 2) {
+        print('Invalid top-level sequence');
+        return null;
+      }
 
-      var modulus = publicKeySeq.elements[0] as asn1lib.ASN1Integer;
-      var exponent = publicKeySeq.elements[1] as asn1lib.ASN1Integer;
+      var publicKeyBitString = topLevelSeq.elements[1];
+      if (publicKeyBitString is! asn1lib.ASN1BitString) {
+        print('Second element is not an ASN1BitString');
+        return null;
+      }
 
-      return RSAPublicKey(
-        modulus.valueAsBigInteger,
-        exponent.valueAsBigInteger,
-      );
-    } catch (e) {
+      var publicKeyBytes = publicKeyBitString.valueBytes();
+      if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
+        print('Empty public key bytes');
+        return null;
+      }
+
+      // Skip the unused bits byte if present and unusedbits is 0
+      if (publicKeyBytes[0] == 0x00 && publicKeyBitString.unusedbits == 0) {
+        publicKeyBytes = publicKeyBytes.sublist(1);
+      }
+
+      var parser = asn1lib.ASN1Parser(publicKeyBytes);
+      var publicKeySeq = parser.nextObject();
+
+      if (publicKeySeq is! asn1lib.ASN1Sequence ||
+          publicKeySeq.elements.length < 2) {
+        print('Invalid RSAPublicKey sequence');
+        return null;
+      }
+
+      var modulusElement = publicKeySeq.elements[0];
+      var exponentElement = publicKeySeq.elements[1];
+
+      if (modulusElement is! asn1lib.ASN1Integer ||
+          exponentElement is! asn1lib.ASN1Integer) {
+        print('Modulus or exponent is not an ASN1Integer');
+        return null;
+      }
+
+      var modulus = modulusElement.valueAsBigInteger;
+      var exponent = exponentElement.valueAsBigInteger;
+
+      if (modulus == null || exponent == null) {
+        print('Null modulus or exponent');
+        return null;
+      }
+
+      return RSAPublicKey(modulus, exponent);
+    } catch (e, stackTrace) {
       print('Error parsing public key: $e');
+      print('Stack trace: $stackTrace');
       return null;
+    }
+  }
+
+  Uint8List _decodePEM(String pem) {
+    try {
+      if (pem.trim().isEmpty) {
+        throw FormatException('Empty PEM string');
+      }
+
+      String normalizedPem = pem
+          .replaceAll('\r\n', '\n')
+          .replaceAll('\r', '\n')
+          .trim();
+      int startMarkerStart = normalizedPem.indexOf('-----BEGIN');
+      if (startMarkerStart == -1) {
+        throw FormatException('Invalid PEM format: missing BEGIN marker');
+      }
+
+      int startMarkerEnd = normalizedPem.indexOf('-----', startMarkerStart + 5);
+      if (startMarkerEnd == -1) {
+        throw FormatException('Invalid PEM format: malformed BEGIN marker');
+      }
+
+      int endMarkerStart = normalizedPem.indexOf('-----END');
+      if (endMarkerStart == -1) {
+        throw FormatException('Invalid PEM format: missing END marker');
+      }
+
+      String base64Content = normalizedPem
+          .substring(startMarkerEnd + 5, endMarkerStart)
+          .trim();
+      base64Content = base64Content.replaceAll(RegExp(r'\s+'), '');
+
+      if (base64Content.isEmpty) {
+        throw FormatException('Invalid PEM format: empty content');
+      }
+
+      if (!RegExp(r'^[A-Za-z0-9+/]*={0,2}$').hasMatch(base64Content)) {
+        throw FormatException('Invalid PEM format: invalid base64 characters');
+      }
+
+      return base64.decode(base64Content);
+    } catch (e) {
+      print('PEM decode error: $e');
+      rethrow;
     }
   }
 
   RSAPrivateKey? _parsePrivateKey(String pemString) {
     try {
       final privateKeyDER = _decodePEM(pemString);
+      if (privateKeyDER.isEmpty) {
+        print('Empty DER data after PEM decoding');
+        return null;
+      }
+
       var asn1Parser = asn1lib.ASN1Parser(privateKeyDER);
-      var pkSeq = asn1Parser.nextObject() as asn1lib.ASN1Sequence;
+      var pkSeq = asn1Parser.nextObject();
 
-      var modulus =
-          (pkSeq.elements[1] as asn1lib.ASN1Integer).valueAsBigInteger;
-      var publicExponent =
-          (pkSeq.elements[2] as asn1lib.ASN1Integer).valueAsBigInteger;
-      var privateExponent =
-          (pkSeq.elements[3] as asn1lib.ASN1Integer).valueAsBigInteger;
-      var p = (pkSeq.elements[4] as asn1lib.ASN1Integer).valueAsBigInteger;
-      var q = (pkSeq.elements[5] as asn1lib.ASN1Integer).valueAsBigInteger;
+      if (pkSeq is! asn1lib.ASN1Sequence) {
+        print('Private key top level is not an ASN1Sequence');
+        return null;
+      }
 
-      return RSAPrivateKey(modulus, privateExponent, p, q);
-    } catch (e) {
+      // Check if this is PKCS#8 or PKCS#1 format
+      if (pkSeq.elements.length >= 9 &&
+          pkSeq.elements[0] is asn1lib.ASN1Integer) {
+        // Check first element - if it's 0, this might be PKCS#1
+        var firstElement = pkSeq.elements[0] as asn1lib.ASN1Integer;
+        if (firstElement.valueAsBigInteger == BigInt.zero &&
+            pkSeq.elements.length == 9) {
+          // PKCS#1 format
+          var modulus =
+              (pkSeq.elements[1] as asn1lib.ASN1Integer).valueAsBigInteger;
+          var publicExponent =
+              (pkSeq.elements[2] as asn1lib.ASN1Integer).valueAsBigInteger;
+          var privateExponent =
+              (pkSeq.elements[3] as asn1lib.ASN1Integer).valueAsBigInteger;
+          var p = (pkSeq.elements[4] as asn1lib.ASN1Integer).valueAsBigInteger;
+          var q = (pkSeq.elements[5] as asn1lib.ASN1Integer).valueAsBigInteger;
+
+          if (modulus == null ||
+              privateExponent == null ||
+              p == null ||
+              q == null) {
+            print('PKCS#1: Null key component');
+            return null;
+          }
+
+          return RSAPrivateKey(modulus, privateExponent, p, q);
+        }
+      }
+
+      // PKCS#8 format
+      if (pkSeq.elements.length >= 3) {
+        var privateKeyOctetString = pkSeq.elements[2];
+
+        if (privateKeyOctetString is! asn1lib.ASN1OctetString) {
+          print('PKCS#8: Third element is not an ASN1OctetString');
+          return null;
+        }
+
+        var privateKeyBytes = privateKeyOctetString.valueBytes();
+        if (privateKeyBytes == null || privateKeyBytes.isEmpty) {
+          print('PKCS#8: Empty private key bytes');
+          return null;
+        }
+
+        var privateKeyParser = asn1lib.ASN1Parser(privateKeyBytes);
+        var rsaPrivateKeySeq = privateKeyParser.nextObject();
+
+        if (rsaPrivateKeySeq is! asn1lib.ASN1Sequence) {
+          print('PKCS#8: RSA private key is not an ASN1Sequence');
+          return null;
+        }
+
+        if (rsaPrivateKeySeq.elements.length < 6) {
+          print('PKCS#8: Insufficient elements in RSA private key sequence');
+          return null;
+        }
+
+        var modulus = (rsaPrivateKeySeq.elements[1] as asn1lib.ASN1Integer)
+            .valueAsBigInteger;
+        var publicExponent =
+            (rsaPrivateKeySeq.elements[2] as asn1lib.ASN1Integer)
+                .valueAsBigInteger;
+        var privateExponent =
+            (rsaPrivateKeySeq.elements[3] as asn1lib.ASN1Integer)
+                .valueAsBigInteger;
+        var p = (rsaPrivateKeySeq.elements[4] as asn1lib.ASN1Integer)
+            .valueAsBigInteger;
+        var q = (rsaPrivateKeySeq.elements[5] as asn1lib.ASN1Integer)
+            .valueAsBigInteger;
+
+        if (modulus == null ||
+            privateExponent == null ||
+            p == null ||
+            q == null) {
+          print('PKCS#8: Null key component');
+          return null;
+        }
+
+        return RSAPrivateKey(modulus, privateExponent, p, q);
+      }
+
+      print('Unsupported private key format');
+      return null;
+    } catch (e, stackTrace) {
       print('Error parsing private key: $e');
+      print('Stack trace: $stackTrace');
       return null;
     }
   }
 
-  Uint8List _decodePEM(String pem) {
-    final startTag = pem.indexOf('-----BEGIN');
-    final endTag = pem.indexOf('-----END');
-    final base64String = pem
-        .substring(startTag, endTag)
-        .replaceAll(RegExp(r'-----[^-]*-----'), '')
-        .replaceAll(RegExp(r'\s+'), '');
-    return base64.decode(base64String);
-  }
+  // Uint8List _decodePEM(String pem) {
+  //   try {
+  //     if (pem.trim().isEmpty) {
+  //       throw FormatException('Empty PEM string');
+  //     }
+  //
+  //     // Normalize line endings and remove any extra whitespace
+  //     String normalizedPem = pem
+  //         .replaceAll('\r\n', '\n')
+  //         .replaceAll('\r', '\n')
+  //         .trim();
+  //
+  //     // Find the start and end markers
+  //     int startMarkerStart = normalizedPem.indexOf('-----BEGIN');
+  //     if (startMarkerStart == -1) {
+  //       throw FormatException('Invalid PEM format: missing BEGIN marker');
+  //     }
+  //
+  //     int startMarkerEnd = normalizedPem.indexOf('-----', startMarkerStart + 5);
+  //     if (startMarkerEnd == -1) {
+  //       throw FormatException('Invalid PEM format: malformed BEGIN marker');
+  //     }
+  //
+  //     int endMarkerStart = normalizedPem.indexOf('-----END');
+  //     if (endMarkerStart == -1) {
+  //       throw FormatException('Invalid PEM format: missing END marker');
+  //     }
+  //
+  //     // Extract the base64 content between the markers
+  //     String base64Content = normalizedPem
+  //         .substring(startMarkerEnd + 5, endMarkerStart)
+  //         .trim();
+  //
+  //     // Remove any whitespace and newlines from the base64 content
+  //     base64Content = base64Content.replaceAll(RegExp(r'\s+'), '');
+  //
+  //     if (base64Content.isEmpty) {
+  //       throw FormatException('Invalid PEM format: empty content');
+  //     }
+  //
+  //     // Validate base64 format
+  //     if (!RegExp(r'^[A-Za-z0-9+/]*={0,2}$').hasMatch(base64Content)) {
+  //       throw FormatException('Invalid PEM format: invalid base64 characters');
+  //     }
+  //
+  //     return base64.decode(base64Content);
+  //   } catch (e) {
+  //     print('PEM decode error: $e');
+  //     print('PEM content length: ${pem.length}');
+  //     print(
+  //       'PEM content preview: ${pem.length > 100 ? pem.substring(0, 100) + '...' : pem}',
+  //     );
+  //     rethrow;
+  //   }
+  // }
 }

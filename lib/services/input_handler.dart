@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
+import 'package:qrypt/services/rsa/rsa_key_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 import '../models/Qrypt.dart';
@@ -39,7 +41,7 @@ class InputHandler {
     }
   }
 
-  Qrypt handleEncrypt(Qrypt qrypt) {
+  Future<Qrypt> handleEncrypt(Qrypt qrypt) async {
     String? encryptedText = qrypt.text;
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
@@ -83,8 +85,29 @@ class InputHandler {
         qrypt.text = encryptedText;
         return qrypt;
       case EncryptionMethod.rsa:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        try {
+          // Check if a valid RSA public key is provided
+          if (qrypt.rsaReceiverPublicKey.isEmpty ||
+              qrypt.rsaReceiverPublicKey == "noPublicKey" ||
+              !qrypt.rsaReceiverPublicKey.contains("BEGIN PUBLIC KEY")) {
+            throw Exception('No valid RSA public key provided for encryption');
+          }
+
+          RSAKeyService rsa = RSAKeyService();
+          // Convert compressed bytes to string for RSA encryption
+          String textToEncrypt = base64.encode(qrypt.compressedText);
+          String encryptedResult = await rsa.encryptWithPublicKey(
+            textToEncrypt,
+            qrypt.rsaReceiverPublicKey,
+          );
+          qrypt.text = encryptedResult;
+          return qrypt;
+        } catch (e) {
+          if (kDebugMode) {
+            print('RSA encryption failed: $e');
+          }
+          throw Exception('RSA encryption failed: $e');
+        }
     }
   }
 
@@ -269,9 +292,9 @@ class InputHandler {
     }
   }
 
-  Qrypt handleProcess(Qrypt qrypt) {
+  Future<Qrypt> handleProcess(Qrypt qrypt) async {
     qrypt = handleCompression(qrypt);
-    qrypt = handleEncrypt(qrypt);
+    qrypt = await handleEncrypt(qrypt);
     qrypt.text = qrypt.tag + qrypt.text;
     qrypt = handleObfs(qrypt);
     return qrypt;
