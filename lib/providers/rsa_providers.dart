@@ -10,6 +10,10 @@ final rsaKeyPairsProvider = FutureProvider<List<RSAKeyPair>>((ref) async {
   return await service.getKeyPairs();
 });
 
-final selectedRSAKeyPairProvider = StateProvider<RSAKeyPair?>((ref) => null);
-
+final selectedRSAEncryptKeyPairProvider = StateProvider<RSAKeyPair?>(
+  (ref) => null,
+);
+final selectedRSADecryptKeyPairProvider = StateProvider<RSAKeyPair?>(
+  (ref) => null,
+);
 final senderPublicKeyProvider = StateProvider<String>((ref) => '');

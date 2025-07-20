@@ -1,5 +1,6 @@
 import 'package:asn1lib/asn1lib.dart';
 import 'package:encrypt/encrypt.dart' hide RSASigner;
+import 'package:flutter/foundation.dart' hide Key;
 import 'package:pointycastle/api.dart' hide Signer;
 import 'package:pointycastle/asymmetric/api.dart';
 import 'package:pointycastle/asymmetric/oaep.dart';
@@ -542,7 +543,9 @@ class RSAKeyService {
       }
       return await encryptLargeData(plaintext, keyPair.publicKey);
     } catch (e) {
-      print('Large data encryption with stored key error: $e');
+      if (kDebugMode) {
+        print('Large data encryption with stored key error: $e');
+      }
       rethrow;
     }
   }

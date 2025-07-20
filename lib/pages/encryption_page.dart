@@ -163,7 +163,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
-    final publicKey = ref.watch(publicKeyProvider);
     Future(() {
       ref.read(currentTextControllerProvider.notifier).state =
           _encryptTextController;
@@ -422,7 +421,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     const SizedBox(height: AppConstants.defaultPadding),
                     if (selectedEncryption == EncryptionMethod.rsa) ...[
                       // const SizedBox(height: AppConstants.defaultPadding),
-                      RSAKeySelector(primaryColor: primaryColor),
+                      RSAEncryptKeySelector(primaryColor: primaryColor),
                       const SizedBox(height: AppConstants.largePadding / 2),
                       TextField(
                         onChanged: (val) {
@@ -554,6 +553,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       selectedObfuscation: selectedObfuscation,
                       primaryColor: primaryColor,
                     ),
+                    const SizedBox(height: AppConstants.defaultPadding),
+                    if (selectedEncryption == EncryptionMethod.rsa) ...[
+                      // const SizedBox(height: AppConstants.defaultPadding),
+                      RSADecryptKeySelector(primaryColor: primaryColor),
+                    ],
                   ],
 
                   const SizedBox(height: AppConstants.largePadding),
@@ -731,6 +735,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: selectedCompression,
           useTag: false,
         );
+        if (selectedEncryption == EncryptionMethod.rsa) {
+          ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(
+            selectedRSADecryptKeyPairProvider,
+          )!;
+        }
         ref.read(processedDecryptProvider.notifier).state = await ih
             .handleDeProcess(ref.read(inputQryptProvider), false);
       } else {
@@ -772,7 +781,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       if (!defaultEncryption) {
         // Handle RSA encryption separately with proper validation
         if (selectedEncryption == EncryptionMethod.rsa) {
-          final selectedKeyPair = ref.read(selectedRSAKeyPairProvider);
+          final selectedKeyPair = ref.read(selectedRSAEncryptKeyPairProvider);
           final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
 
           // Validate RSA requirements
@@ -816,7 +825,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       } else {
         // Default encryption logic
         if (selectedEncryption == EncryptionMethod.rsa) {
-          final selectedKeyPair = ref.read(selectedRSAKeyPairProvider);
+          final selectedKeyPair = ref.read(selectedRSAEncryptKeyPairProvider);
           final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
 
           if (selectedKeyPair == null) {
@@ -829,8 +838,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
           ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
             text: _encryptTextController.text,
-            encryption:
-                selectedEncryption, // Use selected encryption instead of default
+            encryption: selectedEncryption,
+            // Use selected encryption instead of default
             obfuscation: ObfuscationMethod.en2,
             compression: CompressionMethod.brotli,
             useTag: true,
@@ -850,7 +859,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         if (kDebugMode) {
           print('created input qrypt');
           print(
-            'RSA Key Pair: ${ref.read(inputQryptProvider).rsaKeyPair?.name}',
+            'RSA Key Pair: ${ref.read(inputQryptProvider).rsaKeyPair.name}',
           );
           print(
             'RSA Public Key length: ${ref.read(inputQryptProvider).rsaReceiverPublicKey.length}',
