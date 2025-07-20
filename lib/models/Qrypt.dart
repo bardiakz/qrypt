@@ -47,9 +47,6 @@ class Qrypt {
   }) {
     // Validate RSA parameters
     if (encryption == EncryptionMethod.rsa) {
-      if (rsaKeyPair == null) {
-        throw ArgumentError('RSA key pair is required for RSA encryption');
-      }
       if (rsaReceiverPublicKey.isEmpty ||
           rsaReceiverPublicKey == 'noPublicKey') {
         throw ArgumentError(
@@ -95,8 +92,7 @@ class Qrypt {
       return true; // Not RSA, so RSA validation doesn't apply
     }
 
-    return rsaKeyPair != null &&
-        rsaReceiverPublicKey.isNotEmpty &&
+    return rsaReceiverPublicKey.isNotEmpty &&
         rsaReceiverPublicKey != 'noPublicKey' &&
         rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY');
   }

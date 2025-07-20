@@ -1,5 +1,4 @@
 import 'package:pointycastle/asymmetric/api.dart';
-import 'package:pointycastle/asymmetric/rsa.dart';
 import 'package:asn1lib/asn1lib.dart' as asn1lib;
 import 'dart:convert';
 import 'dart:typed_data';
@@ -33,7 +32,7 @@ RSAPublicKey? _parsePublicKey(String pemString) {
     }
 
     var publicKeyBytes = publicKeyBitString.valueBytes();
-    if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
+    if (publicKeyBytes.isEmpty) {
       print('Empty public key bytes');
       return null;
     }
@@ -75,11 +74,6 @@ RSAPublicKey? _parsePublicKey(String pemString) {
 
       var modulus = modulusElement.valueAsBigInteger;
       var exponent = exponentElement.valueAsBigInteger;
-
-      if (modulus == null || exponent == null) {
-        print('Null modulus or exponent');
-        return null;
-      }
 
       print('Modulus: $modulus');
       print('Exponent: $exponent');
