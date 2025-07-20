@@ -1,3 +1,5 @@
+import 'package:encrypt/encrypt.dart' hide SecureRandom, Signer;
+import 'package:flutter/foundation.dart';
 import 'package:pointycastle/asymmetric/oaep.dart';
 import 'package:pointycastle/asymmetric/rsa.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
@@ -20,20 +22,28 @@ class RSAKeyService {
 
   // Delegate storage operations to the storage service
   Future<List<RSAKeyPair>> getKeyPairs() => _storageService.getKeyPairs();
+
   Future<void> saveKeyPair(RSAKeyPair keyPair) =>
       _storageService.saveKeyPair(keyPair);
+
   Future<void> deleteKeyPair(String id) => _storageService.deleteKeyPair(id);
+
   Future<void> updateKeyPair(RSAKeyPair updatedKeyPair) =>
       _storageService.updateKeyPair(updatedKeyPair);
+
   Future<RSAKeyPair?> getKeyPairById(String id) =>
       _storageService.getKeyPairById(id);
+
   Future<void> clearAllKeyPairs() => _storageService.clearAllKeyPairs();
 
   // Additional storage convenience methods
   Future<bool> keyPairExists(String id) => _storageService.keyPairExists(id);
+
   Future<int> getKeyPairsCount() => _storageService.getKeyPairsCount();
+
   Future<bool> keyPairNameExists(String name) =>
       _storageService.keyPairNameExists(name);
+
   Future<List<RSAKeyPair>> searchKeyPairsByName(String searchTerm) =>
       _storageService.searchKeyPairsByName(searchTerm);
 
@@ -553,69 +563,84 @@ class RSAKeyService {
   //     return null;
   //   }
   // }
+  // RSAPublicKey? _parsePublicKey(String pemString) {
+  //   try {
+  //     final publicKeyDER = _decodePEM(pemString);
+  //     if (publicKeyDER.isEmpty) {
+  //       print('Empty DER data after PEM decoding');
+  //       return null;
+  //     }
+  //
+  //     var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
+  //     var topLevelSeq = asn1Parser.nextObject();
+  //
+  //     if (topLevelSeq is! asn1lib.ASN1Sequence ||
+  //         topLevelSeq.elements.length != 2) {
+  //       print('Invalid top-level sequence');
+  //       return null;
+  //     }
+  //
+  //     var publicKeyBitString = topLevelSeq.elements[1];
+  //     if (publicKeyBitString is! asn1lib.ASN1BitString) {
+  //       print('Second element is not an ASN1BitString');
+  //       return null;
+  //     }
+  //
+  //     var publicKeyBytes = publicKeyBitString.valueBytes();
+  //     if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
+  //       print('Empty public key bytes');
+  //       return null;
+  //     }
+  //
+  //     // Skip the unused bits byte if present and unusedbits is 0
+  //     if (publicKeyBytes[0] == 0x00 && publicKeyBitString.unusedbits == 0) {
+  //       publicKeyBytes = publicKeyBytes.sublist(1);
+  //     }
+  //
+  //     var parser = asn1lib.ASN1Parser(publicKeyBytes);
+  //     var publicKeySeq = parser.nextObject();
+  //
+  //     if (publicKeySeq is! asn1lib.ASN1Sequence ||
+  //         publicKeySeq.elements.length < 2) {
+  //       print('Invalid RSAPublicKey sequence');
+  //       return null;
+  //     }
+  //
+  //     var modulusElement = publicKeySeq.elements[0];
+  //     var exponentElement = publicKeySeq.elements[1];
+  //
+  //     if (modulusElement is! asn1lib.ASN1Integer ||
+  //         exponentElement is! asn1lib.ASN1Integer) {
+  //       print('Modulus or exponent is not an ASN1Integer');
+  //       return null;
+  //     }
+  //
+  //     var modulus = modulusElement.valueAsBigInteger;
+  //     var exponent = exponentElement.valueAsBigInteger;
+  //
+  //     if (modulus == null || exponent == null) {
+  //       print('Null modulus or exponent');
+  //       return null;
+  //     }
+  //
+  //     return RSAPublicKey(modulus, exponent);
+  //   } catch (e, stackTrace) {
+  //     print('Error parsing public key: $e');
+  //     print('Stack trace: $stackTrace');
+  //     return null;
+  //   }
+  // }
   RSAPublicKey? _parsePublicKey(String pemString) {
     try {
-      final publicKeyDER = _decodePEM(pemString);
-      if (publicKeyDER.isEmpty) {
-        print('Empty DER data after PEM decoding');
-        return null;
+      final parser = RSAKeyParser();
+      final key = parser.parse(pemString);
+      if (key is RSAPublicKey) {
+        return key;
       }
-
-      var asn1Parser = asn1lib.ASN1Parser(publicKeyDER);
-      var topLevelSeq = asn1Parser.nextObject();
-
-      if (topLevelSeq is! asn1lib.ASN1Sequence ||
-          topLevelSeq.elements.length != 2) {
-        print('Invalid top-level sequence');
-        return null;
-      }
-
-      var publicKeyBitString = topLevelSeq.elements[1];
-      if (publicKeyBitString is! asn1lib.ASN1BitString) {
-        print('Second element is not an ASN1BitString');
-        return null;
-      }
-
-      var publicKeyBytes = publicKeyBitString.valueBytes();
-      if (publicKeyBytes == null || publicKeyBytes.isEmpty) {
-        print('Empty public key bytes');
-        return null;
-      }
-
-      // Skip the unused bits byte if present and unusedbits is 0
-      if (publicKeyBytes[0] == 0x00 && publicKeyBitString.unusedbits == 0) {
-        publicKeyBytes = publicKeyBytes.sublist(1);
-      }
-
-      var parser = asn1lib.ASN1Parser(publicKeyBytes);
-      var publicKeySeq = parser.nextObject();
-
-      if (publicKeySeq is! asn1lib.ASN1Sequence ||
-          publicKeySeq.elements.length < 2) {
-        print('Invalid RSAPublicKey sequence');
-        return null;
-      }
-
-      var modulusElement = publicKeySeq.elements[0];
-      var exponentElement = publicKeySeq.elements[1];
-
-      if (modulusElement is! asn1lib.ASN1Integer ||
-          exponentElement is! asn1lib.ASN1Integer) {
-        print('Modulus or exponent is not an ASN1Integer');
-        return null;
-      }
-
-      var modulus = modulusElement.valueAsBigInteger;
-      var exponent = exponentElement.valueAsBigInteger;
-
-      if (modulus == null || exponent == null) {
-        print('Null modulus or exponent');
-        return null;
-      }
-
-      return RSAPublicKey(modulus, exponent);
+      print('Parsed key is not an RSAPublicKey');
+      return null;
     } catch (e, stackTrace) {
-      print('Error parsing public key: $e');
+      print('Error parsing public key with encrypt: $e');
       print('Stack trace: $stackTrace');
       return null;
     }
@@ -670,7 +695,9 @@ class RSAKeyService {
     try {
       final privateKeyDER = _decodePEM(pemString);
       if (privateKeyDER.isEmpty) {
-        print('Empty DER data after PEM decoding');
+        if (kDebugMode) {
+          print('Empty DER data after PEM decoding');
+        }
         return null;
       }
 
@@ -678,7 +705,9 @@ class RSAKeyService {
       var pkSeq = asn1Parser.nextObject();
 
       if (pkSeq is! asn1lib.ASN1Sequence) {
-        print('Private key top level is not an ASN1Sequence');
+        if (kDebugMode) {
+          print('Private key top level is not an ASN1Sequence');
+        }
         return null;
       }
 
@@ -699,14 +728,6 @@ class RSAKeyService {
           var p = (pkSeq.elements[4] as asn1lib.ASN1Integer).valueAsBigInteger;
           var q = (pkSeq.elements[5] as asn1lib.ASN1Integer).valueAsBigInteger;
 
-          if (modulus == null ||
-              privateExponent == null ||
-              p == null ||
-              q == null) {
-            print('PKCS#1: Null key component');
-            return null;
-          }
-
           return RSAPrivateKey(modulus, privateExponent, p, q);
         }
       }
@@ -716,13 +737,17 @@ class RSAKeyService {
         var privateKeyOctetString = pkSeq.elements[2];
 
         if (privateKeyOctetString is! asn1lib.ASN1OctetString) {
-          print('PKCS#8: Third element is not an ASN1OctetString');
+          if (kDebugMode) {
+            print('PKCS#8: Third element is not an ASN1OctetString');
+          }
           return null;
         }
 
         var privateKeyBytes = privateKeyOctetString.valueBytes();
-        if (privateKeyBytes == null || privateKeyBytes.isEmpty) {
-          print('PKCS#8: Empty private key bytes');
+        if (privateKeyBytes.isEmpty) {
+          if (kDebugMode) {
+            print('PKCS#8: Empty private key bytes');
+          }
           return null;
         }
 
@@ -730,12 +755,16 @@ class RSAKeyService {
         var rsaPrivateKeySeq = privateKeyParser.nextObject();
 
         if (rsaPrivateKeySeq is! asn1lib.ASN1Sequence) {
-          print('PKCS#8: RSA private key is not an ASN1Sequence');
+          if (kDebugMode) {
+            print('PKCS#8: RSA private key is not an ASN1Sequence');
+          }
           return null;
         }
 
         if (rsaPrivateKeySeq.elements.length < 6) {
-          print('PKCS#8: Insufficient elements in RSA private key sequence');
+          if (kDebugMode) {
+            print('PKCS#8: Insufficient elements in RSA private key sequence');
+          }
           return null;
         }
 
@@ -752,22 +781,20 @@ class RSAKeyService {
         var q = (rsaPrivateKeySeq.elements[5] as asn1lib.ASN1Integer)
             .valueAsBigInteger;
 
-        if (modulus == null ||
-            privateExponent == null ||
-            p == null ||
-            q == null) {
-          print('PKCS#8: Null key component');
-          return null;
-        }
-
         return RSAPrivateKey(modulus, privateExponent, p, q);
       }
 
-      print('Unsupported private key format');
+      if (kDebugMode) {
+        print('Unsupported private key format');
+      }
       return null;
     } catch (e, stackTrace) {
-      print('Error parsing private key: $e');
-      print('Stack trace: $stackTrace');
+      if (kDebugMode) {
+        print('Error parsing private key: $e');
+      }
+      if (kDebugMode) {
+        print('Stack trace: $stackTrace');
+      }
       return null;
     }
   }
