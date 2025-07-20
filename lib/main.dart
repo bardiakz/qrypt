@@ -1,21 +1,26 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
-
-void main() async{
+void main() async {
   await dotenv.load();
   Obfuscate.setAllMaps();
-  if(!(Platform.isAndroid || Platform.isIOS)){
+  if (!(Platform.isAndroid || Platform.isIOS)) {
     Compression.setNativeLibPaths();
   }
   TagManager.initializeTags();
+  if (kDebugMode) {
+    final storage = FlutterSecureStorage();
+    await storage.deleteAll(); // Wipe all secure data in debug mode
+  }
 
   runApp(ProviderScope(child: const MyApp()));
 }
@@ -23,10 +28,8 @@ void main() async{
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       title: 'Qrypt',
       theme: ThemeData(
@@ -46,4 +49,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

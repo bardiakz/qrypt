@@ -449,9 +449,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
                     ],
-
-                    const SizedBox(height: AppConstants.largePadding),
                   ],
+                  const SizedBox(height: AppConstants.largePadding),
 
                   SizedBox(
                     width: double.infinity,
