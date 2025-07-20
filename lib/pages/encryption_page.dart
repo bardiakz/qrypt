@@ -435,10 +435,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             );
                             ref.read(publicKeyProvider.notifier).state =
                                 normalized;
-                            if (kDebugMode) {
-                              print('Saved normalized public key: $normalized');
-                              print('Key code units: ${normalized.codeUnits}');
-                            }
+                            // if (kDebugMode) {
+                            //   print('Saved normalized public key: $normalized');
+                            //   print('Key code units: ${normalized.codeUnits}');
+                            // }
                           } catch (e) {
                             if (kDebugMode) {
                               print('Error normalizing public key: $e');
