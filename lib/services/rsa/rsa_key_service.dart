@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:asn1lib/asn1lib.dart';
 import 'package:encrypt/encrypt.dart' hide RSASigner;
 import 'package:flutter/foundation.dart' hide Key;
@@ -572,6 +574,42 @@ class RSAKeyService {
       return await decryptLargeData(encryptedPackage, keyPair.privateKey);
     } catch (e) {
       print('Large data decryption with stored key error: $e');
+      rethrow;
+    }
+  }
+
+  /// Normalizes a PEM string by standardizing line endings and removing invalid characters
+  String _normalizePem(String pem) {
+    try {
+      // Remove leading/trailing whitespace and normalize line endings to \n
+      String normalized = pem.trim().replaceAll(RegExp(r'\r\n|\r|\n'), '\n');
+
+      // Ensure PEM has correct header and footer
+      if (!normalized.startsWith('-----BEGIN PUBLIC KEY-----\n') &&
+          !normalized.startsWith('-----BEGIN PRIVATE KEY-----\n')) {
+        throw FormatException('Missing PEM header');
+      }
+      if (!normalized.endsWith('\n-----END PUBLIC KEY-----') &&
+          !normalized.endsWith('\n-----END PRIVATE KEY-----')) {
+        throw FormatException('Missing PEM footer');
+      }
+
+      // Extract base64 content and validate
+      final lines = normalized.split('\n');
+      final base64Lines = lines
+          .where(
+            (line) =>
+                !line.startsWith('-----BEGIN') &&
+                !line.endsWith('-----END-----'),
+          )
+          .join('');
+      if (!RegExp(r'^[A-Za-z0-9+/=]+$').hasMatch(base64Lines)) {
+        throw FormatException('Invalid base64 content in PEM');
+      }
+
+      return normalized;
+    } catch (e) {
+      print('PEM normalization error: $e');
       rethrow;
     }
   }
