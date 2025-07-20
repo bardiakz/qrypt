@@ -764,13 +764,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           )!;
         }
         ref.read(processedDecryptProvider.notifier).state = await ih
-            .handleDeProcess(ref.read(inputQryptProvider), false);
+            .handleDeProcess(context, ref.read(inputQryptProvider), false);
       } else {
         ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
           text: _decryptTextController.text,
         );
         ref.read(processedDecryptProvider.notifier).state = await ih
-            .handleDeProcess(ref.read(inputQryptProvider), true);
+            .handleDeProcess(context, ref.read(inputQryptProvider), true);
       }
     } catch (e) {
       if (mounted) {
