@@ -731,18 +731,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: selectedCompression,
           useTag: false,
         );
-        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(
-          ref.read(inputQryptProvider),
-          false,
-        );
+        ref.read(processedDecryptProvider.notifier).state = await ih
+            .handleDeProcess(ref.read(inputQryptProvider), false);
       } else {
         ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
           text: _decryptTextController.text,
         );
-        ref.read(processedDecryptProvider.notifier).state = ih.handleDeProcess(
-          ref.read(inputQryptProvider),
-          true,
-        );
+        ref.read(processedDecryptProvider.notifier).state = await ih
+            .handleDeProcess(ref.read(inputQryptProvider), true);
       }
     } catch (e) {
       if (mounted) {
