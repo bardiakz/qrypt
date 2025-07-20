@@ -125,6 +125,9 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
       if (_useManualInput) {
         if (_publicKeyController.text.trim().isEmpty ||
             _privateKeyController.text.trim().isEmpty) {
+          setState(() {
+            _isGenerating = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please enter both public and private keys'),
@@ -137,6 +140,9 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
           _publicKeyController.text,
           _privateKeyController.text,
         )) {
+          setState(() {
+            _isGenerating = false;
+          });
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Invalid key pair')));
@@ -172,9 +178,11 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
         );
       }
     } finally {
-      setState(() {
-        _isGenerating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isGenerating = false;
+        });
+      }
     }
   }
 }

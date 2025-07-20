@@ -90,7 +90,7 @@ class InputHandler {
           // Check if a valid RSA public key is provided
           if (qrypt.rsaReceiverPublicKey.isEmpty ||
               qrypt.rsaReceiverPublicKey == "noPublicKey" ||
-              !qrypt.rsaReceiverPublicKey.contains("BEGIN PUBLIC KEY")) {
+              !qrypt.rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY')) {
             throw Exception('No valid RSA public key provided for encryption');
           }
 
@@ -256,49 +256,9 @@ class InputHandler {
         return qrypt;
       case EncryptionMethod.rsa:
         try {
-          qrypt.rsaKeyPair = RSAKeyPair(
-            id: '',
-            name: '',
-            publicKey: '',
-            privateKey: '''-----BEGIN PRIVATE KEY-----
-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
------END PRIVATE KEY-----''',
-            createdAt: DateTime.now(),
-          );
           // Check if a valid RSA private key is provided
-          if (qrypt.rsaKeyPair!.privateKey.isEmpty ||
-              qrypt.rsaKeyPair!.privateKey == "noPrivateKey" ||
-              !qrypt.rsaKeyPair!.privateKey.contains("BEGIN PRIVATE KEY")) {
+          if (qrypt.rsaKeyPair.privateKey.isEmpty ||
+              qrypt.rsaKeyPair.privateKey == "noPrivateKey") {
             throw Exception('No valid RSA private key provided for decryption');
           }
 
@@ -306,7 +266,7 @@ AJPXheOKta1w/K3JUV1ThbRnFuC1uDhBcPvJ9nbFY0PLUP+PXEMLAVNOlxST5LOK
           // Decrypt the RSA encrypted text
           String decryptedResult = await rsa.decryptWithPrivateKey(
             qrypt.text,
-            qrypt.rsaKeyPair!.privateKey,
+            qrypt.rsaKeyPair.privateKey,
           );
 
           // The decrypted result is base64 encoded compressed data

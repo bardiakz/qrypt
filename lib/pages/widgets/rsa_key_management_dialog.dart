@@ -116,7 +116,11 @@ class RSAKeyManagementDialog extends ConsumerWidget {
   }
 
   void _showImportKeyDialog(BuildContext context, WidgetRef ref) {
-    // Implement import dialog
+    Navigator.of(context).pop();
+    showDialog(
+      context: context,
+      builder: (context) => CreateRSAKeyDialog(primaryColor: primaryColor),
+    );
   }
 
   void _deleteKeyPair(BuildContext context, WidgetRef ref, String keyId) async {
@@ -160,8 +164,6 @@ class RSAKeyManagementDialog extends ConsumerWidget {
   }
 
   void _exportKeyPair(BuildContext context, RSAKeyPair keyPair) {
-    // Implement export functionality
-    // You might want to show the keys in a copyable format
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

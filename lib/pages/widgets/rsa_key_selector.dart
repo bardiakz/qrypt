@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qrypt/pages/widgets/rsa_key_management_dialog.dart';
 
 import '../../models/rsa_key_pair.dart';
 import '../../providers/rsa_providers.dart';
 import 'create_rsa_key_dialog.dart';
+import 'rsa_key_management_dialog.dart';
+
+enum RSAKeyType { encrypt, decrypt }
 
 class RSAKeySelector extends ConsumerWidget {
   final Color primaryColor;
+  final RSAKeyType keyType;
+  final String title;
 
-  const RSAKeySelector({super.key, required this.primaryColor});
+  const RSAKeySelector({
+    super.key,
+    required this.primaryColor,
+    required this.keyType,
+    this.title = 'RSA Key Pair',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keyPairsAsync = ref.watch(rsaKeyPairsProvider);
-    final selectedKeyPair = ref.watch(selectedRSAKeyPairProvider);
+    final selectedKeyPair = ref.watch(_getSelectedProvider());
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -29,9 +38,12 @@ class RSAKeySelector extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'RSA Key Pair',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               IconButton(
                 onPressed: () => _showKeyManagementDialog(context, ref),
@@ -87,8 +99,7 @@ class RSAKeySelector extends ConsumerWidget {
                 currentSelectedKeyPair = deduplicatedKeyPairs.first;
                 // Update the provider to reflect this default selection
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ref.read(selectedRSAKeyPairProvider.notifier).state =
-                      deduplicatedKeyPairs.first;
+                  _updateSelectedProvider(ref, deduplicatedKeyPairs.first);
                 });
               }
 
@@ -111,7 +122,9 @@ class RSAKeySelector extends ConsumerWidget {
                   );
                 }).toList(),
                 onChanged: (keyPair) {
-                  ref.read(selectedRSAKeyPairProvider.notifier).state = keyPair;
+                  if (keyPair != null) {
+                    _updateSelectedProvider(ref, keyPair);
+                  }
                 },
               );
             },
@@ -121,6 +134,28 @@ class RSAKeySelector extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  // Get the appropriate provider based on key type
+  StateProvider<RSAKeyPair?> _getSelectedProvider() {
+    switch (keyType) {
+      case RSAKeyType.encrypt:
+        return selectedRSAEncryptKeyPairProvider;
+      case RSAKeyType.decrypt:
+        return selectedRSADecryptKeyPairProvider;
+    }
+  }
+
+  // Update the appropriate provider based on key type
+  void _updateSelectedProvider(WidgetRef ref, RSAKeyPair keyPair) {
+    switch (keyType) {
+      case RSAKeyType.encrypt:
+        ref.read(selectedRSAEncryptKeyPairProvider.notifier).state = keyPair;
+        break;
+      case RSAKeyType.decrypt:
+        ref.read(selectedRSADecryptKeyPairProvider.notifier).state = keyPair;
+        break;
+    }
   }
 
   void _showKeyManagementDialog(BuildContext context, WidgetRef ref) {
@@ -134,6 +169,36 @@ class RSAKeySelector extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => CreateRSAKeyDialog(primaryColor: primaryColor),
+    );
+  }
+}
+
+class RSAEncryptKeySelector extends StatelessWidget {
+  final Color primaryColor;
+
+  const RSAEncryptKeySelector({super.key, required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return RSAKeySelector(
+      primaryColor: primaryColor,
+      keyType: RSAKeyType.encrypt,
+      title: 'RSA Key Pair (Encrypt)',
+    );
+  }
+}
+
+class RSADecryptKeySelector extends StatelessWidget {
+  final Color primaryColor;
+
+  const RSADecryptKeySelector({super.key, required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return RSAKeySelector(
+      primaryColor: primaryColor,
+      keyType: RSAKeyType.decrypt,
+      title: 'RSA Key Pair (Decrypt)',
     );
   }
 }
