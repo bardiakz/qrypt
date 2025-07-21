@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../providers/resource_providers.dart';
+import '../providers/rsa_providers.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -22,14 +26,14 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Security Section
-          _buildSectionHeader('Security'),
-          _buildSecuritySettings(context, ref),
-          const SizedBox(height: 24),
+          // _buildSectionHeader('Security'),
+          // _buildSecuritySettings(context, ref),
+          // const SizedBox(height: 24),
 
           // Data Management Section
-          _buildSectionHeader('Data Management'),
-          _buildDataManagementSettings(context, ref),
-          const SizedBox(height: 24),
+          // _buildSectionHeader('Data Management'),
+          // _buildDataManagementSettings(context, ref),
+          // const SizedBox(height: 24),
 
           // About Section
           _buildSectionHeader('About'),
@@ -67,34 +71,32 @@ class SettingsPage extends ConsumerWidget {
             title: const Text('App Theme'),
             subtitle: const Text('Choose your preferred theme'),
             trailing: DropdownButton<String>(
-              value: 'System', // TODO: Connect to theme provider
+              value: ref.watch(themeModeProvider).label,
               items: const [
                 DropdownMenuItem(value: 'Light', child: Text('Light')),
                 DropdownMenuItem(value: 'Dark', child: Text('Dark')),
                 DropdownMenuItem(value: 'System', child: Text('System')),
               ],
               onChanged: (value) {
-                // TODO: Implement theme change logic
+                switch (value) {
+                  case 'Light':
+                    ref
+                        .read(themeModeProvider.notifier)
+                        .setTheme(ThemeMode.light);
+                  case 'Dark':
+                    ref
+                        .read(themeModeProvider.notifier)
+                        .setTheme(ThemeMode.dark);
+                  case 'System':
+                    ref
+                        .read(themeModeProvider.notifier)
+                        .setTheme(ThemeMode.system);
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Theme changed to $value')),
                 );
               },
             ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.color_lens_outlined),
-            title: const Text('Accent Color'),
-            subtitle: const Text('Customize app accent color'),
-            trailing: CircleAvatar(
-              radius: 12,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-            onTap: () {
-              // TODO: Implement color picker
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Color picker coming soon')),
-              );
-            },
           ),
         ],
       ),
@@ -105,97 +107,56 @@ class SettingsPage extends ConsumerWidget {
     return Card(
       child: Column(
         children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.fingerprint),
-            title: const Text('Biometric Lock'),
-            subtitle: const Text('Use fingerprint/face unlock'),
-            value: true,
-            // TODO: Connect to security provider
-            onChanged: (value) {
-              // TODO: Implement biometric toggle
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Biometric lock ${value ? 'enabled' : 'disabled'}',
-                  ),
-                ),
-              );
-            },
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.lock_clock),
-            title: const Text('Auto Lock'),
-            subtitle: const Text('Lock app when backgrounded'),
-            value: false,
-            // TODO: Connect to security provider
-            onChanged: (value) {
-              // TODO: Implement auto lock toggle
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Auto lock ${value ? 'enabled' : 'disabled'}'),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.timer),
-            title: const Text('Auto Lock Timeout'),
-            subtitle: const Text('5 minutes'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Show timeout selector
-              _showTimeoutDialog(context);
-            },
-          ),
+          // SwitchListTile(
+          //   secondary: const Icon(Icons.fingerprint),
+          //   title: const Text('Biometric Lock'),
+          //   subtitle: const Text('Use fingerprint/face unlock'),
+          //   value: true,
+          //   // TODO: Connect to security provider
+          //   onChanged: (value) {
+          //     // TODO: Implement biometric toggle
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       SnackBar(
+          //         content: Text(
+          //           'Biometric lock ${value ? 'enabled' : 'disabled'}',
+          //         ),
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );
   }
 
-  Widget _buildDataManagementSettings(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.backup),
-            title: const Text('Export Data'),
-            subtitle: const Text('Export your encrypted data'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Implement data export
-              _showExportDialog(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.restore),
-            title: const Text('Import Data'),
-            subtitle: const Text('Import from backup file'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Implement data import
-              _showImportDialog(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.sync),
-            title: const Text('Sync Settings'),
-            subtitle: const Text('Configure data synchronization'),
-            trailing: Switch(
-              value: false, // TODO: Connect to sync provider
-              onChanged: (value) {
-                // TODO: Implement sync toggle
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Sync ${value ? 'enabled' : 'disabled'}'),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildDataManagementSettings(BuildContext context, WidgetRef ref) {
+  //   return Card(
+  //     child: Column(
+  //       children: [
+  //         ListTile(
+  //           leading: const Icon(Icons.backup),
+  //           title: const Text('Export Data'),
+  //           subtitle: const Text('Export your encrypted data'),
+  //           trailing: const Icon(Icons.chevron_right),
+  //           onTap: () {
+  //             // TODO: Implement data export
+  //             _showExportDialog(context);
+  //           },
+  //         ),
+  //         ListTile(
+  //           leading: const Icon(Icons.restore),
+  //           title: const Text('Import Data'),
+  //           subtitle: const Text('Import from backup file'),
+  //           trailing: const Icon(Icons.chevron_right),
+  //           onTap: () {
+  //             // TODO: Implement data import
+  //             _showImportDialog(context);
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildAboutSettings(BuildContext context, WidgetRef ref) {
     return Card(
@@ -204,7 +165,7 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),
-            subtitle: const Text('1.0.0 (Build 1)'),
+            subtitle: const Text('v2.5.5 (Build 8)'),
             // TODO: Get from package info
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
@@ -218,8 +179,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const Text('View source code and contribute'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
-              // TODO: Replace with actual GitHub URL
-              const url = 'https://github.com/username/qrypt';
+              const url = 'https://github.com/bardiakz/qrypt';
               if (await canLaunchUrl(Uri.parse(url))) {
                 await launchUrl(Uri.parse(url));
               } else {
@@ -240,7 +200,7 @@ class SettingsPage extends ConsumerWidget {
             trailing: const Icon(Icons.open_in_new),
             onTap: () async {
               // TODO: Replace with actual issues URL
-              const url = 'https://github.com/username/qrypt/issues';
+              const url = 'https://github.com/bardiakz/qrypt/issues';
               if (await canLaunchUrl(Uri.parse(url))) {
                 await launchUrl(Uri.parse(url));
               } else {
@@ -254,20 +214,10 @@ class SettingsPage extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
-            title: const Text('Privacy Policy'),
+            title: const Text('Disclaimer'),
             trailing: const Icon(Icons.open_in_new),
             onTap: () {
-              // TODO: Show privacy policy
               _showPrivacyDialog(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.gavel_outlined),
-            title: const Text('Terms of Service'),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () {
-              // TODO: Show terms of service
-              _showTermsDialog(context);
             },
           ),
         ],
@@ -289,19 +239,7 @@ class SettingsPage extends ConsumerWidget {
             subtitle: const Text('This action cannot be undone'),
             trailing: Icon(Icons.chevron_right, color: Colors.red.shade700),
             onTap: () {
-              _showClearDataDialog(context);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.red.shade700),
-            title: Text(
-              'Sign Out',
-              style: TextStyle(color: Colors.red.shade700),
-            ),
-            subtitle: const Text('Sign out of your account'),
-            trailing: Icon(Icons.chevron_right, color: Colors.red.shade700),
-            onTap: () {
-              _showSignOutDialog(context);
+              _showClearDataDialog(context, ref);
             },
           ),
         ],
@@ -447,10 +385,7 @@ class SettingsPage extends ConsumerWidget {
         title: const Text('Privacy Policy'),
         content: const SingleChildScrollView(
           child: Text(
-            'Your privacy is important to us. This app stores all data locally '
-            'and uses end-to-end encryption. No data is sent to external servers '
-            'without your explicit consent.\n\n'
-            'For the full privacy policy, please visit our website.',
+            'This tool is for educational and legitimate use cases only. Users are responsible for compliance with local laws and regulations regarding encryption and data protection.',
           ),
         ),
         actions: [
@@ -463,29 +398,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _showTermsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'By using this app, you agree to use it responsibly and in accordance '
-            'with all applicable laws. The app is provided "as is" without warranty.\n\n'
-            'For the full terms of service, please visit our website.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showClearDataDialog(BuildContext context) {
+  void _showClearDataDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -503,7 +416,7 @@ class SettingsPage extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _confirmClearData(context);
+              _confirmClearData(context, ref);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -516,7 +429,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _confirmClearData(BuildContext context) {
+  void _confirmClearData(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -532,7 +445,9 @@ class SettingsPage extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement clear data logic
+              final storage = FlutterSecureStorage();
+              storage.deleteAll();
+              ref.refresh(rsaKeyPairsProvider);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Data cleared successfully')),
               );
@@ -542,32 +457,6 @@ class SettingsPage extends ConsumerWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement sign out logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Signed out successfully')),
-              );
-            },
-            child: const Text('Sign Out'),
           ),
         ],
       ),

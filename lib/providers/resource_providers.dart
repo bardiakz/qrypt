@@ -15,3 +15,32 @@ final currentTextControllerProvider = StateProvider<TextEditingController>(
 );
 
 final isDarkModeProvider = StateProvider<bool>((ref) => false);
+
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.light);
+
+  void toggleTheme() {
+    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  }
+
+  void setTheme(ThemeMode mode) {
+    state = mode;
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+  (ref) => ThemeModeNotifier(),
+);
+
+extension ThemeModeLabel on ThemeMode {
+  String get label {
+    switch (this) {
+      case ThemeMode.system:
+        return 'System';
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+    }
+  }
+}

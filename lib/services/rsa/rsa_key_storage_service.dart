@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../models/rsa_key_pair.dart';
@@ -136,7 +137,9 @@ class RSAKeyStorageService {
       );
       return keyPairs;
     } catch (e) {
-      print('Error sorting key pairs: $e');
+      if (kDebugMode) {
+        print('Error sorting key pairs: $e');
+      }
       return [];
     }
   }
@@ -146,7 +149,9 @@ class RSAKeyStorageService {
     try {
       await _storage.delete(key: _keyPairsKey);
     } catch (e) {
-      print('Error clearing key pairs: $e');
+      if (kDebugMode) {
+        print('Error clearing key pairs: $e');
+      }
       rethrow;
     }
   }
@@ -157,7 +162,9 @@ class RSAKeyStorageService {
       final keyPairs = await getKeyPairs();
       return jsonEncode(keyPairs.map((kp) => kp.toJson()).toList());
     } catch (e) {
-      print('Error exporting key pairs: $e');
+      if (kDebugMode) {
+        print('Error exporting key pairs: $e');
+      }
       rethrow;
     }
   }
@@ -196,7 +203,9 @@ class RSAKeyStorageService {
       );
       await _storage.write(key: _keyPairsKey, value: keyPairsJson);
     } catch (e) {
-      print('Error saving key pairs list: $e');
+      if (kDebugMode) {
+        print('Error saving key pairs list: $e');
+      }
       rethrow;
     }
   }
