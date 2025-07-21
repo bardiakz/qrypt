@@ -707,6 +707,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                             )
                                             .state =
                                         normalized;
+                                    decryptPublicKeyGlobal = normalized;
                                     // if (kDebugMode) {
                                     //   print('Saved normalized public key: $normalized');
                                     //   print('Key code units: ${normalized.codeUnits}');
@@ -741,7 +742,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                       : (RegExp(
                                               r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
                                             ).hasMatch(
-                                              ref.watch(publicKeyProvider),
+                                              ref.watch(
+                                                decryptPublicKeyProvider,
+                                              ),
                                             )
                                             ? null
                                             : 'Invalid PEM format'),
@@ -1076,7 +1079,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           compression: selectedCompression,
           useTag: false,
         );
-        if (selectedEncryption == EncryptionMethod.rsa) {
+        if (selectedEncryption == EncryptionMethod.rsa ||
+            selectedEncryption == EncryptionMethod.rsaSign) {
           ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(
             selectedRSADecryptKeyPairProvider,
           )!;
