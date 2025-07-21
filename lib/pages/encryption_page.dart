@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
+import '../models/rsa_key_pair.dart';
 import '../providers/resource_providers.dart';
 import '../services/input_handler.dart';
 
@@ -420,9 +420,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       primaryColor: primaryColor,
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
-                    if (selectedEncryption == EncryptionMethod.rsa) ...[
+                    if (selectedEncryption == EncryptionMethod.rsa ||
+                        selectedEncryption == EncryptionMethod.rsaSign) ...[
                       // const SizedBox(height: AppConstants.defaultPadding),
-                      RSAEncryptKeySelector(primaryColor: primaryColor),
+                      selectedEncryption == EncryptionMethod.rsaSign
+                          ? RSAEncryptKeySelector(primaryColor: primaryColor)
+                          : SizedBox.shrink(),
+
                       const SizedBox(height: AppConstants.largePadding / 2),
                       TextField(
                         onChanged: (val) {
@@ -732,56 +736,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
-  void _decrypt(
-    bool autoDetectTag,
-    EncryptionMethod selectedEncryption,
-    ObfuscationMethod selectedObfuscation,
-    CompressionMethod selectedCompression,
-  ) async {
-    // Input validation
-    if (_decryptTextController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter text to decrypt')),
-      );
-      return;
-    }
-
-    ref.read(isProcessingProvider.notifier).state = true;
-
-    try {
-      if (!autoDetectTag) {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-          text: _decryptTextController.text,
-          encryption: selectedEncryption,
-          obfuscation: selectedObfuscation,
-          compression: selectedCompression,
-          useTag: false,
-        );
-        if (selectedEncryption == EncryptionMethod.rsa) {
-          ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(
-            selectedRSADecryptKeyPairProvider,
-          )!;
-        }
-        ref.read(processedDecryptProvider.notifier).state = await ih
-            .handleDeProcess(context, ref.read(inputQryptProvider), false);
-      } else {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
-          text: _decryptTextController.text,
-        );
-        ref.read(processedDecryptProvider.notifier).state = await ih
-            .handleDeProcess(context, ref.read(inputQryptProvider), true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Decryption failed: ${e.toString()}')),
-        );
-      }
-    } finally {
-      ref.read(isProcessingProvider.notifier).state = false;
-    }
-  }
-
   void _encrypt(
     bool defaultEncryption,
     EncryptionMethod selectedEncryption,
@@ -801,15 +755,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
     try {
       if (!defaultEncryption) {
+        final bool isRsaSign = selectedEncryption == EncryptionMethod.rsaSign;
         // Handle RSA encryption separately with proper validation
-        if (selectedEncryption == EncryptionMethod.rsa) {
+        if (selectedEncryption == EncryptionMethod.rsa || isRsaSign) {
           final selectedKeyPair = ref.read(selectedRSAEncryptKeyPairProvider);
-          String rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
-
-          // Validate RSA requirements
-          if (selectedKeyPair == null) {
-            throw Exception('Please select an RSA key pair');
+          if (selectedEncryption == EncryptionMethod.rsaSign) {
+            if (selectedKeyPair == null) {
+              throw Exception('Please select an RSA key pair');
+            }
           }
+
+          String rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
 
           if (rsaReceiversPublicKey.isEmpty) {
             throw Exception('Please enter the receiver\'s public key');
@@ -828,7 +784,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             obfuscation: selectedObfuscation,
             compression: selectedCompression,
             useTag: useTagManually,
-            rsaKeyPair: selectedKeyPair,
+            rsaKeyPair:
+                selectedKeyPair ??
+                RSAKeyPair(
+                  id: 'n',
+                  name: 'n',
+                  publicKey: 'n',
+                  privateKey: 'n',
+                  createdAt: DateTime.now(),
+                ),
             rsaReceiverPublicKey: rsaReceiversPublicKey,
           );
         } else {
@@ -895,6 +859,56 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Encryption failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      ref.read(isProcessingProvider.notifier).state = false;
+    }
+  }
+
+  void _decrypt(
+    bool autoDetectTag,
+    EncryptionMethod selectedEncryption,
+    ObfuscationMethod selectedObfuscation,
+    CompressionMethod selectedCompression,
+  ) async {
+    // Input validation
+    if (_decryptTextController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter text to decrypt')),
+      );
+      return;
+    }
+
+    ref.read(isProcessingProvider.notifier).state = true;
+
+    try {
+      if (!autoDetectTag) {
+        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+          text: _decryptTextController.text,
+          encryption: selectedEncryption,
+          obfuscation: selectedObfuscation,
+          compression: selectedCompression,
+          useTag: false,
+        );
+        if (selectedEncryption == EncryptionMethod.rsa) {
+          ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(
+            selectedRSADecryptKeyPairProvider,
+          )!;
+        }
+        ref.read(processedDecryptProvider.notifier).state = await ih
+            .handleDeProcess(context, ref.read(inputQryptProvider), false);
+      } else {
+        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
+          text: _decryptTextController.text,
+        );
+        ref.read(processedDecryptProvider.notifier).state = await ih
+            .handleDeProcess(context, ref.read(inputQryptProvider), true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Decryption failed: ${e.toString()}')),
         );
       }
     } finally {

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
@@ -125,8 +126,60 @@ class InputHandler {
           throw Exception('RSA encryption failed: $e');
         }
       case EncryptionMethod.rsaSign:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        try {
+          if (qrypt.rsaReceiverPublicKey.isEmpty ||
+              qrypt.rsaReceiverPublicKey == 'noPublicKey' ||
+              !qrypt.rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY')) {
+            throw Exception('No valid RSA public key provided for encryption');
+          }
+          if (kDebugMode) {
+            print('this is private key: ${qrypt.rsaKeyPair.privateKey}');
+          }
+          final normalizedPrivateKey = qrypt.rsaKeyPair.privateKey
+              .trim()
+              .replaceAll(RegExp(r'\r\n|\r|\n'), '\n');
+          if (normalizedPrivateKey.isEmpty ||
+              normalizedPrivateKey == 'n' ||
+              !normalizedPrivateKey.contains('BEGIN PRIVATE KEY')) {
+            throw Exception('No valid RSA private key provided for encryption');
+          }
+
+          RSAKeyService rsa = RSAKeyService();
+
+          String textToEncrypt = base64.encode(qrypt.compressedText);
+          final String signedText = await rsa.signWithPrivateKey(
+            textToEncrypt,
+            normalizedPrivateKey,
+          );
+
+          String encryptedResult = await rsa.encryptWithPublicKey(
+            signedText,
+            qrypt.rsaReceiverPublicKey,
+          );
+
+          //Convert RSA result to appropriate format for obfuscation
+          if (usesMappedObfuscation) {
+            // Convert base64 RSA result to hex for mapped obfuscations
+            Uint8List rsaBytes = base64.decode(encryptedResult);
+            qrypt.text = rsaBytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join('');
+          } else if (usesBase64Obfuscation) {
+            // For b64 obfuscation, decode base64 to raw string
+            Uint8List rsaBytes = base64.decode(encryptedResult);
+            qrypt.text = String.fromCharCodes(rsaBytes);
+          } else {
+            // For other obfuscations, keep as base64
+            qrypt.text = encryptedResult;
+          }
+
+          return qrypt;
+        } catch (e) {
+          if (kDebugMode) {
+            print('RSA+Sign encryption failed: $e');
+          }
+          throw Exception('RSA+Sign encryption failed: $e');
+        }
     }
   }
 
