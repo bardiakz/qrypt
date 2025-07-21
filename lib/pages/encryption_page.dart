@@ -19,6 +19,7 @@ import '../services/input_handler.dart';
 class AppConstants {
   static const double defaultPadding = 16.0;
   static const double smallPadding = 8.0;
+  static const double verySmallPadding = 4.0;
   static const double largePadding = 24.0;
   static const double xlargePadding = 32.0;
   static const double borderRadius = 12.0;
@@ -172,7 +173,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     return SafeArea(
       child: Scaffold(
         body: Padding(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          padding: const EdgeInsets.only(
+            left: 2,
+            right: 2,
+            top: 4,
+            bottom: AppConstants.smallPadding,
+          ),
           child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) {
               const double sensitivity = 100.0; // Adjust sensitivity as needed
@@ -192,24 +198,41 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             },
             child: ListView(
               children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: AppConstants.defaultPadding,
+                Row(
+                  children: [
+                    Expanded(child: Container()),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: AppConstants.defaultPadding,
+                        ),
+                        child: modeSwitch(
+                          appMode,
+                          primaryColor,
+                          ref,
+                          _encryptTextController,
+                          _decryptTextController,
+                        ),
+                      ),
                     ),
-                    child: modeSwitch(
-                      appMode,
-                      primaryColor,
-                      ref,
-                      _encryptTextController,
-                      _decryptTextController,
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: Icon(Icons.settings),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.only(left: 2, top: 18),
+                  padding: const EdgeInsets.only(
+                    left: AppConstants.defaultPadding + 2,
+                    top: 18,
+                    right: AppConstants.defaultPadding,
+                  ),
                   child: Row(
                     children: [
                       const Text(
@@ -296,189 +319,238 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ),
                 ),
 
-                TextField(
-                  onChanged: (text) {
-                    ref.read(inputTextProvider.notifier).state = text;
-                  },
-                  controller: isEncryptMode
-                      ? _encryptTextController
-                      : _decryptTextController,
-                  maxLines: AppConstants.maxInputLines,
-                  decoration: InputDecoration(
-                    hintText: "Enter or paste text...",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.defaultPadding,
+                  ),
+                  child: TextField(
+                    onChanged: (text) {
+                      ref.read(inputTextProvider.notifier).state = text;
+                    },
+                    controller: isEncryptMode
+                        ? _encryptTextController
+                        : _decryptTextController,
+                    maxLines: AppConstants.maxInputLines,
+                    decoration: InputDecoration(
+                      hintText: "Enter or paste text...",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: primaryColor,
+                          width: AppConstants.borderWidth,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
-                      ),
-                      borderSide: BorderSide(
-                        color: primaryColor,
-                        width: AppConstants.borderWidth,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
                   ),
                 ),
 
                 const SizedBox(height: AppConstants.largePadding),
 
                 if (isEncryptMode) ...[
-                  Container(
-                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
-                      ),
-                      border: Border.all(color: Colors.grey[300]!),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.defaultPadding,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Use Default Encryption",
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Switch(
-                          thumbColor: WidgetStateProperty.all(Colors.white),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return primaryColor;
-                            }
-                            return Colors.grey.shade300;
-                          }),
-                          value: defaultEncryption,
-                          onChanged: (val) =>
-                              ref
-                                      .read(defaultEncryptionProvider.notifier)
-                                      .state =
-                                  val,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!defaultEncryption) ...[
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Container(
+                    child: Container(
                       padding: const EdgeInsets.all(
                         AppConstants.defaultPadding,
                       ),
                       decoration: BoxDecoration(
-                        color: useTagManually
-                            ? primaryColor.withOpacity(0.1)
-                            : Colors.grey[100],
+                        color: Colors.grey[50],
                         borderRadius: BorderRadius.circular(
                           AppConstants.borderRadius,
                         ),
-                        border: Border.all(
-                          color: useTagManually
-                              ? primaryColor.withOpacity(0.3)
-                              : Colors.grey[300]!,
-                        ),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              "Include Tag",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
+                          const Text(
+                            "Use Default Encryption",
+                            style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Switch(
-                            value: useTagManually,
+                            thumbColor: WidgetStateProperty.all(Colors.white),
+                            trackColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
+                              if (states.contains(WidgetState.selected)) {
+                                return primaryColor;
+                              }
+                              return Colors.grey.shade300;
+                            }),
+                            value: defaultEncryption,
                             onChanged: (val) =>
-                                ref.read(useTagProvider.notifier).state = val,
-                            activeColor: primaryColor,
+                                ref
+                                        .read(
+                                          defaultEncryptionProvider.notifier,
+                                        )
+                                        .state =
+                                    val,
                           ),
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    CompressionsDropdownButtonForm(
-                      selectedCompression: selectedCompression,
-                      primaryColor: primaryColor,
+                  ),
+                  if (!defaultEncryption) ...[
+                    const SizedBox(height: AppConstants.smallPadding),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: useTagManually
+                              ? primaryColor.withOpacity(0.1)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.borderRadius,
+                          ),
+                          border: Border.all(
+                            color: useTagManually
+                                ? primaryColor.withOpacity(0.3)
+                                : Colors.grey[300]!,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                "Include Tag",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: useTagManually,
+                              onChanged: (val) =>
+                                  ref.read(useTagProvider.notifier).state = val,
+                              activeColor: primaryColor,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: AppConstants.defaultPadding),
-                    EncryptionsDropdownButtonForm(
-                      selectedEncryption: selectedEncryption,
-                      primaryColor: primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: CompressionsDropdownButtonForm(
+                        selectedCompression: selectedCompression,
+                        primaryColor: primaryColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppConstants.defaultPadding),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: EncryptionsDropdownButtonForm(
+                        selectedEncryption: selectedEncryption,
+                        primaryColor: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
-                    ObfsDropdownButtonForm(
-                      selectedObfuscation: selectedObfuscation,
-                      primaryColor: primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: ObfsDropdownButtonForm(
+                        selectedObfuscation: selectedObfuscation,
+                        primaryColor: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
                     if (selectedEncryption == EncryptionMethod.rsa ||
                         selectedEncryption == EncryptionMethod.rsaSign) ...[
                       // const SizedBox(height: AppConstants.defaultPadding),
                       selectedEncryption == EncryptionMethod.rsaSign
-                          ? RSAEncryptKeySelector(primaryColor: primaryColor)
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppConstants.defaultPadding,
+                              ),
+                              child: RSAEncryptKeySelector(
+                                primaryColor: primaryColor,
+                              ),
+                            )
                           : SizedBox.shrink(),
 
                       const SizedBox(height: AppConstants.largePadding / 2),
-                      TextField(
-                        onChanged: (val) {
-                          try {
-                            // Normalize the input PEM string
-                            String normalized = val.trim().replaceAll(
-                              RegExp(r'\r\n|\r|\n'),
-                              '\n',
-                            );
-                            ref.read(publicKeyProvider.notifier).state =
-                                normalized;
-                            // if (kDebugMode) {
-                            //   print('Saved normalized public key: $normalized');
-                            //   print('Key code units: ${normalized.codeUnits}');
-                            // }
-                          } catch (e) {
-                            if (kDebugMode) {
-                              print('Error normalizing public key: $e');
-                            }
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Public Key',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppConstants.borderRadius,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppConstants.borderRadius,
-                            ),
-                            borderSide: BorderSide(
-                              color: primaryColor,
-                              width: AppConstants.borderWidth,
-                            ),
-                          ),
-                          errorText: ref.watch(publicKeyProvider).isEmpty
-                              ? null
-                              : (RegExp(
-                                      r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                    ).hasMatch(ref.watch(publicKeyProvider))
-                                    ? null
-                                    : 'Invalid PEM format'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
                         ),
-                        maxLines: 4,
+                        child: TextField(
+                          onChanged: (val) {
+                            try {
+                              // Normalize the input PEM string
+                              String normalized = val.trim().replaceAll(
+                                RegExp(r'\r\n|\r|\n'),
+                                '\n',
+                              );
+                              ref.read(publicKeyProvider.notifier).state =
+                                  normalized;
+                              // if (kDebugMode) {
+                              //   print('Saved normalized public key: $normalized');
+                              //   print('Key code units: ${normalized.codeUnits}');
+                              // }
+                            } catch (e) {
+                              if (kDebugMode) {
+                                print('Error normalizing public key: $e');
+                              }
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Public Key',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                              borderSide: BorderSide(
+                                color: primaryColor,
+                                width: AppConstants.borderWidth,
+                              ),
+                            ),
+                            errorText: ref.watch(publicKeyProvider).isEmpty
+                                ? null
+                                : (RegExp(
+                                        r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                      ).hasMatch(ref.watch(publicKeyProvider))
+                                      ? null
+                                      : 'Invalid PEM format'),
+                          ),
+                          maxLines: 4,
+                        ),
                       ),
                     ],
                   ],
                   const SizedBox(height: AppConstants.largePadding),
 
-                  SizedBox(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.defaultPadding,
+                    ),
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: isProcessing
@@ -530,64 +602,99 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
                   ),
                 ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
-                      ),
-                      border: Border.all(color: Colors.grey[300]!),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.defaultPadding,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Auto-detect Settings (from Tag)",
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                    child: Container(
+                      padding: const EdgeInsets.all(
+                        AppConstants.defaultPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
                         ),
-                        Switch(
-                          thumbColor: WidgetStateProperty.all(Colors.white),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) {
-                              return primaryColor;
-                            }
-                            return Colors.grey.shade300;
-                          }),
-                          value: autoDetectTag,
-                          onChanged: (val) =>
-                              ref.read(autoDetectTagProvider.notifier).state =
-                                  val,
-                        ),
-                      ],
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Auto-detect Settings (from Tag)",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          Switch(
+                            thumbColor: WidgetStateProperty.all(Colors.white),
+                            trackColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
+                              if (states.contains(WidgetState.selected)) {
+                                return primaryColor;
+                              }
+                              return Colors.grey.shade300;
+                            }),
+                            value: autoDetectTag,
+                            onChanged: (val) =>
+                                ref.read(autoDetectTagProvider.notifier).state =
+                                    val,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
                   if (!autoDetectTag) ...[
                     const SizedBox(height: AppConstants.defaultPadding),
-                    CompressionsDropdownButtonForm(
-                      selectedCompression: selectedCompression,
-                      primaryColor: primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: CompressionsDropdownButtonForm(
+                        selectedCompression: selectedCompression,
+                        primaryColor: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
-                    EncryptionsDropdownButtonForm(
-                      selectedEncryption: selectedEncryption,
-                      primaryColor: primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: EncryptionsDropdownButtonForm(
+                        selectedEncryption: selectedEncryption,
+                        primaryColor: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
-                    ObfsDropdownButtonForm(
-                      selectedObfuscation: selectedObfuscation,
-                      primaryColor: primaryColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: ObfsDropdownButtonForm(
+                        selectedObfuscation: selectedObfuscation,
+                        primaryColor: primaryColor,
+                      ),
                     ),
                     const SizedBox(height: AppConstants.defaultPadding),
-                    if (selectedEncryption == EncryptionMethod.rsa) ...[
+                    if (selectedEncryption == EncryptionMethod.rsa ||
+                        selectedEncryption == EncryptionMethod.rsaSign) ...[
                       // const SizedBox(height: AppConstants.defaultPadding),
-                      RSADecryptKeySelector(primaryColor: primaryColor),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: RSADecryptKeySelector(
+                          primaryColor: primaryColor,
+                        ),
+                      ),
                     ],
                   ],
 
                   const SizedBox(height: AppConstants.largePadding),
-                  SizedBox(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.defaultPadding,
+                    ),
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: isProcessing
@@ -640,9 +747,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ],
 
                 const SizedBox(height: AppConstants.xlargePadding),
-                const Divider(),
                 Padding(
-                  padding: const EdgeInsets.only(left: 2, bottom: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.defaultPadding,
+                  ),
+                  child: const Divider(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppConstants.defaultPadding + 2,
+                    bottom: 5,
+                    right: AppConstants.defaultPadding,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -709,25 +825,31 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ],
                   ),
                 ),
-                Container(
-                  height: screenHeight * AppConstants.outputHeightRatio,
-                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                  constraints: const BoxConstraints(minHeight: 120),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.borderRadius,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.defaultPadding,
+                  ),
+                  child: Container(
+                    height: screenHeight * AppConstants.outputHeightRatio,
+                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                    constraints: const BoxConstraints(minHeight: 120),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.borderRadius,
+                      ),
+                    ),
+                    child: SelectableText(
+                      isEncryptMode
+                          ? ref.watch(processedEncryptProvider).text
+                          : ref.watch(processedDecryptProvider).text,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                  child: SelectableText(
-                    isEncryptMode
-                        ? ref.watch(processedEncryptProvider).text
-                        : ref.watch(processedDecryptProvider).text,
-                    style: const TextStyle(fontSize: 16),
-                  ),
                 ),
+                SizedBox(height: AppConstants.defaultPadding),
               ],
             ),
           ),
