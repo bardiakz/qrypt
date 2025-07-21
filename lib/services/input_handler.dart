@@ -124,6 +124,9 @@ class InputHandler {
           }
           throw Exception('RSA encryption failed: $e');
         }
+      case EncryptionMethod.rsaSign:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -309,6 +312,9 @@ class InputHandler {
           }
           throw Exception('RSA decryption failed: $e');
         }
+      case EncryptionMethod.rsaSign:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
