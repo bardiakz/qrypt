@@ -16,4 +16,6 @@ final selectedRSAEncryptKeyPairProvider = StateProvider<RSAKeyPair?>(
 final selectedRSADecryptKeyPairProvider = StateProvider<RSAKeyPair?>(
   (ref) => null,
 );
-final senderPublicKeyProvider = StateProvider<String>((ref) => '');
+final receiverPublicKeyProvider = StateProvider<String>((ref) => 'n');
+final decryptPublicKeyProvider = StateProvider<String>((ref) => 'n');
+String decryptPublicKeyGlobal = 'n';

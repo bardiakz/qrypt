@@ -1,19 +1,25 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/providers/resource_providers.dart';
 import '../../models/rsa_key_pair.dart';
+import '../../providers/encryption_providers.dart';
 import '../../providers/rsa_providers.dart';
+import '../encryption_page.dart';
 import 'create_rsa_key_dialog.dart';
 
 class RSAKeySelectionDialog extends ConsumerStatefulWidget {
   final Color primaryColor;
   final String title;
   final String message;
+  final bool publicKeyRequired;
 
   const RSAKeySelectionDialog({
     super.key,
     required this.primaryColor,
     this.title = 'Select RSA Key Pair',
     this.message = 'Please select an RSA key pair to use for decryption.',
+    required this.publicKeyRequired,
   });
 
   @override
@@ -164,9 +170,59 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                 ),
               ),
             ),
+            widget.publicKeyRequired
+                ? TextField(
+                    onChanged: (val) {
+                      try {
+                        // Normalize the input PEM string
+                        String normalized = val.trim().replaceAll(
+                          RegExp(r'\r\n|\r|\n'),
+                          '\n',
+                        );
+                        ref.read(decryptPublicKeyProvider.notifier).state =
+                            normalized;
+                        decryptPublicKeyGlobal = normalized;
+                        // if (kDebugMode) {
+                        //   print('Saved normalized public key: $normalized');
+                        //   print('Key code units: ${normalized.codeUnits}');
+                        // }
+                      } catch (e) {
+                        if (kDebugMode) {
+                          print('Error normalizing public key: $e');
+                        }
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Public Key',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
+                        borderSide: BorderSide(
+                          color: widget.primaryColor,
+                          width: AppConstants.borderWidth,
+                        ),
+                      ),
+                      errorText: ref.watch(decryptPublicKeyProvider).isEmpty
+                          ? null
+                          : (RegExp(
+                                  r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                ).hasMatch(ref.watch(publicKeyProvider))
+                                ? null
+                                : 'Invalid PEM format'),
+                    ),
+                    maxLines: 4,
+                  )
+                : const SizedBox.shrink(),
           ],
         ),
       ),
+
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -248,6 +304,7 @@ Future<RSAKeyPair?> showRSAKeySelectionDialog({
   required Color primaryColor,
   String title = 'Select RSA Key Pair',
   String message = 'Please select an RSA key pair to use for decryption.',
+  required bool publicKeyRequired,
 }) {
   return showDialog<RSAKeyPair>(
     context: context,
@@ -256,6 +313,7 @@ Future<RSAKeyPair?> showRSAKeySelectionDialog({
       primaryColor: primaryColor,
       title: title,
       message: message,
+      publicKeyRequired: publicKeyRequired,
     ),
   );
 }

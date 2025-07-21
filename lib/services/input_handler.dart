@@ -12,6 +12,7 @@ import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
 import '../pages/widgets/RSA_key_selection_dialog.dart';
+import '../providers/rsa_providers.dart';
 import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
@@ -132,9 +133,7 @@ class InputHandler {
               !qrypt.rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY')) {
             throw Exception('No valid RSA public key provided for encryption');
           }
-          if (kDebugMode) {
-            print('this is private key: ${qrypt.rsaKeyPair.privateKey}');
-          }
+
           final normalizedPrivateKey = qrypt.rsaKeyPair.privateKey
               .trim()
               .replaceAll(RegExp(r'\r\n|\r|\n'), '\n');
@@ -145,18 +144,26 @@ class InputHandler {
           }
 
           RSAKeyService rsa = RSAKeyService();
-
           String textToEncrypt = base64.encode(qrypt.compressedText);
 
           // First sign the data
-          final String signedText = await rsa.signWithPrivateKey(
+          final String signature = await rsa.signWithPrivateKey(
             textToEncrypt,
             normalizedPrivateKey,
           );
 
-          // Then encrypt using hybrid encryption
+          // Create a package containing both original data and signature
+          final Map<String, String> signedPackage = {
+            'data': textToEncrypt,
+            'signature': signature,
+          };
+
+          // Convert to JSON string
+          final String packageJson = jsonEncode(signedPackage);
+
+          // Then encrypt the entire package using hybrid encryption
           Map<String, String> encryptedPackage = await rsa.encryptLargeData(
-            signedText,
+            packageJson,
             qrypt.rsaReceiverPublicKey,
           );
 
@@ -166,7 +173,6 @@ class InputHandler {
 
           // Convert RSA result to appropriate format for obfuscation
           if (usesMappedObfuscation) {
-            // Convert base64 RSA result to hex for mapped obfuscations
             Uint8List rsaBytes = base64.decode(
               base64.encode(utf8.encode(encryptedResult)),
             );
@@ -174,10 +180,8 @@ class InputHandler {
                 .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
                 .join('');
           } else if (usesBase64Obfuscation) {
-            // For b64 obfuscation, use the encrypted result as raw string
             qrypt.text = encryptedResult;
           } else {
-            // For other obfuscations, encode as base64
             qrypt.text = base64.encode(utf8.encode(encryptedResult));
           }
 
@@ -280,7 +284,7 @@ class InputHandler {
     }
   }
 
-  Future<Qrypt> handleDecrypt(Qrypt qrypt) async {
+  Future<Qrypt> handleDecrypt(Qrypt qrypt, BuildContext buildContext) async {
     bool usesMappedObfuscation = [
       ObfuscationMethod.en1,
       ObfuscationMethod.en2,
@@ -374,16 +378,19 @@ class InputHandler {
         }
       case EncryptionMethod.rsaSign:
         try {
-          // Check if valid RSA keys are provided
+          qrypt.rsaSenderPublicKey = decryptPublicKeyGlobal;
+
+          // Validate keys
           if (qrypt.rsaKeyPair.privateKey.isEmpty ||
-              qrypt.rsaKeyPair.privateKey == "noPrivateKey" ||
+              qrypt.rsaKeyPair.privateKey == 'noPrivateKey' ||
               !qrypt.rsaKeyPair.privateKey.contains('BEGIN PRIVATE KEY')) {
             throw Exception('No valid RSA private key provided for decryption');
           }
 
-          if (qrypt.rsaReceiverPublicKey.isEmpty ||
-              qrypt.rsaReceiverPublicKey == "noPublicKey" ||
-              !qrypt.rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY')) {
+          if (qrypt.rsaSenderPublicKey.isEmpty ||
+              qrypt.rsaSenderPublicKey == 'noPublicKey' ||
+              !qrypt.rsaSenderPublicKey.contains('BEGIN PUBLIC KEY') ||
+              qrypt.rsaSenderPublicKey == 'n') {
             throw Exception(
               'No valid RSA public key provided for signature verification',
             );
@@ -391,8 +398,23 @@ class InputHandler {
 
           RSAKeyService rsa = RSAKeyService();
 
-          // Parse the hybrid encryption format: encryptedData:encryptedKey:iv
-          List<String> parts = parseByColon(qrypt.text);
+          // Convert obfuscated text back to encrypted format
+          String rsaInputText;
+          if (usesMappedObfuscation) {
+            List<int> bytes = [];
+            for (int i = 0; i < qrypt.text.length; i += 2) {
+              String hexByte = qrypt.text.substring(i, i + 2);
+              bytes.add(int.parse(hexByte, radix: 16));
+            }
+            rsaInputText = utf8.decode(bytes);
+          } else if (usesBase64Obfuscation) {
+            rsaInputText = qrypt.text;
+          } else {
+            rsaInputText = utf8.decode(base64.decode(qrypt.text));
+          }
+
+          // Parse the hybrid encryption format
+          List<String> parts = parseByColon(rsaInputText);
           if (parts.length != 3) {
             throw FormatException(
               'Invalid RSA+Sign hybrid encryption format. Expected format: encryptedData:encryptedKey:iv',
@@ -406,44 +428,51 @@ class InputHandler {
             'iv': parts[2],
           };
 
-          // First decrypt the data using hybrid decryption
-          String decryptedSignedText = await rsa.decryptLargeData(
+          // Decrypt the package
+          String decryptedPackageJson = await rsa.decryptLargeData(
             encryptedPackage,
             qrypt.rsaKeyPair.privateKey,
           );
 
-          // The decrypted text should contain the signature and original data
-          // Parse the signed data format (this depends on how signWithPrivateKey formats the output)
-          // Assuming the signed data is in base64 format
+          // Parse the JSON package
+          Map<String, dynamic> signedPackage = jsonDecode(decryptedPackageJson);
+          String originalData = signedPackage['data'];
+          String signature = signedPackage['signature'];
 
-          // For now, we'll extract the original data from the signed text
-          // This might need adjustment based on your specific signing implementation
-          String originalData;
+          // Verify the signature
+          bool isSignatureValid = await rsa.verifyWithPublicKey(
+            originalData,
+            signature,
+            qrypt.rsaSenderPublicKey,
+          );
 
-          try {
-            // Try to verify the signature and extract the original message
-            // This is a simplified approach - you might need to modify based on your signing format
-
-            // If the signed text contains both signature and data, parse them
-            // For this example, assuming the signed text is the original message that was signed
-            originalData = decryptedSignedText;
-
-            // Optional: Verify signature if you have the signature separate
-            // bool isSignatureValid = await rsa.verifyWithPublicKey(
-            //   originalData,
-            //   signature,
-            //   qrypt.rsaReceiverPublicKey,
-            // );
-            //
-            // if (!isSignatureValid) {
-            //   throw Exception('Signature verification failed');
-            // }
-          } catch (verificationError) {
+          if (isSignatureValid) {
             if (kDebugMode) {
-              print('Signature verification warning: $verificationError');
+              print('Signature verification successful ✓');
             }
-            // Still proceed with decryption even if signature verification fails
-            originalData = decryptedSignedText;
+            if (buildContext.mounted) {
+              ScaffoldMessenger.of(buildContext).showSnackBar(
+                const SnackBar(
+                  content: Text('Signature verification successful ✓'),
+                ),
+              );
+            }
+          } else {
+            if (kDebugMode) {
+              print(
+                '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
+              );
+            }
+            if (buildContext.mounted) {
+              ScaffoldMessenger.of(buildContext).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
+                  ),
+                ),
+              );
+            }
+            // throw Exception('Signature verification failed - data integrity compromised');
           }
 
           // The original data is base64 encoded compressed data
@@ -507,7 +536,7 @@ class InputHandler {
     Color primaryColor = Colors.blue;
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
-      qrypt = await handleDecrypt(qrypt);
+      qrypt = await handleDecrypt(qrypt, context);
       qrypt = handleDeCompression(qrypt);
     } else {
       String? tag = TagManager.matchedTag(qrypt.text);
@@ -515,28 +544,34 @@ class InputHandler {
         qrypt.text = 'Invalid tag format';
         // throw FormatException('Invalid tag format');
       } else {
-        print('tag is $tag');
+        if (kDebugMode) {
+          print('tag is $tag');
+        }
         qrypt.text = qrypt.text.substring(tag.length);
-        print('tag removed text: ${qrypt.text}');
+        if (kDebugMode) {
+          print('tag removed text: ${qrypt.text}');
+        }
         final methods = TagManager.getMethodsFromTag(tag);
         qrypt.obfuscation = methods!.obfuscation;
         qrypt.encryption = methods.encryption;
         qrypt.compression = methods.compression;
         qrypt = handleDeObfs(qrypt);
-        if (qrypt.encryption == EncryptionMethod.rsa) {
+        if (qrypt.encryption == EncryptionMethod.rsa ||
+            qrypt.encryption == EncryptionMethod.rsaSign) {
           final selectedKeyPair = await showRSAKeySelectionDialog(
             context: context,
             primaryColor: primaryColor,
             title: 'Select Decryption Key',
             message:
                 'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
+            publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
           );
           if (selectedKeyPair == null) {
             throw Exception('Decryption cancelled: No key pair selected');
           }
           qrypt.rsaKeyPair = selectedKeyPair;
         }
-        qrypt = await handleDecrypt(qrypt);
+        qrypt = await handleDecrypt(qrypt, context);
         qrypt = handleDeCompression(qrypt);
       }
     }
@@ -546,9 +581,11 @@ class InputHandler {
   static List<String> parseByColon(String input) {
     List<String> parts;
     parts = input.split(':');
-    print(
-      'parsed the text with size ${parts.length} : ${parts[0]} and ${parts[1]} ',
-    );
+    if (kDebugMode) {
+      print(
+        'parsed the text with size ${parts.length} : ${parts[0]} and ${parts[1]} ',
+      );
+    }
     return input.split(':');
   }
 }
