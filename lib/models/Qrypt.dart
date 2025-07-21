@@ -21,6 +21,7 @@ class Qrypt {
     createdAt: DateTime.now(),
   );
   String rsaReceiverPublicKey = 'noPublicKey';
+  String rsaSenderPublicKey = 'noPublicKey';
   bool useTag = false;
   String tag = '';
 
