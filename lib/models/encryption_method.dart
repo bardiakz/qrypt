@@ -2,7 +2,7 @@ abstract class Encryption {
   String get tag;
 }
 
-enum EncryptionMethod { none, aesCbc, aesCtr, aesGcm, rsa }
+enum EncryptionMethod { none, aesCbc, aesCtr, aesGcm, rsa, rsaSign }
 
 extension EncryptionMethodName on EncryptionMethod {
   String get displayName {
@@ -16,7 +16,10 @@ extension EncryptionMethodName on EncryptionMethod {
       case EncryptionMethod.aesGcm:
         return 'AES-GCM';
       case EncryptionMethod.rsa:
-        return 'RSA';
+        return 'RSA-OAEP-SHA1';
+      case EncryptionMethod.rsaSign:
+        return 'RSA-PSS256-OAEP1 (with sign)';
+        throw UnimplementedError();
     }
   }
 }
