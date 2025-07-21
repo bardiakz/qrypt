@@ -40,6 +40,8 @@ class EncryptionPage extends ConsumerStatefulWidget {
 class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _encryptTextController = TextEditingController();
   final _decryptTextController = TextEditingController();
+  final _encryptPublicKeyController = TextEditingController();
+  final _decryptPublicKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
 
   @override
@@ -497,6 +499,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           horizontal: AppConstants.defaultPadding,
                         ),
                         child: TextField(
+                          controller: _encryptPublicKeyController,
                           onChanged: (val) {
                             try {
                               // Normalize the input PEM string
@@ -694,6 +697,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 horizontal: AppConstants.defaultPadding,
                               ),
                               child: TextField(
+                                controller: _decryptPublicKeyController,
                                 onChanged: (val) {
                                   try {
                                     // Normalize the input PEM string
