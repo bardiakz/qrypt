@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/Qrypt.dart';
 import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
+import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa_key_selector.dart';
@@ -183,8 +184,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           ),
           child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) {
-              const double sensitivity = 100.0; // Adjust sensitivity as needed
-
+              const double sensitivity = 100.0;
               if (details.primaryVelocity != null) {
                 if (details.primaryVelocity! > sensitivity) {
                   // Swiped Right (decrypt -> encrypt)
@@ -221,7 +221,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const SettingsPage(),
+                              ),
+                            );
+                          },
                           icon: Icon(Icons.settings),
                         ),
                       ),
