@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../providers/resource_providers.dart';
 import '../providers/rsa_providers.dart';
@@ -159,69 +160,82 @@ class SettingsPage extends ConsumerWidget {
   // }
 
   Widget _buildAboutSettings(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Version'),
-            subtitle: const Text('v2.5.5 (Build 8)'),
-            // TODO: Get from package info
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Show version details
-              _showVersionDialog(context);
-            },
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator();
+        }
+
+        final info = snapshot.data!;
+        final version = info.version;
+        final build = info.buildNumber;
+
+        return Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Version'),
+                subtitle: Text('v$version (Build $build)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  _showVersionDialog(context, version, build);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.code),
+                title: const Text('GitHub Repository'),
+                subtitle: const Text('View source code and contribute'),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () async {
+                  const url = 'https://github.com/bardiakz/qrypt';
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(Uri.parse(url));
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not open GitHub repository'),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bug_report_outlined),
+                title: const Text('Report Issue'),
+                subtitle: const Text('Report bugs or request features'),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () async {
+                  // TODO: Replace with actual issues URL
+                  const url = 'https://github.com/bardiakz/qrypt/issues';
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(Uri.parse(url));
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not open issues page'),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: const Text('Disclaimer'),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () {
+                  _showPrivacyDialog(context);
+                },
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: const Text('GitHub Repository'),
-            subtitle: const Text('View source code and contribute'),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () async {
-              const url = 'https://github.com/bardiakz/qrypt';
-              if (await canLaunchUrl(Uri.parse(url))) {
-                await launchUrl(Uri.parse(url));
-              } else {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Could not open GitHub repository'),
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.bug_report_outlined),
-            title: const Text('Report Issue'),
-            subtitle: const Text('Report bugs or request features'),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () async {
-              // TODO: Replace with actual issues URL
-              const url = 'https://github.com/bardiakz/qrypt/issues';
-              if (await canLaunchUrl(Uri.parse(url))) {
-                await launchUrl(Uri.parse(url));
-              } else {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Could not open issues page')),
-                  );
-                }
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.privacy_tip_outlined),
-            title: const Text('Disclaimer'),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: () {
-              _showPrivacyDialog(context);
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -352,21 +366,15 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _showVersionDialog(BuildContext context) {
+  void _showVersionDialog(BuildContext context, String version, String build) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('About Qrypt'),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Version: 1.0.0'),
-            Text('Build: 1'),
-            Text('Release Date: July 2025'),
-            SizedBox(height: 16),
-            Text('A secure encryption and password management app.'),
-          ],
+          children: [Text('Version: $version'), Text('Build: $build')],
         ),
         actions: [
           TextButton(
