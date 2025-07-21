@@ -540,7 +540,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                       ? null
                                       : 'Invalid PEM format'),
                           ),
-                          maxLines: 4,
+                          maxLines: 3,
                         ),
                       ),
                     ],
@@ -687,6 +687,69 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      selectedEncryption == EncryptionMethod.rsaSign
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppConstants.defaultPadding,
+                              ),
+                              child: TextField(
+                                onChanged: (val) {
+                                  try {
+                                    // Normalize the input PEM string
+                                    String normalized = val.trim().replaceAll(
+                                      RegExp(r'\r\n|\r|\n'),
+                                      '\n',
+                                    );
+                                    ref
+                                            .read(
+                                              decryptPublicKeyProvider.notifier,
+                                            )
+                                            .state =
+                                        normalized;
+                                    // if (kDebugMode) {
+                                    //   print('Saved normalized public key: $normalized');
+                                    //   print('Key code units: ${normalized.codeUnits}');
+                                    // }
+                                  } catch (e) {
+                                    if (kDebugMode) {
+                                      print('Error normalizing public key: $e');
+                                    }
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Public Key',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppConstants.borderRadius,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppConstants.borderRadius,
+                                    ),
+                                    borderSide: BorderSide(
+                                      color: primaryColor,
+                                      width: AppConstants.borderWidth,
+                                    ),
+                                  ),
+                                  errorText:
+                                      ref
+                                          .watch(decryptPublicKeyProvider)
+                                          .isEmpty
+                                      ? null
+                                      : (RegExp(
+                                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                            ).hasMatch(
+                                              ref.watch(publicKeyProvider),
+                                            )
+                                            ? null
+                                            : 'Invalid PEM format'),
+                                ),
+                                maxLines: 3,
+                              ),
+                            )
+                          : SizedBox.shrink(),
                     ],
                   ],
 
