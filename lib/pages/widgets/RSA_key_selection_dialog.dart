@@ -212,7 +212,7 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                           ? null
                           : (RegExp(
                                   r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                ).hasMatch(ref.watch(publicKeyProvider))
+                                ).hasMatch(ref.watch(decryptPublicKeyProvider))
                                 ? null
                                 : 'Invalid PEM format'),
                     ),
