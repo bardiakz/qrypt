@@ -504,52 +504,103 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
                         ),
-                        child: TextField(
-                          controller: _encryptPublicKeyController,
-                          onChanged: (val) {
-                            try {
-                              // Normalize the input PEM string
-                              String normalized = val.trim().replaceAll(
-                                RegExp(r'\r\n|\r|\n'),
-                                '\n',
-                              );
-                              ref.read(publicKeyProvider.notifier).state =
-                                  normalized;
-                              // if (kDebugMode) {
-                              //   print('Saved normalized public key: $normalized');
-                              //   print('Key code units: ${normalized.codeUnits}');
-                              // }
-                            } catch (e) {
-                              if (kDebugMode) {
-                                print('Error normalizing public key: $e');
-                              }
-                            }
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Public Key',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppConstants.borderRadius,
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: _encryptPublicKeyController,
+                              onChanged: (val) {
+                                try {
+                                  // Normalize the input PEM string
+                                  String normalized = val.trim().replaceAll(
+                                    RegExp(r'\r\n|\r|\n'),
+                                    '\n',
+                                  );
+                                  ref.read(publicKeyProvider.notifier).state =
+                                      normalized;
+                                  // if (kDebugMode) {
+                                  //   print('Saved normalized public key: $normalized');
+                                  //   print('Key code units: ${normalized.codeUnits}');
+                                  // }
+                                } catch (e) {
+                                  if (kDebugMode) {
+                                    print('Error normalizing public key: $e');
+                                  }
+                                }
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Public Key',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppConstants.borderRadius,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppConstants.borderRadius,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: primaryColor,
+                                    width: AppConstants.borderWidth,
+                                  ),
+                                ),
+                                errorText: ref.watch(publicKeyProvider).isEmpty
+                                    ? null
+                                    : (RegExp(
+                                            r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                          ).hasMatch(
+                                            ref.watch(publicKeyProvider),
+                                          )
+                                          ? null
+                                          : 'Invalid PEM format'),
+                              ),
+                              maxLines: 3,
+                            ),
+                            Positioned(
+                              top: 25,
+                              right: 5,
+                              child: InkWell(
+                                onTap: () async {
+                                  final pastedText =
+                                      await _pasteFromClipboard();
+                                  if (pastedText != null) {
+                                    if (isEncryptMode) {
+                                      _encryptPublicKeyController.text =
+                                          pastedText;
+                                      ref
+                                          .read(
+                                            receiverPublicKeyProvider.notifier,
+                                          )
+                                          .state = _encryptPublicKeyController
+                                          .text;
+                                    } else {
+                                      _encryptPublicKeyController.text =
+                                          pastedText;
+                                      ref
+                                          .read(
+                                            receiverPublicKeyProvider.notifier,
+                                          )
+                                          .state = _encryptPublicKeyController
+                                          .text;
+                                    }
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(
+                                  AppConstants.switchBorderRadius,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(
+                                    AppConstants.smallPadding,
+                                  ),
+                                  child: Icon(
+                                    Icons.content_paste_go,
+                                    color: Colors.blueGrey,
+                                    size: AppConstants.iconSize + 5,
+                                    semanticLabel: 'Paste from clipboard',
+                                  ),
+                                ),
                               ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppConstants.borderRadius,
-                              ),
-                              borderSide: BorderSide(
-                                color: primaryColor,
-                                width: AppConstants.borderWidth,
-                              ),
-                            ),
-                            errorText: ref.watch(publicKeyProvider).isEmpty
-                                ? null
-                                : (RegExp(
-                                        r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                      ).hasMatch(ref.watch(publicKeyProvider))
-                                      ? null
-                                      : 'Invalid PEM format'),
-                          ),
-                          maxLines: 3,
+                          ],
                         ),
                       ),
                     ],
@@ -702,64 +753,122 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppConstants.defaultPadding,
                               ),
-                              child: TextField(
-                                controller: _decryptPublicKeyController,
-                                onChanged: (val) {
-                                  try {
-                                    // Normalize the input PEM string
-                                    String normalized = val.trim().replaceAll(
-                                      RegExp(r'\r\n|\r|\n'),
-                                      '\n',
-                                    );
-                                    ref
-                                            .read(
-                                              decryptPublicKeyProvider.notifier,
-                                            )
-                                            .state =
-                                        normalized;
-                                    decryptPublicKeyGlobal = normalized;
-                                    // if (kDebugMode) {
-                                    //   print('Saved normalized public key: $normalized');
-                                    //   print('Key code units: ${normalized.codeUnits}');
-                                    // }
-                                  } catch (e) {
-                                    if (kDebugMode) {
-                                      print('Error normalizing public key: $e');
-                                    }
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  labelText: 'Public Key',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppConstants.borderRadius,
+                              child: Stack(
+                                children: [
+                                  TextField(
+                                    controller: _decryptPublicKeyController,
+                                    onChanged: (val) {
+                                      try {
+                                        // Normalize the input PEM string
+                                        String normalized = val
+                                            .trim()
+                                            .replaceAll(
+                                              RegExp(r'\r\n|\r|\n'),
+                                              '\n',
+                                            );
+                                        ref
+                                                .read(
+                                                  decryptPublicKeyProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            normalized;
+                                        decryptPublicKeyGlobal = normalized;
+                                        // if (kDebugMode) {
+                                        //   print('Saved normalized public key: $normalized');
+                                        //   print('Key code units: ${normalized.codeUnits}');
+                                        // }
+                                      } catch (e) {
+                                        if (kDebugMode) {
+                                          print(
+                                            'Error normalizing public key: $e',
+                                          );
+                                        }
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      labelText: 'Public Key',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppConstants.borderRadius,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppConstants.borderRadius,
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: primaryColor,
+                                          width: AppConstants.borderWidth,
+                                        ),
+                                      ),
+                                      errorText:
+                                          ref
+                                              .watch(decryptPublicKeyProvider)
+                                              .isEmpty
+                                          ? null
+                                          : (RegExp(
+                                                  r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                                                ).hasMatch(
+                                                  ref.watch(
+                                                    decryptPublicKeyProvider,
+                                                  ),
+                                                )
+                                                ? null
+                                                : 'Invalid PEM format'),
+                                    ),
+                                    maxLines: 3,
+                                  ),
+                                  Positioned(
+                                    top: 25,
+                                    right: 5,
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final pastedText =
+                                            await _pasteFromClipboard();
+                                        if (pastedText != null) {
+                                          if (isEncryptMode) {
+                                            _decryptPublicKeyController.text =
+                                                pastedText;
+                                            ref
+                                                    .read(
+                                                      decryptPublicKeyProvider
+                                                          .notifier,
+                                                    )
+                                                    .state =
+                                                _decryptPublicKeyController
+                                                    .text;
+                                          } else {
+                                            _decryptPublicKeyController.text =
+                                                pastedText;
+                                            ref
+                                                    .read(
+                                                      decryptPublicKeyProvider
+                                                          .notifier,
+                                                    )
+                                                    .state =
+                                                _decryptPublicKeyController
+                                                    .text;
+                                          }
+                                        }
+                                      },
+                                      borderRadius: BorderRadius.circular(
+                                        AppConstants.switchBorderRadius,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(
+                                          AppConstants.smallPadding,
+                                        ),
+                                        child: Icon(
+                                          Icons.content_paste_go,
+                                          color: Colors.blueGrey,
+                                          size: AppConstants.iconSize + 5,
+                                          semanticLabel: 'Paste from clipboard',
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppConstants.borderRadius,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color: primaryColor,
-                                      width: AppConstants.borderWidth,
-                                    ),
-                                  ),
-                                  errorText:
-                                      ref
-                                          .watch(decryptPublicKeyProvider)
-                                          .isEmpty
-                                      ? null
-                                      : (RegExp(
-                                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                            ).hasMatch(
-                                              ref.watch(
-                                                decryptPublicKeyProvider,
-                                              ),
-                                            )
-                                            ? null
-                                            : 'Invalid PEM format'),
-                                ),
-                                maxLines: 3,
+                                ],
                               ),
                             )
                           : SizedBox.shrink(),
