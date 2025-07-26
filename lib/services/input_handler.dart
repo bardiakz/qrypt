@@ -340,67 +340,42 @@ class InputHandler {
           );
         }
 
-        // Determine which key to use
-        encrypt.Key keyToUse;
-        // if (qrypt.customKey.isNotEmpty) {
-        //   // Use custom key if provided
-        //   try {
-        //     keyToUse = encrypt.Key.fromUtf8(qrypt.customKey!);
-        //   } catch (e) {
-        //     throw Exception('Invalid custom key format: $e');
-        //   }
-        // } else {
-        //   // Use default key
-        //   keyToUse = _defaultKey;
-        // }
-        keyToUse = _defaultKey;
-
-        // First attempt with the determined key
+        // STEP 1: Always try with default key first
         try {
           final decryptedData = _decryptWithAESKey(
             qrypt.getEncryptionMethod(),
             parts[0],
             parts[1],
-            keyToUse,
+            _defaultKey,
           );
 
-          if (decryptedData == null) {
-            throw Exception(
-              'Decryption returned null - invalid key or corrupted data',
-            );
+          if (decryptedData != null) {
+            qrypt.deCompressedText = decryptedData;
+            if (kDebugMode) {
+              print('✓ Decryption successful with default key');
+            }
+            return qrypt;
           }
-
-          qrypt.deCompressedText = decryptedData;
-          return qrypt;
-        } catch (firstAttemptError) {
+        } catch (defaultKeyError) {
           if (kDebugMode) {
-            print('First decryption attempt failed: $firstAttemptError');
+            print('Default key decryption failed: $defaultKeyError');
           }
+        }
 
-          // If we used custom key and it failed, throw error immediately
-          if (qrypt.customKey.isNotEmpty) {
-            throw Exception(
-              'Decryption failed with provided custom key: $firstAttemptError',
-            );
-          }
+        // STEP 2: If default key failed and context is available, prompt for custom key
+        if (buildContext.mounted) {
+          final customKey = await _showCustomKeyDialog(buildContext);
+          if (customKey != null && customKey.isNotEmpty) {
+            try {
+              final customEncryptKey = encrypt.Key.fromUtf8(customKey);
+              final decryptedData = _decryptWithAESKey(
+                qrypt.getEncryptionMethod(),
+                parts[0],
+                parts[1],
+                customEncryptKey,
+              );
 
-          // If we used default key and context is available, try prompting for custom key
-          if (buildContext.mounted) {
-            final customKey = await _showCustomKeyDialog(buildContext);
-            if (customKey != null && customKey.isNotEmpty) {
-              try {
-                final customEncryptKey = encrypt.Key.fromUtf8(customKey);
-                final decryptedData = _decryptWithAESKey(
-                  qrypt.getEncryptionMethod(),
-                  parts[0],
-                  parts[1],
-                  customEncryptKey,
-                );
-
-                if (decryptedData == null) {
-                  throw Exception('Decryption with custom key returned null');
-                }
-
+              if (decryptedData != null) {
                 qrypt.deCompressedText = decryptedData;
 
                 // Show success feedback
@@ -414,27 +389,32 @@ class InputHandler {
                   );
                 }
 
-                return qrypt;
-              } catch (customKeyError) {
                 if (kDebugMode) {
-                  print('Custom key decryption failed: $customKeyError');
+                  print('✓ Decryption successful with custom key');
                 }
-                throw Exception(
-                  'Decryption failed with both default and custom keys: $customKeyError',
-                );
+                return qrypt;
+              } else {
+                throw Exception('Decryption with custom key returned null');
               }
-            } else {
-              // User chose not to provide custom key
+            } catch (customKeyError) {
+              if (kDebugMode) {
+                print('Custom key decryption failed: $customKeyError');
+              }
               throw Exception(
-                'Decryption failed with default key. Custom key may be required.',
+                'Decryption failed with both default and custom keys: $customKeyError',
               );
             }
           } else {
-            // Context not available for dialog
+            // User cancelled or didn't provide custom key
             throw Exception(
-              'Decryption failed with default key. Custom key may be required.',
+              'Decryption failed with default key and no custom key provided',
             );
           }
+        } else {
+          // Context not available for dialog
+          throw Exception(
+            'Decryption failed with default key and cannot prompt for custom key',
+          );
         }
 
       case EncryptionMethod.rsa:
@@ -700,42 +680,69 @@ class InputHandler {
     encrypt.Key key,
   ) {
     try {
+      if (kDebugMode) {
+        print('Attempting AES decryption with method: $method');
+        print('Ciphertext length: ${ciphertext.length}');
+        print('IV length: ${iv.length}');
+      }
+
       switch (method) {
         case EncryptionMethod.aesCbc:
           final result = Aes.decryptAesCbc(ciphertext, iv, key);
+          if (result == null) {
+            if (kDebugMode) {
+              print('AES-CBC decryption returned null');
+            }
+            return null;
+          }
           // Convert List<int> to Uint8List if needed
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List?;
+          return result as Uint8List;
 
         case EncryptionMethod.aesCtr:
           final result = Aes.decryptAesCtr(ciphertext, iv, key);
+          if (result == null) {
+            if (kDebugMode) {
+              print('AES-CTR decryption returned null');
+            }
+            return null;
+          }
           // Convert List<int> to Uint8List if needed
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List?;
+          return result as Uint8List;
 
         case EncryptionMethod.aesGcm:
           final result = Aes.decryptAesGcm(ciphertext, iv, key);
-          // Convert List<int> to Uint8List if needed, handle null case
           if (result == null) {
+            if (kDebugMode) {
+              print(
+                'AES-GCM decryption returned null - likely authentication failure',
+              );
+            }
             return null;
           }
+          // Convert List<int> to Uint8List if needed
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List?;
+          return result as Uint8List;
 
         default:
+          if (kDebugMode) {
+            print('Invalid AES encryption method: $method');
+          }
           throw Exception('Invalid AES encryption method: $method');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('AES decryption error: $e');
+        print('AES decryption error with method $method: $e');
       }
-      return null; // Return null on any decryption error
+      // Return null on any decryption error to trigger custom key prompt
+      return null;
     }
   }
 
