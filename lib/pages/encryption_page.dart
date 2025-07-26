@@ -43,6 +43,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _decryptTextController = TextEditingController();
   final _encryptPublicKeyController = TextEditingController();
   final _decryptPublicKeyController = TextEditingController();
+  final _customAesKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
 
   @override
@@ -51,6 +52,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     _decryptTextController.dispose();
     _encryptPublicKeyController.dispose();
     _decryptPublicKeyController.dispose();
+    _customAesKeyController.dispose();
     super.dispose();
   }
 
@@ -259,6 +261,110 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
+  Widget _buildCustomAesKeyField({
+    required BuildContext context,
+    required Color primaryColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Stack(
+        children: [
+          TextField(
+            controller: _customAesKeyController,
+            onChanged: (value) {
+              ref.read(customAesKeyProvider.notifier).state = value;
+            },
+            decoration: _buildInputDecoration(
+              context: context,
+              primaryColor: primaryColor,
+              labelText: 'Custom AES Key',
+              hintText: 'Enter your custom AES key (16, 24, or 32 bytes)',
+              errorText: _customAesKeyController.text.isEmpty
+                  ? null
+                  : _validateAesKey(_customAesKeyController.text),
+            ),
+            maxLines: 1,
+          ),
+          Positioned(
+            top: 5,
+            right: 5,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    final pastedText = await _pasteFromClipboard();
+                    if (pastedText != null) {
+                      _customAesKeyController.text = pastedText;
+                      ref.read(customAesKeyProvider.notifier).state =
+                          pastedText;
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.switchBorderRadius,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppConstants.smallPadding),
+                    child: Icon(
+                      Icons.content_paste_go,
+                      color: Colors.blueGrey,
+                      size: AppConstants.iconSize + 2,
+                      semanticLabel: 'Paste from clipboard',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () {
+                    // Generate a random 32-byte AES key
+                    final randomKey = _generateRandomAesKey();
+                    _customAesKeyController.text = randomKey;
+                    ref.read(customAesKeyProvider.notifier).state = randomKey;
+                  },
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.switchBorderRadius,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppConstants.smallPadding),
+                    child: Icon(
+                      Icons.casino,
+                      color: Colors.blueGrey,
+                      size: AppConstants.iconSize + 2,
+                      semanticLabel: 'Generate random key',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _validateAesKey(String key) {
+    if (key.isEmpty) return null;
+
+    final keyLength = key.length;
+    if (keyLength != 16 && keyLength != 24 && keyLength != 32) {
+      return 'AES key must be 16, 24, or 32 characters long';
+    }
+    return null;
+  }
+
+  String _generateRandomAesKey() {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    var result = '';
+    for (var i = 0; i < 32; i++) {
+      result += chars[(random + i) % chars.length];
+    }
+    return result;
+  }
+
   void _copyToClipboard(String text) async {
     try {
       await Clipboard.setData(ClipboardData(text: text));
@@ -323,6 +429,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
+    final useCustomAesKey = ref.watch(useCustomAesKeyProvider);
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
@@ -554,6 +661,37 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
 
                     const SizedBox(height: AppConstants.defaultPadding),
+
+                    // Custom AES Key Section - Show only for AES encryption methods
+                    if (selectedEncryption == EncryptionMethod.aesGcm ||
+                        selectedEncryption == EncryptionMethod.aesCbc ||
+                        selectedEncryption == EncryptionMethod.aesCtr) ...[
+                      _buildSwitchContainer(
+                        context: context,
+                        title: "Use Custom AES Key",
+                        value: useCustomAesKey,
+                        onChanged: (val) {
+                          ref.read(useCustomAesKeyProvider.notifier).state =
+                              val;
+                          if (!val) {
+                            _customAesKeyController.clear();
+                            ref.read(customAesKeyProvider.notifier).state = '';
+                          }
+                        },
+                        primaryColor: primaryColor,
+                      ),
+
+                      if (useCustomAesKey) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildCustomAesKeyField(
+                          context: context,
+                          primaryColor: primaryColor,
+                        ),
+                      ],
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+                    ],
+
                     if (selectedEncryption == EncryptionMethod.rsa ||
                         selectedEncryption == EncryptionMethod.rsaSign) ...[
                       if (selectedEncryption == EncryptionMethod.rsaSign)
@@ -693,6 +831,37 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
 
                     const SizedBox(height: AppConstants.defaultPadding),
+
+                    // Custom AES Key Section for Decrypt - Show only for AES encryption methods
+                    if (selectedEncryption == EncryptionMethod.aesGcm ||
+                        selectedEncryption == EncryptionMethod.aesCbc ||
+                        selectedEncryption == EncryptionMethod.aesCtr) ...[
+                      _buildSwitchContainer(
+                        context: context,
+                        title: "Use Custom AES Key",
+                        value: useCustomAesKey,
+                        onChanged: (val) {
+                          ref.read(useCustomAesKeyProvider.notifier).state =
+                              val;
+                          if (!val) {
+                            _customAesKeyController.clear();
+                            ref.read(customAesKeyProvider.notifier).state = '';
+                          }
+                        },
+                        primaryColor: primaryColor,
+                      ),
+
+                      if (useCustomAesKey) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildCustomAesKeyField(
+                          context: context,
+                          primaryColor: primaryColor,
+                        ),
+                      ],
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+                    ],
+
                     if (selectedEncryption == EncryptionMethod.rsa ||
                         selectedEncryption == EncryptionMethod.rsaSign) ...[
                       Padding(
@@ -728,7 +897,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             }
                           },
                           validationPattern:
-                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
+                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
                           isEncryptMode: false,
                         ),
                     ],
@@ -881,6 +1050,30 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       return;
     }
 
+    // Validate custom AES key if being used
+    final useCustomAesKey = ref.read(useCustomAesKeyProvider);
+    final customAesKey = ref.read(customAesKeyProvider);
+
+    if (useCustomAesKey &&
+        (selectedEncryption == EncryptionMethod.aesGcm ||
+            selectedEncryption == EncryptionMethod.aesCbc ||
+            selectedEncryption == EncryptionMethod.aesCtr)) {
+      if (customAesKey.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a custom AES key')),
+        );
+        return;
+      }
+
+      final validationError = _validateAesKey(customAesKey);
+      if (validationError != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(validationError)));
+        return;
+      }
+    }
+
     ref.read(isProcessingProvider.notifier).state = true;
 
     try {
@@ -928,14 +1121,28 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             rsaReceiverPublicKey: rsaReceiversPublicKey,
           );
         } else {
-          // Non-RSA encryption
-          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-            text: _encryptTextController.text,
-            encryption: selectedEncryption,
-            obfuscation: selectedObfuscation,
-            compression: selectedCompression,
-            useTag: useTagManually,
-          );
+          // Non-RSA encryption - create Qrypt object with custom AES key if provided
+          if (useCustomAesKey && customAesKey.isNotEmpty) {
+            // Create Qrypt object with custom AES key
+            ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+              text: _encryptTextController.text,
+              encryption: selectedEncryption,
+              obfuscation: selectedObfuscation,
+              compression: selectedCompression,
+              useTag: useTagManually,
+            );
+            ref.read(inputQryptProvider.notifier).state.customKey =
+                customAesKey;
+          } else {
+            // Standard non-RSA encryption
+            ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+              text: _encryptTextController.text,
+              encryption: selectedEncryption,
+              obfuscation: selectedObfuscation,
+              compression: selectedCompression,
+              useTag: useTagManually,
+            );
+          }
         }
 
         ref.read(processedEncryptProvider.notifier).state = await ih
@@ -1012,17 +1219,58 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       return;
     }
 
+    // Validate custom AES key if being used
+    final useCustomAesKey = ref.read(useCustomAesKeyProvider);
+    final customAesKey = ref.read(customAesKeyProvider);
+
+    if (!autoDetectTag &&
+        useCustomAesKey &&
+        (selectedEncryption == EncryptionMethod.aesGcm ||
+            selectedEncryption == EncryptionMethod.aesCbc ||
+            selectedEncryption == EncryptionMethod.aesCtr)) {
+      if (customAesKey.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a custom AES key')),
+        );
+        return;
+      }
+
+      final validationError = _validateAesKey(customAesKey);
+      if (validationError != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(validationError)));
+        return;
+      }
+    }
+
     ref.read(isProcessingProvider.notifier).state = true;
 
     try {
       if (!autoDetectTag) {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-          text: _decryptTextController.text,
-          encryption: selectedEncryption,
-          obfuscation: selectedObfuscation,
-          compression: selectedCompression,
-          useTag: false,
-        );
+        if (useCustomAesKey &&
+            customAesKey.isNotEmpty &&
+            (selectedEncryption == EncryptionMethod.aesGcm ||
+                selectedEncryption == EncryptionMethod.aesCbc ||
+                selectedEncryption == EncryptionMethod.aesCtr)) {
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+            text: _decryptTextController.text,
+            encryption: selectedEncryption,
+            obfuscation: selectedObfuscation,
+            compression: selectedCompression,
+            useTag: false,
+          );
+          ref.read(inputQryptProvider.notifier).state.customKey = customAesKey;
+        } else {
+          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+            text: _decryptTextController.text,
+            encryption: selectedEncryption,
+            obfuscation: selectedObfuscation,
+            compression: selectedCompression,
+            useTag: false,
+          );
+        }
+
         if (selectedEncryption == EncryptionMethod.rsa ||
             selectedEncryption == EncryptionMethod.rsaSign) {
           ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(

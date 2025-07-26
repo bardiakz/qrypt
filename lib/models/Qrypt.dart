@@ -22,6 +22,7 @@ class Qrypt {
   );
   String rsaReceiverPublicKey = 'noPublicKey';
   String rsaSenderPublicKey = 'noPublicKey';
+  String customKey = 'noCustomKey';
   bool useTag = false;
   String tag = '';
 
