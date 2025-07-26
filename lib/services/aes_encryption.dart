@@ -3,20 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/encryption_method.dart';
 
-
-
 class Aes extends Encryption {
   @override
   String get tag => 'aes';
 
-  static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
+  // static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
 
   ///Encrypt AES-CBC
-  static Map<String, String> encryptAesCbc(Uint8List compressed) {
+  static Map<String, String> encryptAesCbc(
+    Uint8List compressed,
+    encrypt.Key key,
+  ) {
     final iv = encrypt.IV.fromLength(16);
 
     final encrypter = encrypt.Encrypter(
-      encrypt.AES(_key, mode: encrypt.AESMode.cbc),
+      encrypt.AES(key, mode: encrypt.AESMode.cbc),
     );
     final encrypted = encrypter.encryptBytes(compressed, iv: iv);
 
@@ -29,8 +30,13 @@ class Aes extends Encryption {
 
     return {'ciphertext': hexEncrypted, 'iv': hexIV};
   }
+
   ///Decrypt AES-CBC
-  static List<int> decryptAesCbc(String hexCiphertext, String hexIV) {
+  static List<int> decryptAesCbc(
+    String hexCiphertext,
+    String hexIV,
+    encrypt.Key key,
+  ) {
     // Convert hex back to bytes
     final encryptedBytes = Uint8List.fromList(
       List.generate(
@@ -49,7 +55,7 @@ class Aes extends Encryption {
     final iv = encrypt.IV(ivBytes);
 
     final encrypter = encrypt.Encrypter(
-      encrypt.AES(_key, mode: encrypt.AESMode.cbc),
+      encrypt.AES(key, mode: encrypt.AESMode.cbc),
     );
 
     final decrypted = encrypter.decryptBytes(
@@ -60,10 +66,10 @@ class Aes extends Encryption {
   }
 
   /// AES-GCM - Encrypt
-  static Map<String, String> encryptAesGcm(Uint8List data) {
+  static Map<String, String> encryptAesGcm(Uint8List data, encrypt.Key key) {
     final iv = encrypt.IV.fromSecureRandom(12);
     final encrypter = encrypt.Encrypter(
-      encrypt.AES(_key, mode: encrypt.AESMode.gcm),
+      encrypt.AES(key, mode: encrypt.AESMode.gcm),
     );
 
     final encrypted = encrypter.encryptBytes(data, iv: iv);
@@ -75,13 +81,17 @@ class Aes extends Encryption {
   }
 
   ///AES-GCM - Decrypt
-  static List<int>? decryptAesGcm(String hexCiphertext, String hexIV) {
+  static List<int>? decryptAesGcm(
+    String hexCiphertext,
+    String hexIV,
+    encrypt.Key key,
+  ) {
     try {
       final encryptedBytes = _fromHex(hexCiphertext);
       final iv = encrypt.IV(_fromHex(hexIV));
 
       final encrypter = encrypt.Encrypter(
-        encrypt.AES(_key, mode: encrypt.AESMode.gcm),
+        encrypt.AES(key, mode: encrypt.AESMode.gcm),
       );
 
       final decrypted = encrypter.decryptBytes(
@@ -96,30 +106,28 @@ class Aes extends Encryption {
     }
   }
 
-
   /// AES-CTR - Encrypt
-  static Map<String, String> encryptAesCtr(Uint8List data) {
+  static Map<String, String> encryptAesCtr(Uint8List data, encrypt.Key key) {
     final iv = encrypt.IV.fromLength(16);
     final encrypter = encrypt.Encrypter(
-      encrypt.AES(_key, mode: encrypt.AESMode.ctr),
+      encrypt.AES(key, mode: encrypt.AESMode.ctr),
     );
     final encrypted = encrypter.encryptBytes(data, iv: iv);
-    return {
-      'ciphertext': _toHex(encrypted.bytes),
-      'iv': _toHex(iv.bytes),
-    };
+    return {'ciphertext': _toHex(encrypted.bytes), 'iv': _toHex(iv.bytes)};
   }
+
   /// AES-CTR - Decrypt
-  static List<int> decryptAesCtr(String hexCiphertext, String hexIV) {
+  static List<int> decryptAesCtr(
+    String hexCiphertext,
+    String hexIV,
+    encrypt.Key key,
+  ) {
     final encryptedBytes = _fromHex(hexCiphertext);
     final iv = encrypt.IV(_fromHex(hexIV));
     final encrypter = encrypt.Encrypter(
-      encrypt.AES(_key, mode: encrypt.AESMode.ctr),
+      encrypt.AES(key, mode: encrypt.AESMode.ctr),
     );
-    return encrypter.decryptBytes(
-      encrypt.Encrypted(encryptedBytes),
-      iv: iv,
-    );
+    return encrypter.decryptBytes(encrypt.Encrypted(encryptedBytes), iv: iv);
   }
 
   //Utility methods
@@ -130,7 +138,7 @@ class Aes extends Encryption {
     return Uint8List.fromList(
       List.generate(
         hex.length ~/ 2,
-            (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16),
+        (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16),
       ),
     );
   }
