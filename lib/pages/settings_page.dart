@@ -182,41 +182,23 @@ class SettingsPage extends ConsumerWidget {
                 title: const Text('GitHub Repository'),
                 subtitle: const Text('View source code and contribute'),
                 trailing: const Icon(Icons.open_in_new),
-                onTap: () async {
-                  const url = 'https://github.com/bardiakz/qrypt';
-                  if (await canLaunchUrl(Uri.parse(url))) {
-                    await launchUrl(Uri.parse(url));
-                  } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Could not open GitHub repository'),
-                        ),
-                      );
-                    }
-                  }
-                },
+                onTap: () => _launchURL(
+                  context,
+                  'https://github.com/bardiakz/qrypt',
+                  'Could not open GitHub repository',
+                ),
               ),
+
               ListTile(
                 leading: const Icon(Icons.bug_report_outlined),
                 title: const Text('Report Issue'),
                 subtitle: const Text('Report bugs or request features'),
                 trailing: const Icon(Icons.open_in_new),
-                onTap: () async {
-                  // TODO: Replace with actual issues URL
-                  const url = 'https://github.com/bardiakz/qrypt/issues';
-                  if (await canLaunchUrl(Uri.parse(url))) {
-                    await launchUrl(Uri.parse(url));
-                  } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Could not open issues page'),
-                        ),
-                      );
-                    }
-                  }
-                },
+                onTap: () => _launchURL(
+                  context,
+                  'https://github.com/bardiakz/qrypt/issues',
+                  'Could not open issues page',
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
@@ -463,5 +445,30 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _launchURL(
+    BuildContext context,
+    String url,
+    String errorMessage,
+  ) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening URL: $e')));
+      }
+    }
   }
 }
