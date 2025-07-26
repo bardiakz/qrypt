@@ -64,6 +64,8 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Widget _buildThemeSelector(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(themeModeProvider);
+
     return Card(
       child: Column(
         children: [
@@ -71,31 +73,23 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.palette_outlined),
             title: const Text('App Theme'),
             subtitle: const Text('Choose your preferred theme'),
-            trailing: DropdownButton<String>(
-              value: ref.watch(themeModeProvider).label,
+            trailing: DropdownButton<ThemeMode>(
+              value: currentTheme,
               items: const [
-                DropdownMenuItem(value: 'Light', child: Text('Light')),
-                DropdownMenuItem(value: 'Dark', child: Text('Dark')),
-                DropdownMenuItem(value: 'System', child: Text('System')),
+                DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+                DropdownMenuItem(
+                  value: ThemeMode.system,
+                  child: Text('System'),
+                ),
               ],
-              onChanged: (value) {
-                switch (value) {
-                  case 'Light':
-                    ref
-                        .read(themeModeProvider.notifier)
-                        .setTheme(ThemeMode.light);
-                  case 'Dark':
-                    ref
-                        .read(themeModeProvider.notifier)
-                        .setTheme(ThemeMode.dark);
-                  case 'System':
-                    ref
-                        .read(themeModeProvider.notifier)
-                        .setTheme(ThemeMode.system);
+              onChanged: (ThemeMode? value) {
+                if (value != null) {
+                  ref.read(themeModeProvider.notifier).setTheme(value);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Theme changed to ${value.label}')),
+                  );
                 }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Theme changed to $value')),
-                );
               },
             ),
           ),
