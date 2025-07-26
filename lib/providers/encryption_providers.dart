@@ -49,5 +49,7 @@ final processedDecryptProvider = StateProvider<Qrypt>(
   ),
 );
 
-final customAesKeyProvider = StateProvider<String>((ref) => '');
-final useCustomAesKeyProvider = StateProvider<bool>((ref) => false);
+final customEncryptAesKeyProvider = StateProvider<String>((ref) => '');
+final useCustomEncryptAesKeyProvider = StateProvider<bool>((ref) => false);
+final customDecryptAesKeyProvider = StateProvider<String>((ref) => '');
+final useCustomDecryptAesKeyProvider = StateProvider<bool>((ref) => false);
