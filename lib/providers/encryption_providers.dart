@@ -48,3 +48,5 @@ final processedDecryptProvider = StateProvider<Qrypt>(
     compression: CompressionMethod.gZip,
   ),
 );
+
+final customAesKeyProvider = StateProvider<String>((ref) => '');
