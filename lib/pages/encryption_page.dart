@@ -44,6 +44,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _encryptPublicKeyController = TextEditingController();
   final _decryptPublicKeyController = TextEditingController();
   final _customAesKeyController = TextEditingController();
+  final _customDecryptAesKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
 
   @override
@@ -53,6 +54,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     _encryptPublicKeyController.dispose();
     _decryptPublicKeyController.dispose();
     _customAesKeyController.dispose();
+    _customDecryptAesKeyController.dispose();
     super.dispose();
   }
 
@@ -264,7 +266,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   Widget _buildCustomAesKeyField({
     required BuildContext context,
     required Color primaryColor,
+    required bool isEncryptMode,
   }) {
+    final controller = isEncryptMode
+        ? _customAesKeyController
+        : _customDecryptAesKeyController;
+    final keyProvider = isEncryptMode
+        ? customEncryptAesKeyProvider
+        : customDecryptAesKeyProvider;
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.defaultPadding,
@@ -272,18 +282,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       child: Stack(
         children: [
           TextField(
-            controller: _customAesKeyController,
+            controller: controller,
             onChanged: (value) {
-              ref.read(customAesKeyProvider.notifier).state = value;
+              ref.read(keyProvider.notifier).state = value;
             },
             decoration: _buildInputDecoration(
               context: context,
               primaryColor: primaryColor,
               labelText: 'Custom AES Key',
               hintText: 'Enter your custom AES key (16, 24, or 32 bytes)',
-              errorText: _customAesKeyController.text.isEmpty
+              errorText: controller.text.isEmpty
                   ? null
-                  : _validateAesKey(_customAesKeyController.text),
+                  : _validateAesKey(controller.text),
             ),
             maxLines: 1,
           ),
@@ -297,9 +307,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   onTap: () async {
                     final pastedText = await _pasteFromClipboard();
                     if (pastedText != null) {
-                      _customAesKeyController.text = pastedText;
-                      ref.read(customAesKeyProvider.notifier).state =
-                          pastedText;
+                      controller.text = pastedText;
+                      ref.read(keyProvider.notifier).state = pastedText;
                     }
                   },
                   borderRadius: BorderRadius.circular(
@@ -320,8 +329,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   onTap: () {
                     // Generate a random 32-byte AES key
                     final randomKey = _generateRandomAesKey();
-                    _customAesKeyController.text = randomKey;
-                    ref.read(customAesKeyProvider.notifier).state = randomKey;
+                    controller.text = randomKey;
+                    ref.read(keyProvider.notifier).state = randomKey;
                   },
                   borderRadius: BorderRadius.circular(
                     AppConstants.switchBorderRadius,
@@ -429,7 +438,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
-    final useCustomAesKey = ref.watch(useCustomAesKeyProvider);
+
+    final useCustomAesKey = isEncryptMode
+        ? ref.watch(useCustomEncryptAesKeyProvider)
+        : ref.watch(useCustomDecryptAesKeyProvider);
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
@@ -671,11 +683,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         title: "Use Custom AES Key",
                         value: useCustomAesKey,
                         onChanged: (val) {
-                          ref.read(useCustomAesKeyProvider.notifier).state =
+                          ref
+                                  .read(useCustomEncryptAesKeyProvider.notifier)
+                                  .state =
                               val;
                           if (!val) {
                             _customAesKeyController.clear();
-                            ref.read(customAesKeyProvider.notifier).state = '';
+                            ref
+                                    .read(customEncryptAesKeyProvider.notifier)
+                                    .state =
+                                '';
                           }
                         },
                         primaryColor: primaryColor,
@@ -686,6 +703,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         _buildCustomAesKeyField(
                           context: context,
                           primaryColor: primaryColor,
+                          isEncryptMode: true, // Pass true for encrypt mode
                         ),
                       ],
 
@@ -841,11 +859,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         title: "Use Custom AES Key",
                         value: useCustomAesKey,
                         onChanged: (val) {
-                          ref.read(useCustomAesKeyProvider.notifier).state =
+                          ref
+                                  .read(useCustomDecryptAesKeyProvider.notifier)
+                                  .state =
                               val;
                           if (!val) {
-                            _customAesKeyController.clear();
-                            ref.read(customAesKeyProvider.notifier).state = '';
+                            _customDecryptAesKeyController.clear();
+                            ref
+                                    .read(customDecryptAesKeyProvider.notifier)
+                                    .state =
+                                '';
                           }
                         },
                         primaryColor: primaryColor,
@@ -856,6 +879,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         _buildCustomAesKeyField(
                           context: context,
                           primaryColor: primaryColor,
+                          isEncryptMode: false, // Pass false for decrypt mode
                         ),
                       ],
 
@@ -1051,8 +1075,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
 
     // Validate custom AES key if being used
-    final useCustomAesKey = ref.read(useCustomAesKeyProvider);
-    final customAesKey = ref.read(customAesKeyProvider);
+    final useCustomAesKey = ref.read(useCustomEncryptAesKeyProvider);
+    final customAesKey = ref.read(customEncryptAesKeyProvider);
 
     if (useCustomAesKey &&
         (selectedEncryption == EncryptionMethod.aesGcm ||
@@ -1222,8 +1246,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
 
     // Validate custom AES key if being used
-    final useCustomAesKey = ref.read(useCustomAesKeyProvider);
-    final customAesKey = ref.read(customAesKeyProvider);
+    final useCustomAesKey = ref.read(useCustomDecryptAesKeyProvider);
+    final customAesKey = ref.read(customDecryptAesKeyProvider);
 
     if (!autoDetectTag &&
         useCustomAesKey &&
@@ -1263,6 +1287,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             useTag: false,
           );
           ref.read(inputQryptProvider.notifier).state.customKey = customAesKey;
+          ref.read(inputQryptProvider.notifier).state.useCustomKey =
+              useCustomAesKey;
+          ref.read(inputQryptProvider.notifier).state.useTag = false;
         } else {
           ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
             text: _decryptTextController.text,

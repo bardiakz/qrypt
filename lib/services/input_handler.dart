@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
-
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
@@ -339,14 +337,19 @@ class InputHandler {
             'Invalid AES format - expected format: ciphertext:iv',
           );
         }
-
+        encrypt.Key useKey = _defaultKey;
+        if (qrypt.useTag == false) {
+          if (qrypt.useCustomKey) {
+            useKey = encrypt.Key.fromUtf8(qrypt.customKey);
+          }
+        }
         // STEP 1: Always try with default key first
         try {
           final decryptedData = _decryptWithAESKey(
             qrypt.getEncryptionMethod(),
             parts[0],
             parts[1],
-            _defaultKey,
+            useKey,
           );
 
           if (decryptedData != null) {
@@ -655,7 +658,9 @@ class InputHandler {
           }
           qrypt.rsaKeyPair = selectedKeyPair;
         }
-        qrypt = await handleDecrypt(qrypt, context);
+        if (context.mounted) {
+          qrypt = await handleDecrypt(qrypt, context);
+        }
         qrypt = handleDeCompression(qrypt);
       }
     }
