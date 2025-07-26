@@ -366,7 +366,7 @@ class InputHandler {
         }
 
         // STEP 2: If default key failed and context is available, prompt for custom key
-        if (buildContext.mounted) {
+        if (buildContext.mounted && qrypt.useTag) {
           final customKey = await _showCustomKeyDialog(buildContext);
           if (customKey != null && customKey.isNotEmpty) {
             try {
