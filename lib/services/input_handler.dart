@@ -4,7 +4,6 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:path/path.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
@@ -309,6 +308,7 @@ class InputHandler {
 
     bool usesBase64Obfuscation =
         qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
         if (usesMappedObfuscation) {
@@ -327,33 +327,114 @@ class InputHandler {
           qrypt.deCompressedText = base64.decode(qrypt.text);
         }
         return qrypt;
+
       case EncryptionMethod.aesCbc:
-        List<String> parts = parseByColon(qrypt.text);
-        if (parts.length != 2) throw FormatException('Invalid AES-CBC format');
-        qrypt.deCompressedText = Aes.decryptAesCbc(
-          parts[0],
-          parts[1],
-          _defaultKey,
-        ); //to be decompressed in the next phase
-        return qrypt;
       case EncryptionMethod.aesCtr:
-        List<String> parts = parseByColon(qrypt.text);
-        if (parts.length != 2) throw FormatException('Invalid AES-CTR format');
-        qrypt.deCompressedText = Aes.decryptAesCtr(
-          parts[0],
-          parts[1],
-          _defaultKey,
-        ); //to be decompressed in the next phase
-        return qrypt;
       case EncryptionMethod.aesGcm:
         List<String> parts = parseByColon(qrypt.text);
-        if (parts.length != 2) throw FormatException('Invalid AES-GCM format');
-        qrypt.deCompressedText = Aes.decryptAesGcm(
-          parts[0],
-          parts[1],
-          _defaultKey,
-        )!; //to be decompressed in the next phase
-        return qrypt;
+        if (parts.length != 2) {
+          throw FormatException(
+            'Invalid AES format - expected format: ciphertext:iv',
+          );
+        }
+
+        // Determine which key to use
+        encrypt.Key keyToUse;
+        // if (qrypt.customKey.isNotEmpty) {
+        //   // Use custom key if provided
+        //   try {
+        //     keyToUse = encrypt.Key.fromUtf8(qrypt.customKey!);
+        //   } catch (e) {
+        //     throw Exception('Invalid custom key format: $e');
+        //   }
+        // } else {
+        //   // Use default key
+        //   keyToUse = _defaultKey;
+        // }
+        keyToUse = _defaultKey;
+
+        // First attempt with the determined key
+        try {
+          final decryptedData = _decryptWithAESKey(
+            qrypt.getEncryptionMethod(),
+            parts[0],
+            parts[1],
+            keyToUse,
+          );
+
+          if (decryptedData == null) {
+            throw Exception(
+              'Decryption returned null - invalid key or corrupted data',
+            );
+          }
+
+          qrypt.deCompressedText = decryptedData;
+          return qrypt;
+        } catch (firstAttemptError) {
+          if (kDebugMode) {
+            print('First decryption attempt failed: $firstAttemptError');
+          }
+
+          // If we used custom key and it failed, throw error immediately
+          if (qrypt.customKey.isNotEmpty) {
+            throw Exception(
+              'Decryption failed with provided custom key: $firstAttemptError',
+            );
+          }
+
+          // If we used default key and context is available, try prompting for custom key
+          if (buildContext.mounted) {
+            final customKey = await _showCustomKeyDialog(buildContext);
+            if (customKey != null && customKey.isNotEmpty) {
+              try {
+                final customEncryptKey = encrypt.Key.fromUtf8(customKey);
+                final decryptedData = _decryptWithAESKey(
+                  qrypt.getEncryptionMethod(),
+                  parts[0],
+                  parts[1],
+                  customEncryptKey,
+                );
+
+                if (decryptedData == null) {
+                  throw Exception('Decryption with custom key returned null');
+                }
+
+                qrypt.deCompressedText = decryptedData;
+
+                // Show success feedback
+                if (buildContext.mounted) {
+                  ScaffoldMessenger.of(buildContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('✓ Successfully decrypted with custom key'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+
+                return qrypt;
+              } catch (customKeyError) {
+                if (kDebugMode) {
+                  print('Custom key decryption failed: $customKeyError');
+                }
+                throw Exception(
+                  'Decryption failed with both default and custom keys: $customKeyError',
+                );
+              }
+            } else {
+              // User chose not to provide custom key
+              throw Exception(
+                'Decryption failed with default key. Custom key may be required.',
+              );
+            }
+          } else {
+            // Context not available for dialog
+            throw Exception(
+              'Decryption failed with default key. Custom key may be required.',
+            );
+          }
+        }
+
       case EncryptionMethod.rsa:
         try {
           if (qrypt.rsaKeyPair.privateKey.isEmpty ||
@@ -394,6 +475,7 @@ class InputHandler {
           }
           throw Exception('RSA decryption failed: $e');
         }
+
       case EncryptionMethod.rsaSign:
         try {
           qrypt.rsaSenderPublicKey = decryptPublicKeyGlobal;
@@ -472,6 +554,7 @@ class InputHandler {
               ScaffoldMessenger.of(buildContext).showSnackBar(
                 const SnackBar(
                   content: Text('Signature verification successful ✓'),
+                  backgroundColor: Colors.green,
                 ),
               );
             }
@@ -487,10 +570,11 @@ class InputHandler {
                   content: Text(
                     '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
                   ),
+                  backgroundColor: Colors.orange,
                 ),
               );
             }
-            // throw Exception('Signature verification failed - data integrity compromised');
+            // Note: Not throwing exception to allow data access despite signature failure
           }
 
           // The original data is base64 encoded compressed data
@@ -605,6 +689,140 @@ class InputHandler {
       );
     }
     return input.split(':');
+  }
+
+  Uint8List? _decryptWithAESKey(
+    EncryptionMethod method,
+    String ciphertext,
+    String iv,
+    encrypt.Key key,
+  ) {
+    try {
+      switch (method) {
+        case EncryptionMethod.aesCbc:
+          final result = Aes.decryptAesCbc(ciphertext, iv, key);
+          // Convert List<int> to Uint8List if needed
+          if (result is! Uint8List) {
+            return Uint8List.fromList(result);
+          }
+          return result as Uint8List?;
+
+        case EncryptionMethod.aesCtr:
+          final result = Aes.decryptAesCtr(ciphertext, iv, key);
+          // Convert List<int> to Uint8List if needed
+          if (result is! Uint8List) {
+            return Uint8List.fromList(result);
+          }
+          return result as Uint8List?;
+
+        case EncryptionMethod.aesGcm:
+          final result = Aes.decryptAesGcm(ciphertext, iv, key);
+          // Convert List<int> to Uint8List if needed, handle null case
+          if (result == null) {
+            return null;
+          }
+          if (result is! Uint8List) {
+            return Uint8List.fromList(result);
+          }
+          return result as Uint8List?;
+
+        default:
+          throw Exception('Invalid AES encryption method: $method');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AES decryption error: $e');
+      }
+      return null; // Return null on any decryption error
+    }
+  }
+
+  Future<String?> _showCustomKeyDialog(BuildContext context) async {
+    final TextEditingController keyController = TextEditingController();
+    String? errorText;
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false, // Force user to make a choice
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.key, color: Colors.orange, size: 24),
+                  SizedBox(width: 8),
+                  Text('Custom Key Required'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Decryption failed with the default key. This content appears to be encrypted with a custom AES key.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: keyController,
+                    decoration: InputDecoration(
+                      labelText: 'Enter Custom AES Key',
+                      hintText: '16, 24, or 32 characters',
+                      prefixIcon: Icon(Icons.vpn_key),
+                      border: OutlineInputBorder(),
+                      errorText: errorText,
+                      helperText:
+                          'Current length: ${keyController.text.length}',
+                    ),
+                    maxLines: 1,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        final length = value.length;
+                        if (value.isNotEmpty &&
+                            length != 16 &&
+                            length != 24 &&
+                            length != 32) {
+                          errorText =
+                              'Key must be exactly 16, 24, or 32 characters';
+                        } else {
+                          errorText = null;
+                        }
+                      });
+                    },
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '• AES-128: 16 characters\n• AES-192: 24 characters\n• AES-256: 32 characters',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: Text('Skip'),
+                ),
+                ElevatedButton(
+                  onPressed: errorText != null || keyController.text.isEmpty
+                      ? null
+                      : () {
+                          final key = keyController.text.trim();
+                          if (key.length == 16 ||
+                              key.length == 24 ||
+                              key.length == 32) {
+                            Navigator.of(context).pop(key);
+                          }
+                        },
+                  child: Text('Try Key'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }
 
