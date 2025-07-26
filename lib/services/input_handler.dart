@@ -18,9 +18,7 @@ import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
 class InputHandler {
-  static final _defaultKey = encrypt.Key.fromUtf8(
-    dotenv.env['ENCRYPTION_KEY']!,
-  );
+  final _defaultKey = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
 
   Qrypt handleCompression(Qrypt qrypt) {
     Uint8List compText;
@@ -50,6 +48,10 @@ class InputHandler {
   }
 
   Future<Qrypt> handleEncrypt(Qrypt qrypt) async {
+    encrypt.Key useKey = qrypt.useCustomKey
+        ? encrypt.Key.fromUtf8(qrypt.customKey)
+        : _defaultKey;
+
     String? encryptedText = qrypt.text;
     bool usesMappedObfuscation = [
       ObfuscationMethod.en1,
@@ -78,7 +80,7 @@ class InputHandler {
       case EncryptionMethod.aesCbc:
         Map<String, String> encMap = Aes.encryptAesCbc(
           qrypt.compressedText,
-          _defaultKey,
+          useKey,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
@@ -87,7 +89,7 @@ class InputHandler {
       case EncryptionMethod.aesCtr:
         Map<String, String> encMap = Aes.encryptAesCtr(
           qrypt.compressedText,
-          _defaultKey,
+          useKey,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
@@ -95,7 +97,7 @@ class InputHandler {
       case EncryptionMethod.aesGcm:
         Map<String, String> encMap = Aes.encryptAesGcm(
           qrypt.compressedText,
-          _defaultKey,
+          useKey,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;

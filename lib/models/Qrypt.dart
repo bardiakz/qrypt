@@ -24,6 +24,7 @@ class Qrypt {
   String rsaSenderPublicKey = 'noPublicKey';
   String customKey = 'noCustomKey';
   bool useTag = false;
+  bool useCustomKey = false;
   String tag = '';
 
   Qrypt.withTag({

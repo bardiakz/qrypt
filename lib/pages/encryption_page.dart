@@ -1133,6 +1133,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             );
             ref.read(inputQryptProvider.notifier).state.customKey =
                 customAesKey;
+            ref.read(inputQryptProvider.notifier).state.useCustomKey =
+                useCustomAesKey;
           } else {
             // Standard non-RSA encryption
             ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
