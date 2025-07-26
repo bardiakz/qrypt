@@ -50,3 +50,4 @@ final processedDecryptProvider = StateProvider<Qrypt>(
 );
 
 final customAesKeyProvider = StateProvider<String>((ref) => '');
+final useCustomAesKeyProvider = StateProvider<bool>((ref) => false);
