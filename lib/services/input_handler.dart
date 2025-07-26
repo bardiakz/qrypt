@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:path/path.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/services/compression.dart';
@@ -17,6 +19,10 @@ import 'aes_encryption.dart';
 import 'obfuscate.dart';
 
 class InputHandler {
+  static final _defaultKey = encrypt.Key.fromUtf8(
+    dotenv.env['ENCRYPTION_KEY']!,
+  );
+
   Qrypt handleCompression(Qrypt qrypt) {
     Uint8List compText;
     switch (qrypt.getCompressionMethod()) {
@@ -71,18 +77,27 @@ class InputHandler {
         }
         return qrypt;
       case EncryptionMethod.aesCbc:
-        Map<String, String> encMap = Aes.encryptAesCbc(qrypt.compressedText);
+        Map<String, String> encMap = Aes.encryptAesCbc(
+          qrypt.compressedText,
+          _defaultKey,
+        );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
 
       case EncryptionMethod.aesCtr:
-        Map<String, String> encMap = Aes.encryptAesCtr(qrypt.compressedText);
+        Map<String, String> encMap = Aes.encryptAesCtr(
+          qrypt.compressedText,
+          _defaultKey,
+        );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
       case EncryptionMethod.aesGcm:
-        Map<String, String> encMap = Aes.encryptAesGcm(qrypt.compressedText);
+        Map<String, String> encMap = Aes.encryptAesGcm(
+          qrypt.compressedText,
+          _defaultKey,
+        );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
         return qrypt;
@@ -318,6 +333,7 @@ class InputHandler {
         qrypt.deCompressedText = Aes.decryptAesCbc(
           parts[0],
           parts[1],
+          _defaultKey,
         ); //to be decompressed in the next phase
         return qrypt;
       case EncryptionMethod.aesCtr:
@@ -326,6 +342,7 @@ class InputHandler {
         qrypt.deCompressedText = Aes.decryptAesCtr(
           parts[0],
           parts[1],
+          _defaultKey,
         ); //to be decompressed in the next phase
         return qrypt;
       case EncryptionMethod.aesGcm:
@@ -334,6 +351,7 @@ class InputHandler {
         qrypt.deCompressedText = Aes.decryptAesGcm(
           parts[0],
           parts[1],
+          _defaultKey,
         )!; //to be decompressed in the next phase
         return qrypt;
       case EncryptionMethod.rsa:
