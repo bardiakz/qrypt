@@ -6,6 +6,7 @@ import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
+import 'package:qrypt/pages/widgets/kyber_widgets.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
@@ -55,102 +56,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     super.dispose();
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required String semanticLabel,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.smallPadding),
-          child: Icon(
-            icon,
-            color: color,
-            size: AppConstants.iconSize,
-            semanticLabel: semanticLabel,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required String characterCount,
-    required List<Widget> actions,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppConstants.defaultPadding + 2,
-        top: 18,
-        right: AppConstants.defaultPadding,
-      ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const Spacer(),
-          Text(
-            characterCount,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-              color: Colors.blueGrey,
-            ),
-          ),
-          const SizedBox(width: 12),
-          ...actions,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSwitchContainer({
-    required BuildContext context,
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required Color primaryColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        decoration: BoxDecoration(
-          color: getContainerBackgroundColor(context),
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          border: Border.all(color: getBorderColor(context)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-            Switch(
-              thumbColor: WidgetStateProperty.all(Colors.white),
-              trackColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return primaryColor;
-                }
-                return Colors.grey.shade300;
-              }),
-              value: value,
-              onChanged: onChanged,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildMLKemKeySizeSelector({
     required BuildContext context,
     required Color primaryColor,
@@ -198,146 +103,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
-  Widget _buildMLKemInfoContainer({
-    required BuildContext context,
-    required Color primaryColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        decoration: BoxDecoration(
-          color: primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          border: Border.all(color: primaryColor.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline, color: primaryColor, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'ML-KEM performs quantum-secure key exchange. The generated shared key can be used with AES for message encryption.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: primaryColor.withOpacity(0.8),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMLKemOutputSection({
-    required BuildContext context,
-    required Color primaryColor,
-    required bool isEncryptMode,
-  }) {
-    if (isEncryptMode) {
-      return Column(
-        children: [
-          // Ciphertext output
-          _buildMLKemOutputField(
-            context: context,
-            primaryColor: primaryColor,
-            title: 'Ciphertext (send to recipient)',
-            content: _mlKemCiphertext,
-            icon: Icons.send,
-          ),
-          const SizedBox(height: AppConstants.defaultPadding),
-          // Shared secret output
-          _buildMLKemOutputField(
-            context: context,
-            primaryColor: primaryColor,
-            title: 'Shared Secret (keep private)',
-            content: _mlKemSharedSecret,
-            icon: Icons.key,
-            isSecret: true,
-          ),
-        ],
-      );
-    } else {
-      return _buildMLKemOutputField(
-        context: context,
-        primaryColor: primaryColor,
-        title: 'Extracted Shared Secret',
-        content: _mlKemSharedSecret,
-        icon: Icons.key,
-        isSecret: true,
-      );
-    }
-  }
-
-  Widget _buildMLKemOutputField({
-    required BuildContext context,
-    required Color primaryColor,
-    required String title,
-    required String content,
-    required IconData icon,
-    bool isSecret = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
-              if (content.isNotEmpty)
-                _buildActionButton(
-                  icon: Icons.content_copy,
-                  color: primaryColor,
-                  onTap: () => _copyToClipboard(content),
-                  semanticLabel: 'Copy $title',
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
-            constraints: const BoxConstraints(minHeight: 80),
-            decoration: BoxDecoration(
-              color: isSecret
-                  ? Colors.amber.withOpacity(0.1)
-                  : getTextFieldBackgroundColor(context),
-              border: Border.all(
-                color: isSecret
-                    ? Colors.amber.withOpacity(0.3)
-                    : getBorderColor(context),
-              ),
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-            ),
-            child: SelectableText(
-              content.isEmpty ? 'No data generated yet...' : content,
-              style: TextStyle(
-                fontSize: 12,
-                fontFamily: 'monospace',
-                color: content.isEmpty ? Colors.grey : null,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildPublicKeyField({
     required BuildContext context,
     required TextEditingController controller,
@@ -373,7 +138,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             right: 5,
             child: InkWell(
               onTap: () async {
-                final pastedText = await _pasteFromClipboard();
+                final pastedText = await pasteFromClipboard(context);
                 if (pastedText != null) {
                   controller.text = pastedText;
                   onChanged(pastedText);
@@ -428,7 +193,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               hintText: 'Enter your custom AES key (16, 24, or 32 bytes)',
               errorText: controller.text.isEmpty
                   ? null
-                  : _validateAesKey(controller.text),
+                  : validateAesKey(controller.text),
             ),
             maxLines: 1,
           ),
@@ -440,7 +205,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               children: [
                 InkWell(
                   onTap: () async {
-                    final pastedText = await _pasteFromClipboard();
+                    final pastedText = await pasteFromClipboard(context);
                     if (pastedText != null) {
                       controller.text = pastedText;
                       ref.read(keyProvider.notifier).state = pastedText;
@@ -463,7 +228,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 InkWell(
                   onTap: () {
                     // Generate a random 32-byte AES key
-                    final randomKey = _generateRandomAesKey();
+                    final randomKey = generateRandomAesKey();
                     controller.text = randomKey;
                     ref.read(keyProvider.notifier).state = randomKey;
                   },
@@ -486,58 +251,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         ],
       ),
     );
-  }
-
-  String? _validateAesKey(String key) {
-    if (key.isEmpty) return null;
-
-    final keyLength = key.length;
-    if (keyLength != 16 && keyLength != 24 && keyLength != 32) {
-      return 'AES key must be 16, 24, or 32 characters long';
-    }
-    return null;
-  }
-
-  String _generateRandomAesKey() {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    var result = '';
-    for (var i = 0; i < 32; i++) {
-      result += chars[(random + i) % chars.length];
-    }
-    return result;
-  }
-
-  void _copyToClipboard(String text) async {
-    try {
-      await Clipboard.setData(ClipboardData(text: text));
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to copy: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  Future<String?> _pasteFromClipboard() async {
-    try {
-      final clipboardData = await Clipboard.getData('text/plain');
-      return clipboardData?.text;
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to paste: ${e.toString()}')),
-        );
-      }
-      return null;
-    }
   }
 
   @override
@@ -832,14 +545,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 // ML-KEM Info Container (only show in ML-KEM mode)
                 if (isMLKemMode) ...[
                   const SizedBox(height: AppConstants.defaultPadding),
-                  _buildMLKemInfoContainer(
+                  buildMLKemInfoContainer(
                     context: context,
                     primaryColor: primaryColor,
                   ),
                 ],
 
                 // Message input section
-                _buildSectionHeader(
+                buildSectionHeader(
                   title: _getInputFieldLabel(isEncryptMode),
                   characterCount: isMLKemMode
                       ? (isEncryptMode
@@ -848,7 +561,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       : ref.watch(inputTextProvider).length.toString(),
                   actions: [
                     if (!isMLKemMode || !isEncryptMode) ...[
-                      _buildActionButton(
+                      buildActionButton(
                         icon: Icons.clear,
                         color: primaryColor,
                         onTap: () {
@@ -864,11 +577,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         },
                         semanticLabel: 'Clear text',
                       ),
-                      _buildActionButton(
+                      buildActionButton(
                         icon: Icons.content_paste,
                         color: primaryColor,
                         onTap: () async {
-                          final pastedText = await _pasteFromClipboard();
+                          final pastedText = await pasteFromClipboard(context);
                           if (pastedText != null) {
                             if (isEncryptMode) {
                               _encryptTextController.text = pastedText;
@@ -918,7 +631,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 if (isEncryptMode) ...[
                   // Encrypt mode configurations
                   if (!isMLKemMode) ...[
-                    _buildSwitchContainer(
+                    buildSwitchContainer(
                       context: context,
                       title: "Use Default Encryption",
                       value: defaultEncryption,
@@ -1046,7 +759,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               selectedEncryption == EncryptionMethod.aesCbc ||
                               selectedEncryption ==
                                   EncryptionMethod.aesCtr)) ...[
-                        _buildSwitchContainer(
+                        buildSwitchContainer(
                           context: context,
                           title: "Use Custom AES Key",
                           value: useCustomAesKey,
@@ -1190,7 +903,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ] else ...[
                   // Decrypt mode configurations
                   if (!isMLKemMode) ...[
-                    _buildSwitchContainer(
+                    buildSwitchContainer(
                       context: context,
                       title: "Auto-detect Settings (from Tag)",
                       value: autoDetectTag,
@@ -1251,7 +964,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       if (selectedEncryption == EncryptionMethod.aesGcm ||
                           selectedEncryption == EncryptionMethod.aesCbc ||
                           selectedEncryption == EncryptionMethod.aesCtr) ...[
-                        _buildSwitchContainer(
+                        buildSwitchContainer(
                           context: context,
                           title: "Use Custom AES Key",
                           value: useCustomAesKey,
@@ -1403,14 +1116,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                 // ML-KEM specific output or regular output
                 if (isMLKemMode) ...[
-                  _buildMLKemOutputSection(
+                  buildMLKemOutputSection(
                     context: context,
                     primaryColor: primaryColor,
                     isEncryptMode: isEncryptMode,
+                    mlKemCiphertext: _mlKemCiphertext,
+                    mlKemSharedSecret: _mlKemSharedSecret,
                   ),
                 ] else ...[
                   // Regular output section for non-ML-KEM
-                  _buildSectionHeader(
+                  buildSectionHeader(
                     title: "Output",
                     characterCount: isEncryptMode
                         ? ref
@@ -1424,7 +1139,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               .length
                               .toString(),
                     actions: [
-                      _buildActionButton(
+                      buildActionButton(
                         icon: Icons.content_copy,
                         color: primaryColor,
                         onTap: () async {
@@ -1432,7 +1147,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               ? ref.watch(processedEncryptProvider).text
                               : ref.watch(processedDecryptProvider).text;
                           if (outputText.isNotEmpty) {
-                            _copyToClipboard(outputText);
+                            copyToClipboard(outputText, context);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -1513,7 +1228,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         return;
       }
 
-      final validationError = _validateAesKey(customAesKey);
+      final validationError = validateAesKey(customAesKey);
       if (validationError != null) {
         ScaffoldMessenger.of(
           context,
@@ -1685,7 +1400,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         return;
       }
 
-      final validationError = _validateAesKey(customAesKey);
+      final validationError = validateAesKey(customAesKey);
       if (validationError != null) {
         ScaffoldMessenger.of(
           context,
