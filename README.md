@@ -52,8 +52,8 @@ for multiple algorithms and customizable processing pipelines, including quantum
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Input Text    │ -> │  Compression    │ -> │   Encryption    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+│   Input Text    │ -> │  Compression    │ -> │   Encryption    │ <-- Optional: ML-KEM shared secret 
+└─────────────────┘    └─────────────────┘    └─────────────────┘               as encryption key
                                                         │
 ┌─────────────────┐    ┌─────────────────┐              │
 │  Final Output   │ <- │  Obfuscation    │ <-           │
