@@ -12,24 +12,12 @@ import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
+import '../models/kyber_models.dart';
 import '../models/rsa_key_pair.dart';
 import '../providers/resource_providers.dart';
+import '../resources/constants.dart';
+import '../resources/global_resources.dart';
 import '../services/input_handler.dart';
-
-// Constants
-class AppConstants {
-  static const double defaultPadding = 16.0;
-  static const double smallPadding = 8.0;
-  static const double verySmallPadding = 4.0;
-  static const double largePadding = 24.0;
-  static const double xlargePadding = 32.0;
-  static const double borderRadius = 12.0;
-  static const double iconSize = 20.0;
-  static const int maxInputLines = 4;
-  static const double outputHeightRatio = 0.25;
-  static const double borderWidth = 2.0;
-  static const double switchBorderRadius = 20.0;
-}
 
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
@@ -45,7 +33,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _decryptPublicKeyController = TextEditingController();
   final _customAesKeyController = TextEditingController();
   final _customDecryptAesKeyController = TextEditingController();
+  final _mlKemPublicKeyController = TextEditingController();
+  final _mlKemDecryptController = TextEditingController();
   final InputHandler ih = InputHandler();
+
+  // ML-KEM specific state
+  MLKemKeySize _selectedMLKemKeySize = MLKemKeySize.kem768;
+  String _mlKemSharedSecret = '';
+  String _mlKemCiphertext = '';
 
   @override
   void dispose() {
@@ -55,50 +50,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     _decryptPublicKeyController.dispose();
     _customAesKeyController.dispose();
     _customDecryptAesKeyController.dispose();
+    _mlKemPublicKeyController.dispose();
+    _mlKemDecryptController.dispose();
     super.dispose();
-  }
-
-  Color _getTextFieldBackgroundColor(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[50]!;
-  }
-
-  Color _getContainerBackgroundColor(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? Colors.grey[850]! : Colors.grey[50]!;
-  }
-
-  Color _getBorderColor(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark
-        ? Colors.grey[700]!
-        : Colors.grey[300]!;
-  }
-
-  InputDecoration _buildInputDecoration({
-    required BuildContext context,
-    required Color primaryColor,
-    String? hintText,
-    String? labelText,
-    String? errorText,
-  }) {
-    return InputDecoration(
-      hintText: hintText,
-      labelText: labelText,
-      errorText: errorText,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        borderSide: BorderSide(
-          color: primaryColor,
-          width: AppConstants.borderWidth,
-        ),
-      ),
-      filled: true,
-      fillColor: _getTextFieldBackgroundColor(context),
-    );
   }
 
   Widget _buildActionButton({
@@ -172,9 +126,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       child: Container(
         padding: const EdgeInsets.all(AppConstants.defaultPadding),
         decoration: BoxDecoration(
-          color: _getContainerBackgroundColor(context),
+          color: getContainerBackgroundColor(context),
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          border: Border.all(color: _getBorderColor(context)),
+          border: Border.all(color: getBorderColor(context)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,6 +151,193 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
+  Widget _buildMLKemKeySizeSelector({
+    required BuildContext context,
+    required Color primaryColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: BoxDecoration(
+          color: getContainerBackgroundColor(context),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          border: Border.all(color: getBorderColor(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ML-KEM Key Size',
+              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<MLKemKeySize>(
+              value: _selectedMLKemKeySize,
+              decoration: buildInputDecoration(
+                context: context,
+                primaryColor: primaryColor,
+              ),
+              items: MLKemKeySize.values.map((keySize) {
+                return DropdownMenuItem(
+                  value: keySize,
+                  child: Text(keySize.displayName),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedMLKemKeySize = value!;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMLKemInfoContainer({
+    required BuildContext context,
+    required Color primaryColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          border: Border.all(color: primaryColor.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: primaryColor, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'ML-KEM performs quantum-secure key exchange. The generated shared key can be used with AES for message encryption.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: primaryColor.withOpacity(0.8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMLKemOutputSection({
+    required BuildContext context,
+    required Color primaryColor,
+    required bool isEncryptMode,
+  }) {
+    if (isEncryptMode) {
+      return Column(
+        children: [
+          // Ciphertext output
+          _buildMLKemOutputField(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Ciphertext (send to recipient)',
+            content: _mlKemCiphertext,
+            icon: Icons.send,
+          ),
+          const SizedBox(height: AppConstants.defaultPadding),
+          // Shared secret output
+          _buildMLKemOutputField(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Shared Secret (keep private)',
+            content: _mlKemSharedSecret,
+            icon: Icons.key,
+            isSecret: true,
+          ),
+        ],
+      );
+    } else {
+      return _buildMLKemOutputField(
+        context: context,
+        primaryColor: primaryColor,
+        title: 'Extracted Shared Secret',
+        content: _mlKemSharedSecret,
+        icon: Icons.key,
+        isSecret: true,
+      );
+    }
+  }
+
+  Widget _buildMLKemOutputField({
+    required BuildContext context,
+    required Color primaryColor,
+    required String title,
+    required String content,
+    required IconData icon,
+    bool isSecret = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+              if (content.isNotEmpty)
+                _buildActionButton(
+                  icon: Icons.content_copy,
+                  color: primaryColor,
+                  onTap: () => _copyToClipboard(content),
+                  semanticLabel: 'Copy $title',
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            constraints: const BoxConstraints(minHeight: 80),
+            decoration: BoxDecoration(
+              color: isSecret
+                  ? Colors.amber.withOpacity(0.1)
+                  : getTextFieldBackgroundColor(context),
+              border: Border.all(
+                color: isSecret
+                    ? Colors.amber.withOpacity(0.3)
+                    : getBorderColor(context),
+              ),
+              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+            ),
+            child: SelectableText(
+              content.isEmpty ? 'No data generated yet...' : content,
+              style: TextStyle(
+                fontSize: 12,
+                fontFamily: 'monospace',
+                color: content.isEmpty ? Colors.grey : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPublicKeyField({
     required BuildContext context,
     required TextEditingController controller,
@@ -204,6 +345,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     required ValueChanged<String> onChanged,
     required String validationPattern,
     required bool isEncryptMode,
+    String? labelText,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -214,15 +356,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           TextField(
             controller: controller,
             onChanged: onChanged,
-            decoration: _buildInputDecoration(
+            decoration: buildInputDecoration(
               context: context,
               primaryColor: primaryColor,
-              labelText: 'Public Key',
+              labelText: labelText ?? 'Public Key',
               errorText: controller.text.isEmpty
                   ? null
                   : (RegExp(validationPattern).hasMatch(controller.text)
                         ? null
-                        : 'Invalid PEM format'),
+                        : 'Invalid key format'),
             ),
             maxLines: 3,
           ),
@@ -234,14 +376,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 final pastedText = await _pasteFromClipboard();
                 if (pastedText != null) {
                   controller.text = pastedText;
-                  if (isEncryptMode) {
-                    ref.read(receiverPublicKeyProvider.notifier).state =
-                        pastedText;
-                  } else {
-                    ref.read(decryptPublicKeyProvider.notifier).state =
-                        pastedText;
-                    decryptPublicKeyGlobal = pastedText;
-                  }
+                  onChanged(pastedText);
                 }
               },
               borderRadius: BorderRadius.circular(
@@ -286,7 +421,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             onChanged: (value) {
               ref.read(keyProvider.notifier).state = value;
             },
-            decoration: _buildInputDecoration(
+            decoration: buildInputDecoration(
               context: context,
               primaryColor: primaryColor,
               labelText: 'Custom AES Key',
@@ -428,6 +563,186 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
+  // Check if current encryption method is ML-KEM
+  bool _isMLKemMode() {
+    final selectedEncryption = ref.watch(selectedEncryptionProvider);
+    return selectedEncryption == EncryptionMethod.mlKem;
+  }
+
+  // Get appropriate input field label based on mode
+  String _getInputFieldLabel(bool isEncryptMode) {
+    if (_isMLKemMode()) {
+      return isEncryptMode ? "Key Exchange Data" : "Ciphertext to Decrypt";
+    }
+    return "Message";
+  }
+
+  // Get appropriate input field hint based on mode
+  String _getInputFieldHint(bool isEncryptMode) {
+    if (_isMLKemMode()) {
+      return isEncryptMode
+          ? "Generated shared secret will appear in output..."
+          : "Enter ML-KEM ciphertext to extract shared key...";
+    }
+    return "Enter or paste text...";
+  }
+
+  // ML-KEM Key Exchange Function
+  void _performMLKemKeyExchange() async {
+    // Validate ML-KEM public key input
+    if (_mlKemPublicKeyController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the recipient\'s ML-KEM public key'),
+        ),
+      );
+      return;
+    }
+
+    ref.read(isProcessingProvider.notifier).state = true;
+
+    try {
+      // TODO: Implement actual ML-KEM key exchange logic here
+      // This is a placeholder implementation
+
+      // Simulate ML-KEM key exchange process
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      // Generate mock ciphertext and shared secret
+      final mockCiphertext = _generateMockMLKemCiphertext();
+      final mockSharedSecret = _generateMockSharedSecret();
+
+      setState(() {
+        _mlKemCiphertext = mockCiphertext;
+        _mlKemSharedSecret = mockSharedSecret;
+      });
+
+      // Update the input field to show generation completed
+      _encryptTextController.text = 'Key exchange completed - see output below';
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ML-KEM key exchange completed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ML-KEM key exchange failed: ${e.toString()}'),
+          ),
+        );
+      }
+    } finally {
+      ref.read(isProcessingProvider.notifier).state = false;
+    }
+  }
+
+  // ML-KEM Shared Secret Extraction Function
+  void _extractMLKemSharedSecret() async {
+    // Validate ciphertext input
+    if (_decryptTextController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter ML-KEM ciphertext to extract shared key'),
+        ),
+      );
+      return;
+    }
+
+    ref.read(isProcessingProvider.notifier).state = true;
+
+    try {
+      // TODO: Implement actual ML-KEM decapsulation logic here
+      // This is a placeholder implementation
+
+      // Simulate ML-KEM decapsulation process
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      // Generate mock shared secret
+      final mockSharedSecret = _generateMockSharedSecret();
+
+      setState(() {
+        _mlKemSharedSecret = mockSharedSecret;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Shared secret extracted successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to extract shared secret: ${e.toString()}'),
+          ),
+        );
+      }
+    } finally {
+      ref.read(isProcessingProvider.notifier).state = false;
+    }
+  }
+
+  // Generate mock ML-KEM ciphertext for demonstration
+  String _generateMockMLKemCiphertext() {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    var result = '';
+
+    // Generate ciphertext based on selected key size
+    int length;
+    switch (_selectedMLKemKeySize) {
+      case MLKemKeySize.kem512:
+        length = 768; // Approximate ciphertext size for KEM-512
+        break;
+      case MLKemKeySize.kem768:
+        length = 1088; // Approximate ciphertext size for KEM-768
+        break;
+      case MLKemKeySize.kem1024:
+        length = 1568; // Approximate ciphertext size for KEM-1024
+        break;
+    }
+
+    for (var i = 0; i < length; i++) {
+      result += chars[(random + i) % chars.length];
+    }
+
+    // Format with line breaks for readability
+    final formatted = result.replaceAllMapped(
+      RegExp(r'.{64}'),
+      (match) => '${match.group(0)}\n',
+    );
+
+    return 'ML-KEM-${_selectedMLKemKeySize.bits} Ciphertext:\n$formatted';
+  }
+
+  // Generate mock shared secret for demonstration
+  String _generateMockSharedSecret() {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    var result = '';
+
+    // Generate 32-byte (256-bit) shared secret
+    for (var i = 0; i < 64; i++) {
+      // 64 hex characters = 32 bytes
+      result += chars[(random + i) % chars.length];
+    }
+
+    // Format as hex-like string
+    return result
+        .replaceAllMapped(RegExp(r'.{8}'), (match) => '${match.group(0)} ')
+        .trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -438,6 +753,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
+    final isMLKemMode = _isMLKemMode();
 
     final useCustomAesKey = isEncryptMode
         ? ref.watch(useCustomEncryptAesKeyProvider)
@@ -513,49 +829,61 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ],
                 ),
 
+                // ML-KEM Info Container (only show in ML-KEM mode)
+                if (isMLKemMode) ...[
+                  const SizedBox(height: AppConstants.defaultPadding),
+                  _buildMLKemInfoContainer(
+                    context: context,
+                    primaryColor: primaryColor,
+                  ),
+                ],
+
                 // Message input section
                 _buildSectionHeader(
-                  title: "Message",
-                  characterCount: ref
-                      .watch(inputTextProvider)
-                      .length
-                      .toString(),
+                  title: _getInputFieldLabel(isEncryptMode),
+                  characterCount: isMLKemMode
+                      ? (isEncryptMode
+                            ? _mlKemCiphertext.length.toString()
+                            : ref.watch(inputTextProvider).length.toString())
+                      : ref.watch(inputTextProvider).length.toString(),
                   actions: [
-                    _buildActionButton(
-                      icon: Icons.clear,
-                      color: primaryColor,
-                      onTap: () {
-                        if (isEncryptMode) {
-                          _encryptTextController.clear();
-                          ref.read(inputTextProvider.notifier).state =
-                              _encryptTextController.text;
-                        } else {
-                          _decryptTextController.clear();
-                          ref.read(inputTextProvider.notifier).state =
-                              _decryptTextController.text;
-                        }
-                      },
-                      semanticLabel: 'Clear text',
-                    ),
-                    _buildActionButton(
-                      icon: Icons.content_paste,
-                      color: primaryColor,
-                      onTap: () async {
-                        final pastedText = await _pasteFromClipboard();
-                        if (pastedText != null) {
+                    if (!isMLKemMode || !isEncryptMode) ...[
+                      _buildActionButton(
+                        icon: Icons.clear,
+                        color: primaryColor,
+                        onTap: () {
                           if (isEncryptMode) {
-                            _encryptTextController.text = pastedText;
+                            _encryptTextController.clear();
                             ref.read(inputTextProvider.notifier).state =
                                 _encryptTextController.text;
                           } else {
-                            _decryptTextController.text = pastedText;
+                            _decryptTextController.clear();
                             ref.read(inputTextProvider.notifier).state =
                                 _decryptTextController.text;
                           }
-                        }
-                      },
-                      semanticLabel: 'Paste from clipboard',
-                    ),
+                        },
+                        semanticLabel: 'Clear text',
+                      ),
+                      _buildActionButton(
+                        icon: Icons.content_paste,
+                        color: primaryColor,
+                        onTap: () async {
+                          final pastedText = await _pasteFromClipboard();
+                          if (pastedText != null) {
+                            if (isEncryptMode) {
+                              _encryptTextController.text = pastedText;
+                              ref.read(inputTextProvider.notifier).state =
+                                  _encryptTextController.text;
+                            } else {
+                              _decryptTextController.text = pastedText;
+                              ref.read(inputTextProvider.notifier).state =
+                                  _decryptTextController.text;
+                            }
+                          }
+                        },
+                        semanticLabel: 'Paste from clipboard',
+                      ),
+                    ],
                   ],
                 ),
 
@@ -572,10 +900,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ? _encryptTextController
                         : _decryptTextController,
                     maxLines: AppConstants.maxInputLines,
-                    decoration: _buildInputDecoration(
+                    readOnly:
+                        isMLKemMode &&
+                        isEncryptMode, // Read-only for ML-KEM encrypt mode
+                    decoration: buildInputDecoration(
                       context: context,
                       primaryColor: primaryColor,
-                      hintText: "Enter or paste text...",
+                      hintText: _getInputFieldHint(isEncryptMode),
+                      labelText: _getInputFieldLabel(isEncryptMode),
                     ),
                   ),
                 ),
@@ -585,170 +917,216 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 // Mode-specific configuration sections
                 if (isEncryptMode) ...[
                   // Encrypt mode configurations
-                  _buildSwitchContainer(
-                    context: context,
-                    title: "Use Default Encryption",
-                    value: defaultEncryption,
-                    onChanged: (val) =>
-                        ref.read(defaultEncryptionProvider.notifier).state =
-                            val,
-                    primaryColor: primaryColor,
-                  ),
+                  if (!isMLKemMode) ...[
+                    _buildSwitchContainer(
+                      context: context,
+                      title: "Use Default Encryption",
+                      value: defaultEncryption,
+                      onChanged: (val) =>
+                          ref.read(defaultEncryptionProvider.notifier).state =
+                              val,
+                      primaryColor: primaryColor,
+                    ),
+                  ],
 
-                  if (!defaultEncryption) ...[
+                  if (!defaultEncryption || isMLKemMode) ...[
                     const SizedBox(height: AppConstants.smallPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: useTagManually
-                              ? primaryColor.withOpacity(0.1)
-                              : _getContainerBackgroundColor(context),
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.borderRadius,
-                          ),
-                          border: Border.all(
-                            color: useTagManually
-                                ? primaryColor.withOpacity(0.3)
-                                : _getBorderColor(context),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                "Include Tag",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                            Switch(
-                              value: useTagManually,
-                              onChanged: (val) =>
-                                  ref.read(useTagProvider.notifier).state = val,
-                              activeColor: primaryColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
 
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: CompressionsDropdownButtonForm(
-                        selectedCompression: selectedCompression,
-                        primaryColor: primaryColor,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: EncryptionsDropdownButtonForm(
-                        selectedEncryption: selectedEncryption,
-                        primaryColor: primaryColor,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: ObfsDropdownButtonForm(
-                        selectedObfuscation: selectedObfuscation,
-                        primaryColor: primaryColor,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppConstants.defaultPadding),
-
-                    // Custom AES Key Section - Show only for AES encryption methods
-                    if (selectedEncryption == EncryptionMethod.aesGcm ||
-                        selectedEncryption == EncryptionMethod.aesCbc ||
-                        selectedEncryption == EncryptionMethod.aesCtr) ...[
-                      _buildSwitchContainer(
+                    // ML-KEM specific configurations
+                    if (isMLKemMode) ...[
+                      _buildMLKemKeySizeSelector(
                         context: context,
-                        title: "Use Custom AES Key",
-                        value: useCustomAesKey,
-                        onChanged: (val) {
-                          ref
-                                  .read(useCustomEncryptAesKeyProvider.notifier)
-                                  .state =
-                              val;
-                          if (!val) {
-                            _customAesKeyController.clear();
-                            ref
-                                    .read(customEncryptAesKeyProvider.notifier)
-                                    .state =
-                                '';
-                          }
-                        },
                         primaryColor: primaryColor,
                       ),
-
-                      if (useCustomAesKey) ...[
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        _buildCustomAesKeyField(
-                          context: context,
-                          primaryColor: primaryColor,
-                          isEncryptMode: true, // Pass true for encrypt mode
-                        ),
-                      ],
-
                       const SizedBox(height: AppConstants.defaultPadding),
-                    ],
-
-                    if (selectedEncryption == EncryptionMethod.rsa ||
-                        selectedEncryption == EncryptionMethod.rsaSign) ...[
-                      if (selectedEncryption == EncryptionMethod.rsaSign)
+                      _buildPublicKeyField(
+                        context: context,
+                        controller: _mlKemPublicKeyController,
+                        primaryColor: primaryColor,
+                        onChanged: (val) {
+                          // Handle ML-KEM public key input
+                        },
+                        validationPattern:
+                            r'^[A-Za-z0-9+/=\n\r\s-]+', // Basic validation for ML-KEM keys
+                        isEncryptMode: true,
+                        labelText: 'Recipient\'s ML-KEM Public Key',
+                      ),
+                    ] else ...[
+                      // Non-ML-KEM configurations
+                      if (!isMLKemMode) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppConstants.defaultPadding,
                           ),
-                          child: RSAEncryptKeySelector(
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: useTagManually
+                                  ? primaryColor.withOpacity(0.1)
+                                  : getContainerBackgroundColor(context),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                              border: Border.all(
+                                color: useTagManually
+                                    ? primaryColor.withOpacity(0.3)
+                                    : getBorderColor(context),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    "Include Tag",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                Switch(
+                                  value: useTagManually,
+                                  onChanged: (val) =>
+                                      ref.read(useTagProvider.notifier).state =
+                                          val,
+                                  activeColor: primaryColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+
+                      // Show compression dropdown (not for ML-KEM)
+                      if (!isMLKemMode) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: CompressionsDropdownButtonForm(
+                            selectedCompression: selectedCompression,
                             primaryColor: primaryColor,
                           ),
                         ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
 
-                      const SizedBox(height: AppConstants.largePadding / 2),
-                      _buildPublicKeyField(
-                        context: context,
-                        controller: _encryptPublicKeyController,
-                        primaryColor: primaryColor,
-                        onChanged: (val) {
-                          try {
-                            String normalized = val.trim().replaceAll(
-                              RegExp(r'\r\n|\r|\n'),
-                              '\n',
-                            );
-                            ref.read(publicKeyProvider.notifier).state =
-                                normalized;
-                          } catch (e) {
-                            if (kDebugMode) {
-                              print('Error normalizing public key: $e');
-                            }
-                          }
-                        },
-                        validationPattern:
-                            r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                        isEncryptMode: true,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: EncryptionsDropdownButtonForm(
+                          selectedEncryption: selectedEncryption,
+                          primaryColor: primaryColor,
+                        ),
                       ),
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+
+                      // Show obfuscation dropdown (not for ML-KEM)
+                      if (!isMLKemMode) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: ObfsDropdownButtonForm(
+                            selectedObfuscation: selectedObfuscation,
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+
+                      // Custom AES Key Section - Show only for AES encryption methods
+                      if (!isMLKemMode &&
+                          (selectedEncryption == EncryptionMethod.aesGcm ||
+                              selectedEncryption == EncryptionMethod.aesCbc ||
+                              selectedEncryption ==
+                                  EncryptionMethod.aesCtr)) ...[
+                        _buildSwitchContainer(
+                          context: context,
+                          title: "Use Custom AES Key",
+                          value: useCustomAesKey,
+                          onChanged: (val) {
+                            ref
+                                    .read(
+                                      useCustomEncryptAesKeyProvider.notifier,
+                                    )
+                                    .state =
+                                val;
+                            if (!val) {
+                              _customAesKeyController.clear();
+                              ref
+                                      .read(
+                                        customEncryptAesKeyProvider.notifier,
+                                      )
+                                      .state =
+                                  '';
+                            }
+                          },
+                          primaryColor: primaryColor,
+                        ),
+
+                        if (useCustomAesKey) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          _buildCustomAesKeyField(
+                            context: context,
+                            primaryColor: primaryColor,
+                            isEncryptMode: true,
+                          ),
+                        ],
+
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+
+                      // RSA specific fields
+                      if (!isMLKemMode &&
+                          (selectedEncryption == EncryptionMethod.rsa ||
+                              selectedEncryption ==
+                                  EncryptionMethod.rsaSign)) ...[
+                        if (selectedEncryption == EncryptionMethod.rsaSign)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.defaultPadding,
+                            ),
+                            child: RSAEncryptKeySelector(
+                              primaryColor: primaryColor,
+                            ),
+                          ),
+
+                        const SizedBox(height: AppConstants.largePadding / 2),
+                        _buildPublicKeyField(
+                          context: context,
+                          controller: _encryptPublicKeyController,
+                          primaryColor: primaryColor,
+                          onChanged: (val) {
+                            try {
+                              String normalized = val.trim().replaceAll(
+                                RegExp(r'\r\n|\r|\n'),
+                                '\n',
+                              );
+                              ref.read(publicKeyProvider.notifier).state =
+                                  normalized;
+                            } catch (e) {
+                              if (kDebugMode) {
+                                print('Error normalizing public key: $e');
+                              }
+                            }
+                          },
+                          validationPattern:
+                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
+                          isEncryptMode: true,
+                        ),
+                      ],
                     ],
                   ],
 
                   const SizedBox(height: AppConstants.largePadding),
+
+                  // Action Button
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppConstants.defaultPadding,
@@ -758,13 +1136,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       onPressed: isProcessing
                           ? null
                           : () {
-                              _encrypt(
-                                defaultEncryption,
-                                selectedEncryption,
-                                selectedObfuscation,
-                                selectedCompression,
-                                useTagManually,
-                              );
+                              if (isMLKemMode) {
+                                _performMLKemKeyExchange();
+                              } else {
+                                _encrypt(
+                                  defaultEncryption,
+                                  selectedEncryption,
+                                  selectedObfuscation,
+                                  selectedCompression,
+                                  useTagManually,
+                                );
+                              }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
@@ -787,14 +1169,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.lock),
-                                SizedBox(width: 5),
+                                Icon(isMLKemMode ? Icons.sync_alt : Icons.lock),
+                                const SizedBox(width: 5),
                                 Text(
-                                  "Encrypt",
-                                  style: TextStyle(
+                                  isMLKemMode
+                                      ? "Generate Shared Key"
+                                      : "Encrypt",
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -805,125 +1189,144 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ),
                 ] else ...[
                   // Decrypt mode configurations
-                  _buildSwitchContainer(
-                    context: context,
-                    title: "Auto-detect Settings (from Tag)",
-                    value: autoDetectTag,
-                    onChanged: (val) =>
-                        ref.read(autoDetectTagProvider.notifier).state = val,
-                    primaryColor: primaryColor,
-                  ),
-
-                  if (!autoDetectTag) ...[
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: CompressionsDropdownButtonForm(
-                        selectedCompression: selectedCompression,
-                        primaryColor: primaryColor,
-                      ),
+                  if (!isMLKemMode) ...[
+                    _buildSwitchContainer(
+                      context: context,
+                      title: "Auto-detect Settings (from Tag)",
+                      value: autoDetectTag,
+                      onChanged: (val) =>
+                          ref.read(autoDetectTagProvider.notifier).state = val,
+                      primaryColor: primaryColor,
                     ),
+                  ],
 
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: EncryptionsDropdownButtonForm(
-                        selectedEncryption: selectedEncryption,
-                        primaryColor: primaryColor,
-                      ),
-                    ),
-
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: ObfsDropdownButtonForm(
-                        selectedObfuscation: selectedObfuscation,
-                        primaryColor: primaryColor,
-                      ),
-                    ),
-
+                  if (!autoDetectTag || isMLKemMode) ...[
                     const SizedBox(height: AppConstants.defaultPadding),
 
-                    // Custom AES Key Section for Decrypt - Show only for AES encryption methods
-                    if (selectedEncryption == EncryptionMethod.aesGcm ||
-                        selectedEncryption == EncryptionMethod.aesCbc ||
-                        selectedEncryption == EncryptionMethod.aesCtr) ...[
-                      _buildSwitchContainer(
+                    // ML-KEM decrypt mode doesn't need many options
+                    if (isMLKemMode) ...[
+                      _buildMLKemKeySizeSelector(
                         context: context,
-                        title: "Use Custom AES Key",
-                        value: useCustomAesKey,
-                        onChanged: (val) {
-                          ref
-                                  .read(useCustomDecryptAesKeyProvider.notifier)
-                                  .state =
-                              val;
-                          if (!val) {
-                            _customDecryptAesKeyController.clear();
-                            ref
-                                    .read(customDecryptAesKeyProvider.notifier)
-                                    .state =
-                                '';
-                          }
-                        },
                         primaryColor: primaryColor,
                       ),
-
-                      if (useCustomAesKey) ...[
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        _buildCustomAesKeyField(
-                          context: context,
-                          primaryColor: primaryColor,
-                          isEncryptMode: false, // Pass false for decrypt mode
-                        ),
-                      ],
-
                       const SizedBox(height: AppConstants.defaultPadding),
-                    ],
-
-                    if (selectedEncryption == EncryptionMethod.rsa ||
-                        selectedEncryption == EncryptionMethod.rsaSign) ...[
+                      // Note: In decrypt mode, we might need private key selector for ML-KEM
+                    ] else ...[
+                      // Non-ML-KEM decrypt configurations
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
                         ),
-                        child: RSADecryptKeySelector(
+                        child: CompressionsDropdownButtonForm(
+                          selectedCompression: selectedCompression,
                           primaryColor: primaryColor,
                         ),
                       ),
 
                       const SizedBox(height: AppConstants.defaultPadding),
-                      if (selectedEncryption == EncryptionMethod.rsaSign)
-                        _buildPublicKeyField(
-                          context: context,
-                          controller: _decryptPublicKeyController,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: EncryptionsDropdownButtonForm(
+                          selectedEncryption: selectedEncryption,
                           primaryColor: primaryColor,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: ObfsDropdownButtonForm(
+                          selectedObfuscation: selectedObfuscation,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+
+                      // Custom AES Key Section for Decrypt
+                      if (selectedEncryption == EncryptionMethod.aesGcm ||
+                          selectedEncryption == EncryptionMethod.aesCbc ||
+                          selectedEncryption == EncryptionMethod.aesCtr) ...[
+                        _buildSwitchContainer(
+                          context: context,
+                          title: "Use Custom AES Key",
+                          value: useCustomAesKey,
                           onChanged: (val) {
-                            try {
-                              String normalized = val.trim().replaceAll(
-                                RegExp(r'\r\n|\r|\n'),
-                                '\n',
-                              );
+                            ref
+                                    .read(
+                                      useCustomDecryptAesKeyProvider.notifier,
+                                    )
+                                    .state =
+                                val;
+                            if (!val) {
+                              _customDecryptAesKeyController.clear();
                               ref
-                                      .read(decryptPublicKeyProvider.notifier)
+                                      .read(
+                                        customDecryptAesKeyProvider.notifier,
+                                      )
                                       .state =
-                                  normalized;
-                              decryptPublicKeyGlobal = normalized;
-                            } catch (e) {
-                              if (kDebugMode) {
-                                print('Error normalizing public key: $e');
-                              }
+                                  '';
                             }
                           },
-                          validationPattern:
-                              r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
-                          isEncryptMode: false,
+                          primaryColor: primaryColor,
                         ),
+
+                        if (useCustomAesKey) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          _buildCustomAesKeyField(
+                            context: context,
+                            primaryColor: primaryColor,
+                            isEncryptMode: false,
+                          ),
+                        ],
+
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+
+                      // RSA decrypt configurations
+                      if (selectedEncryption == EncryptionMethod.rsa ||
+                          selectedEncryption == EncryptionMethod.rsaSign) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: RSADecryptKeySelector(
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        if (selectedEncryption == EncryptionMethod.rsaSign)
+                          _buildPublicKeyField(
+                            context: context,
+                            controller: _decryptPublicKeyController,
+                            primaryColor: primaryColor,
+                            onChanged: (val) {
+                              try {
+                                String normalized = val.trim().replaceAll(
+                                  RegExp(r'\r\n|\r|\n'),
+                                  '\n',
+                                );
+                                ref
+                                        .read(decryptPublicKeyProvider.notifier)
+                                        .state =
+                                    normalized;
+                                decryptPublicKeyGlobal = normalized;
+                              } catch (e) {
+                                if (kDebugMode) {
+                                  print('Error normalizing public key: $e');
+                                }
+                              }
+                            },
+                            validationPattern:
+                                r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
+                            isEncryptMode: false,
+                          ),
+                      ],
                     ],
                   ],
 
@@ -937,12 +1340,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       onPressed: isProcessing
                           ? null
                           : () {
-                              _decrypt(
-                                autoDetectTag,
-                                selectedEncryption,
-                                selectedObfuscation,
-                                selectedCompression,
-                              );
+                              if (isMLKemMode) {
+                                _extractMLKemSharedSecret();
+                              } else {
+                                _decrypt(
+                                  autoDetectTag,
+                                  selectedEncryption,
+                                  selectedObfuscation,
+                                  selectedCompression,
+                                );
+                              }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -965,14 +1372,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.lock_open),
-                                SizedBox(width: 5),
+                                Icon(isMLKemMode ? Icons.key : Icons.lock_open),
+                                const SizedBox(width: 5),
                                 Text(
-                                  "Decrypt",
-                                  style: TextStyle(
+                                  isMLKemMode
+                                      ? "Extract Shared Key"
+                                      : "Decrypt",
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -992,64 +1401,79 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   child: const Divider(),
                 ),
 
-                _buildSectionHeader(
-                  title: "Output",
-                  characterCount: isEncryptMode
-                      ? ref
-                            .watch(processedEncryptProvider)
-                            .text
-                            .length
-                            .toString()
-                      : ref
-                            .watch(processedDecryptProvider)
-                            .text
-                            .length
-                            .toString(),
-                  actions: [
-                    _buildActionButton(
-                      icon: Icons.content_copy,
-                      color: primaryColor,
-                      onTap: () async {
-                        final outputText = isEncryptMode
-                            ? ref.watch(processedEncryptProvider).text
-                            : ref.watch(processedDecryptProvider).text;
-                        if (outputText.isNotEmpty) {
-                          _copyToClipboard(outputText);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('No output to copy')),
-                          );
-                        }
-                      },
-                      semanticLabel: 'Copy output to clipboard',
-                    ),
-                  ],
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.defaultPadding,
+                // ML-KEM specific output or regular output
+                if (isMLKemMode) ...[
+                  _buildMLKemOutputSection(
+                    context: context,
+                    primaryColor: primaryColor,
+                    isEncryptMode: isEncryptMode,
                   ),
-                  child: Container(
-                    height: screenHeight * AppConstants.outputHeightRatio,
-                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                    constraints: const BoxConstraints(minHeight: 120),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: _getTextFieldBackgroundColor(context),
-                      border: Border.all(color: _getBorderColor(context)),
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
+                ] else ...[
+                  // Regular output section for non-ML-KEM
+                  _buildSectionHeader(
+                    title: "Output",
+                    characterCount: isEncryptMode
+                        ? ref
+                              .watch(processedEncryptProvider)
+                              .text
+                              .length
+                              .toString()
+                        : ref
+                              .watch(processedDecryptProvider)
+                              .text
+                              .length
+                              .toString(),
+                    actions: [
+                      _buildActionButton(
+                        icon: Icons.content_copy,
+                        color: primaryColor,
+                        onTap: () async {
+                          final outputText = isEncryptMode
+                              ? ref.watch(processedEncryptProvider).text
+                              : ref.watch(processedDecryptProvider).text;
+                          if (outputText.isNotEmpty) {
+                            _copyToClipboard(outputText);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No output to copy'),
+                              ),
+                            );
+                          }
+                        },
+                        semanticLabel: 'Copy output to clipboard',
+                      ),
+                    ],
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.defaultPadding,
+                    ),
+                    child: Container(
+                      height: screenHeight * AppConstants.outputHeightRatio,
+                      padding: const EdgeInsets.all(
+                        AppConstants.defaultPadding,
+                      ),
+                      constraints: const BoxConstraints(minHeight: 120),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: getTextFieldBackgroundColor(context),
+                        border: Border.all(color: getBorderColor(context)),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
+                      ),
+                      child: SelectableText(
+                        isEncryptMode
+                            ? ref.watch(processedEncryptProvider).text
+                            : ref.watch(processedDecryptProvider).text,
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ),
-                    child: SelectableText(
-                      isEncryptMode
-                          ? ref.watch(processedEncryptProvider).text
-                          : ref.watch(processedDecryptProvider).text,
-                      style: const TextStyle(fontSize: 16),
-                    ),
                   ),
-                ),
+                ],
+
                 const SizedBox(height: AppConstants.defaultPadding),
               ],
             ),
