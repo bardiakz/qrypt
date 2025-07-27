@@ -16,7 +16,7 @@ class RSAKeyStorageService {
       final List<dynamic> keyPairsList = jsonDecode(keyPairsJson);
       return keyPairsList.map((json) => RSAKeyPair.fromJson(json)).toList();
     } catch (e) {
-      print('Error loading key pairs: $e');
+      debugPrint('Error loading key pairs: $e');
       return [];
     }
   }
@@ -28,7 +28,7 @@ class RSAKeyStorageService {
       keyPairs.add(keyPair);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
-      print('Error saving key pair: $e');
+      debugPrint('Error saving key pair: $e');
       rethrow;
     }
   }
@@ -40,7 +40,7 @@ class RSAKeyStorageService {
       keyPairs.removeWhere((kp) => kp.id == id);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
-      print('Error deleting key pair: $e');
+      debugPrint('Error deleting key pair: $e');
       rethrow;
     }
   }
@@ -58,7 +58,7 @@ class RSAKeyStorageService {
         throw Exception('Key pair with ID ${updatedKeyPair.id} not found');
       }
     } catch (e) {
-      print('Error updating key pair: $e');
+      debugPrint('Error updating key pair: $e');
       rethrow;
     }
   }
@@ -72,7 +72,7 @@ class RSAKeyStorageService {
         orElse: () => throw StateError('Key pair not found'),
       );
     } catch (e) {
-      print('Error getting key pair by ID: $e');
+      debugPrint('Error getting key pair by ID: $e');
       return null;
     }
   }
@@ -93,7 +93,7 @@ class RSAKeyStorageService {
       final keyPairs = await getKeyPairs();
       return keyPairs.length;
     } catch (e) {
-      print('Error getting key pairs count: $e');
+      debugPrint('Error getting key pairs count: $e');
       return 0;
     }
   }
@@ -104,7 +104,7 @@ class RSAKeyStorageService {
       final keyPairs = await getKeyPairs();
       return keyPairs.any((kp) => kp.name.toLowerCase() == name.toLowerCase());
     } catch (e) {
-      print('Error checking key pair name: $e');
+      debugPrint('Error checking key pair name: $e');
       return false;
     }
   }
@@ -119,7 +119,7 @@ class RSAKeyStorageService {
           )
           .toList();
     } catch (e) {
-      print('Error searching key pairs: $e');
+      debugPrint('Error searching key pairs: $e');
       return [];
     }
   }
@@ -190,7 +190,7 @@ class RSAKeyStorageService {
 
       await _saveKeyPairsList(finalKeyPairs);
     } catch (e) {
-      print('Error importing key pairs: $e');
+      debugPrint('Error importing key pairs: $e');
       rethrow;
     }
   }
@@ -203,9 +203,8 @@ class RSAKeyStorageService {
       );
       await _storage.write(key: _keyPairsKey, value: keyPairsJson);
     } catch (e) {
-      if (kDebugMode) {
-        print('Error saving key pairs list: $e');
-      }
+      debugPrint('Error saving key pairs list: $e');
+
       rethrow;
     }
   }
@@ -226,7 +225,7 @@ class RSAKeyStorageService {
             : keyPairsJson.length ~/ keyPairs.length,
       };
     } catch (e) {
-      print('Error getting storage info: $e');
+      debugPrint('Error getting storage info: $e');
       return {
         'keyPairsCount': 0,
         'approximateStorageSize': 0,

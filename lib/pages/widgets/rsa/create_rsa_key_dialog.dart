@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../models/rsa_key_pair.dart';
-import '../../providers/rsa_providers.dart';
+import '../../../models/rsa_key_pair.dart';
+import '../../../providers/rsa_providers.dart';
 
 class CreateRSAKeyDialog extends ConsumerStatefulWidget {
   final Color primaryColor;
@@ -163,7 +163,6 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
       } else {
         // For generation, generateKeyPair() already saves it internally
         keyPair = await service.generateKeyPair(_nameController.text.trim());
-        // ❌ REMOVE THIS LINE: await service.saveKeyPair(keyPair);
       }
 
       // Refresh the provider to update the UI

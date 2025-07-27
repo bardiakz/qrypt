@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../models/rsa_key_pair.dart';
-import '../../providers/rsa_providers.dart';
+import '../../../models/rsa_key_pair.dart';
+import '../../../providers/rsa_providers.dart';
+import '../../../resources/global_resources.dart';
 import 'create_rsa_key_dialog.dart';
 import 'rsa_key_management_dialog.dart';
 
@@ -28,7 +28,7 @@ class RSAKeySelector extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: getContainerBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),

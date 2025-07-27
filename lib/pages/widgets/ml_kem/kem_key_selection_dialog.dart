@@ -1,39 +1,36 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qrypt/providers/resource_providers.dart';
-import '../../models/rsa_key_pair.dart';
-import '../../providers/encryption_providers.dart';
-import '../../providers/rsa_providers.dart';
-import '../../resources/constants.dart';
-import '../encryption_page.dart';
-import 'create_rsa_key_dialog.dart';
+import '../../../models/kem_key_pair.dart';
+import '../../../providers/kem_providers.dart';
+import '../../../resources/constants.dart';
+import 'create_kem_key_dialog.dart';
 
-class RSAKeySelectionDialog extends ConsumerStatefulWidget {
+class KemKeySelectionDialog extends ConsumerStatefulWidget {
   final Color primaryColor;
   final String title;
   final String message;
   final bool publicKeyRequired;
 
-  const RSAKeySelectionDialog({
+  const KemKeySelectionDialog({
     super.key,
     required this.primaryColor,
-    this.title = 'Select RSA Key Pair',
-    this.message = 'Please select an RSA key pair to use for decryption.',
+    this.title = 'Select KEM Key Pair',
+    this.message = 'Please select an KEM key pair to use for decryption.',
     required this.publicKeyRequired,
   });
 
   @override
-  ConsumerState<RSAKeySelectionDialog> createState() =>
-      _RSAKeySelectionDialogState();
+  ConsumerState<KemKeySelectionDialog> createState() =>
+      _KemKeySelectionDialogState();
 }
 
-class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
-  RSAKeyPair? _selectedKeyPair;
+class _KemKeySelectionDialogState extends ConsumerState<KemKeySelectionDialog> {
+  QryptKEMKeyPair? _selectedKeyPair;
 
   @override
   Widget build(BuildContext context) {
-    final keyPairsAsync = ref.watch(rsaKeyPairsProvider);
+    final keyPairsAsync = ref.watch(kemKeyPairsProvider);
 
     return AlertDialog(
       title: Text(widget.title),
@@ -52,7 +49,7 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                 }
 
                 // Remove duplicates based on id
-                final uniqueKeyPairs = <String, RSAKeyPair>{};
+                final uniqueKeyPairs = <String, QryptKEMKeyPair>{};
                 for (final keyPair in keyPairs) {
                   uniqueKeyPairs[keyPair.id] = keyPair;
                 }
@@ -86,12 +83,12 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<RSAKeyPair>(
+                        child: DropdownButton<QryptKEMKeyPair>(
                           value: _selectedKeyPair,
                           isExpanded: true,
                           hint: const Text('Select a key pair'),
                           items: deduplicatedKeyPairs.map((keyPair) {
-                            return DropdownMenuItem<RSAKeyPair>(
+                            return DropdownMenuItem<QryptKEMKeyPair>(
                               value: keyPair,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,9 +177,9 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                           RegExp(r'\r\n|\r|\n'),
                           '\n',
                         );
-                        ref.read(decryptPublicKeyProvider.notifier).state =
+                        ref.read(decryptKemPublicKeyProvider.notifier).state =
                             normalized;
-                        decryptPublicKeyGlobal = normalized;
+                        decryptKemPublicKeyGlobal = normalized;
                         // if (kDebugMode) {
                         //   print('Saved normalized public key: $normalized');
                         //   print('Key code units: ${normalized.codeUnits}');
@@ -209,11 +206,13 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                           width: AppConstants.borderWidth,
                         ),
                       ),
-                      errorText: ref.watch(decryptPublicKeyProvider).isEmpty
+                      errorText: ref.watch(decryptKemPublicKeyProvider).isEmpty
                           ? null
                           : (RegExp(
                                   r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                ).hasMatch(ref.watch(decryptPublicKeyProvider))
+                                ).hasMatch(
+                                  ref.watch(decryptKemPublicKeyProvider),
+                                )
                                 ? null
                                 : 'Invalid PEM format'),
                     ),
@@ -270,7 +269,7 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
           ),
           const SizedBox(height: 8),
           Text(
-            'You need to create or import an RSA key pair to decrypt this content.',
+            'You need to create or import an KEM key pair to decrypt this content.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey[600]),
           ),
@@ -291,26 +290,26 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
     showDialog(
       context: context,
       builder: (context) =>
-          CreateRSAKeyDialog(primaryColor: widget.primaryColor),
+          CreateKemKeyDialog(primaryColor: widget.primaryColor),
     ).then((_) {
       // Refresh the key pairs after creating a new one
-      ref.refresh(rsaKeyPairsProvider);
+      ref.refresh(kemKeyPairsProvider);
     });
   }
 }
 
-// Utility function to show the RSA key selection dialog
-Future<RSAKeyPair?> showRSAKeySelectionDialog({
+// Utility function to show the KEM key selection dialog
+Future<QryptKEMKeyPair?> showKemKeySelectionDialog({
   required BuildContext context,
   required Color primaryColor,
-  String title = 'Select RSA Key Pair',
-  String message = 'Please select an RSA key pair to use for decryption.',
+  String title = 'Select KEM Key Pair',
+  String message = 'Please select an KEM key pair to use for decryption.',
   required bool publicKeyRequired,
 }) {
-  return showDialog<RSAKeyPair>(
+  return showDialog<QryptKEMKeyPair>(
     context: context,
     barrierDismissible: false, // Prevent dismissing by tapping outside
-    builder: (context) => RSAKeySelectionDialog(
+    builder: (context) => KemKeySelectionDialog(
       primaryColor: primaryColor,
       title: title,
       message: message,

@@ -7,8 +7,9 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/kyber_widgets.dart';
+import 'package:qrypt/pages/widgets/ml_kem/kem_key_selector.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
-import 'package:qrypt/pages/widgets/rsa_key_selector.dart';
+import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
@@ -606,6 +607,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       buildMLKemKeySizeSelector(
                         context: context,
                         primaryColor: primaryColor,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                          vertical: AppConstants.defaultPadding,
+                        ),
+                        child: KemEncryptKeySelector(
+                          primaryColor: primaryColor,
+                        ),
                       ),
                       const SizedBox(height: AppConstants.defaultPadding),
                       _buildPublicKeyField(

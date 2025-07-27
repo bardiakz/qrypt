@@ -10,7 +10,7 @@ import 'package:qrypt/services/tag_manager.dart';
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
-import '../pages/widgets/RSA_key_selection_dialog.dart';
+import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
 import 'aes_encryption.dart';
 import 'obfuscate.dart';
