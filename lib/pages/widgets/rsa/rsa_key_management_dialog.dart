@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/rsa_key_pair.dart';
-import '../../providers/rsa_providers.dart';
+import '../../../models/rsa_key_pair.dart';
+import '../../../providers/rsa_providers.dart';
 import 'create_rsa_key_dialog.dart';
 
 class RSAKeyManagementDialog extends ConsumerWidget {

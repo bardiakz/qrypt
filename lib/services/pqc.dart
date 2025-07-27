@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:oqs/oqs.dart';
 
 void main() {
@@ -8,9 +11,12 @@ void main() {
   }
   try {
     // Generate a key pair
-    final keyPair = kem.generateKeyPair();
+    final KEMKeyPair keyPair = kem.generateKeyPair();
     print('Public key length: ${keyPair.publicKey.length}');
     print('Secret key length: ${keyPair.secretKey.length}');
+
+    print('Public key : ${base64Encode(keyPair.publicKey)}');
+    print('Secret key : ${base64Encode(keyPair.secretKey)}');
 
     // Encapsulate a shared secret
     final encapsulationResult = kem.encapsulate(keyPair.publicKey);
