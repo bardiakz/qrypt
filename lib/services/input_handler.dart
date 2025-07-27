@@ -3,8 +3,11 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:oqs/oqs.dart';
 import 'package:qrypt/models/encryption_method.dart';
+import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/services/compression.dart';
+import 'package:qrypt/services/kem/kem_service.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 import '../models/Qrypt.dart';
@@ -673,6 +676,32 @@ class InputHandler {
     return qrypt;
   }
 
+  Future<Qrypt> handleKemProcess(Qrypt krypt, String publicKey) async {
+    KemKeyService kem = KemKeyService();
+    Uint8List uint8PublicKey = base64Decode(publicKey);
+    KEMEncapsulationResult encResult = kem.encapsulateWithPublicKey(
+      uint8PublicKey,
+    );
+    Qrypt qrypt = Qrypt.forKem(
+      ciphertext: encResult.ciphertext,
+      sharedSecret: encResult.sharedSecret,
+    );
+    return qrypt;
+  }
+
+  Future<Qrypt> handleKemDeProcess(Qrypt krypt, QryptKEMKeyPair keyPair) async {
+    KemKeyService kem = KemKeyService();
+    Uint8List uint8Ciphertext = base64Decode(krypt.inputCiphertext);
+    debugPrint(keyPair.secretKey.length.toString());
+    Uint8List sharedSecret = kem.decapsulateWithSecretKey(
+      uint8Ciphertext,
+      keyPair.secretKey,
+    );
+
+    Qrypt qrypt = Qrypt.forKemDecrypt(sharedSecret: sharedSecret);
+    return qrypt;
+  }
+
   static List<String> parseByColon(String input) {
     List<String> parts;
     parts = input.split(':');
@@ -710,7 +739,7 @@ class InputHandler {
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List;
+          return result;
 
         case EncryptionMethod.aesCtr:
           final result = Aes.decryptAesCtr(ciphertext, iv, key);
@@ -724,7 +753,7 @@ class InputHandler {
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List;
+          return result;
 
         case EncryptionMethod.aesGcm:
           final result = Aes.decryptAesGcm(ciphertext, iv, key);
@@ -740,7 +769,7 @@ class InputHandler {
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
           }
-          return result as Uint8List;
+          return result;
 
         default:
           if (kDebugMode) {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
+import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
@@ -316,19 +319,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     ref.read(isProcessingProvider.notifier).state = true;
 
     try {
-      // TODO: Implement actual ML-KEM key exchange logic here
-      // This is a placeholder implementation
-
-      // Simulate ML-KEM key exchange process
-      await Future.delayed(const Duration(milliseconds: 1500));
-
-      // Generate mock ciphertext and shared secret
-      final mockCiphertext = generateMockMLKemCiphertext(_selectedMLKemKeySize);
-      final mockSharedSecret = generateMockSharedSecret();
+      ref.read(processedEncryptProvider.notifier).state = await ih
+          .handleKemProcess(
+            ref.read(processedEncryptProvider),
+            _mlKemPublicKeyController.text,
+          );
 
       setState(() {
-        _mlKemCiphertext = mockCiphertext;
-        _mlKemSharedSecret = mockSharedSecret;
+        _mlKemCiphertext = base64Encode(
+          ref.read(processedEncryptProvider).ciphertext!,
+        );
+        _mlKemSharedSecret = base64Encode(
+          ref.read(processedEncryptProvider).sharedSecret!,
+        );
+        ;
       });
 
       // Update the input field to show generation completed
@@ -368,19 +372,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
 
     ref.read(isProcessingProvider.notifier).state = true;
-
+    ref.read(processedDecryptProvider.notifier).state.inputCiphertext =
+        _decryptTextController.text;
     try {
-      // TODO: Implement actual ML-KEM decapsulation logic here
-      // This is a placeholder implementation
-
-      // Simulate ML-KEM decapsulation process
-      await Future.delayed(const Duration(milliseconds: 1000));
-
-      // Generate mock shared secret
-      final mockSharedSecret = generateMockSharedSecret();
+      ref.read(processedDecryptProvider.notifier).state = await ih
+          .handleKemDeProcess(
+            ref.read(processedDecryptProvider),
+            ref.read(selectedKemDecryptKeyPairProvider)!,
+          );
 
       setState(() {
-        _mlKemSharedSecret = mockSharedSecret;
+        _mlKemSharedSecret = base64Encode(
+          ref.read(processedDecryptProvider).sharedSecret!,
+        );
       });
 
       if (mounted) {
@@ -604,19 +608,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-                      buildMLKemKeySizeSelector(
-                        context: context,
-                        primaryColor: primaryColor,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.defaultPadding,
-                          vertical: AppConstants.defaultPadding,
-                        ),
-                        child: KemEncryptKeySelector(
-                          primaryColor: primaryColor,
-                        ),
-                      ),
+
+                      // buildMLKemKeySizeSelector(
+                      //   context: context,
+                      //   primaryColor: primaryColor,
+                      // ),
+                      // Padding(
+                      //   padding: const EdgeInsets.symmetric(
+                      //     horizontal: AppConstants.defaultPadding,
+                      //     vertical: AppConstants.defaultPadding,
+                      //   ),
+                      //   child: KemEncryptKeySelector(
+                      //     primaryColor: primaryColor,
+                      //   ),
+                      // ),
                       const SizedBox(height: AppConstants.defaultPadding),
                       _buildPublicKeyField(
                         context: context,
@@ -884,9 +889,28 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                     // ML-KEM decrypt mode doesn't need many options
                     if (isMLKemMode) ...[
-                      buildMLKemKeySizeSelector(
-                        context: context,
-                        primaryColor: primaryColor,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                          vertical: AppConstants.smallPadding,
+                        ),
+                        child: EncryptionsDropdownButtonForm(
+                          selectedEncryption: selectedEncryption,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+                      // buildMLKemKeySizeSelector(
+                      //   context: context,
+                      //   primaryColor: primaryColor,
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                          vertical: AppConstants.defaultPadding,
+                        ),
+                        child: KemDecryptKeySelector(
+                          primaryColor: primaryColor,
+                        ),
                       ),
                       const SizedBox(height: AppConstants.defaultPadding),
                       // Note: In decrypt mode, we might need private key selector for ML-KEM

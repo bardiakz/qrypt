@@ -138,7 +138,7 @@ class KemKeyService {
       );
 
       // Validate the key pair by testing encapsulation/decapsulation
-      if (!await _validateKeyPair(kemKeyPair)) {
+      if (!await validateKeyPair(kemKeyPair)) {
         throw Exception('Invalid key pair - keys do not work together');
       }
 
@@ -158,13 +158,15 @@ class KemKeyService {
   }
 
   /// Validates that a KEM key pair works by testing encapsulation/decapsulation
-  Future<bool> _validateKeyPair(KEMKeyPair keyPair) async {
+  Future<bool> validateKeyPair(KEMKeyPair keyPair) async {
     if (_kem == null) return false;
 
     try {
       // Test encapsulation with the public key
       // Based on your main() example, encapsulate returns an object with .ciphertext and .sharedSecret
-      final encapsulationResult = _kem!.encapsulate(keyPair.publicKey);
+      final KEMEncapsulationResult encapsulationResult = _kem!.encapsulate(
+        keyPair.publicKey,
+      );
 
       // Test decapsulation with the secret key
       final decapsulatedSecret = _kem!.decapsulate(

@@ -139,24 +139,20 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
           return;
         }
 
-        // if (!service.validateKeyPair( //TODO: validation method
-        //   _publicKeyController.text,
-        //   _privateKeyController.text,
-        // )) {
-        //   setState(() {
-        //     _isGenerating = false;
-        //   });
-        //   ScaffoldMessenger.of(
-        //     context,
-        //   ).showSnackBar(const SnackBar(content: Text('Invalid key pair')));
-        //   return;
-        // }
-
-        // For manual input, create the key pair object and save it
         KEMKeyPair kp = KEMKeyPair(
           publicKey: base64Decode(_publicKeyController.text.trim()),
           secretKey: base64Decode(_privateKeyController.text.trim()),
         );
+        if (await service.validateKeyPair(kp)) {
+          setState(() {
+            _isGenerating = false;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Invalid key pair')));
+          return;
+        }
+
         keyPair = QryptKEMKeyPair(
           id: const Uuid().v4(),
           name: _nameController.text.trim(),

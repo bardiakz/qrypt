@@ -27,6 +27,11 @@ class Qrypt {
   bool useCustomKey = false;
   String tag = '';
 
+  String inputCiphertext = '';
+  Uint8List? ciphertext;
+  Uint8List? sharedSecret;
+  bool useKem = false;
+
   Qrypt.withTag({
     required this.text,
     required this.encryption,
@@ -68,6 +73,14 @@ class Qrypt {
 
   Qrypt.autoDecrypt({required this.text}) {
     useTag = true;
+  }
+
+  Qrypt.forKem({required this.ciphertext, required this.sharedSecret}) {
+    useKem = true;
+  }
+
+  Qrypt.forKemDecrypt({required this.sharedSecret}) {
+    useKem = true;
   }
 
   Qrypt({
