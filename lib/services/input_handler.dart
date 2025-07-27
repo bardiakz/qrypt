@@ -206,6 +206,9 @@ class InputHandler {
           }
           throw Exception('RSA+Sign encryption failed: $e');
         }
+      case EncryptionMethod.mlKem:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -571,6 +574,9 @@ class InputHandler {
           }
           throw Exception('RSA+Sign decryption failed: $e');
         }
+      case EncryptionMethod.mlKem:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
