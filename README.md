@@ -65,15 +65,15 @@ for multiple algorithms and customizable processing pipelines, including quantum
                     │    Quantum-Safe Layer       │
                     │                             │
                     │  ML-KEM Key Exchange        │
-                    │  ┌─────────┐  ┌─────────┐  │
-                    │  │ Public  │  │ Secret  │  │
-                    │  │   Key   │  │   Key   │  │
-                    │  └─────────┘  └─────────┘  │
-                    │       │           │        │
-                    │       ▼           ▼        │
-                    │  ┌─────────────────────┐   │
-                    │  │   Shared Secret     │   │
-                    │  └─────────────────────┘   │
+                    │  ┌─────────┐  ┌─────────┐   │
+                    │  │ Public  │  │ Secret  │   │
+                    │  │   Key   │  │   Key   │   │
+                    │  └─────────┘  └─────────┘   │
+                    │       │           │         │
+                    │       ▼           ▼         │
+                    │  ┌─────────────────────┐    │
+                    │  │   Shared Secret     │    │
+                    │  └─────────────────────┘    │
                     └─────────────────────────────┘
 ```
 
