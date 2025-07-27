@@ -53,3 +53,11 @@ final customEncryptAesKeyProvider = StateProvider<String>((ref) => '');
 final useCustomEncryptAesKeyProvider = StateProvider<bool>((ref) => false);
 final customDecryptAesKeyProvider = StateProvider<String>((ref) => '');
 final useCustomDecryptAesKeyProvider = StateProvider<bool>((ref) => false);
+
+final isMLKemModeProvider = StateProvider<bool>((ref) {
+  bool isMLKemMode =
+      ref.watch(selectedEncryptionProvider) == EncryptionMethod.mlKem
+      ? true
+      : false;
+  return isMLKemMode;
+});

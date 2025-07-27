@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../models/kyber_models.dart';
 import '../../resources/constants.dart';
 import '../../resources/global_resources.dart';
 
@@ -141,4 +141,57 @@ Widget _buildMLKemOutputField({
       ],
     ),
   );
+}
+
+// Generate mock shared secret for demonstration
+String generateMockSharedSecret() {
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final random = DateTime.now().millisecondsSinceEpoch;
+  var result = '';
+
+  // Generate 32-byte (256-bit) shared secret
+  for (var i = 0; i < 64; i++) {
+    // 64 hex characters = 32 bytes
+    result += chars[(random + i) % chars.length];
+  }
+
+  // Format as hex-like string
+  return result
+      .replaceAllMapped(RegExp(r'.{8}'), (match) => '${match.group(0)} ')
+      .trim();
+}
+
+// Generate mock ML-KEM ciphertext for demonstration
+String generateMockMLKemCiphertext(MLKemKeySize selectedMLKemKeySize) {
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  final random = DateTime.now().millisecondsSinceEpoch;
+  var result = '';
+
+  // Generate ciphertext based on selected key size
+  int length;
+  switch (selectedMLKemKeySize) {
+    case MLKemKeySize.kem512:
+      length = 768; // Approximate ciphertext size for KEM-512
+      break;
+    case MLKemKeySize.kem768:
+      length = 1088; // Approximate ciphertext size for KEM-768
+      break;
+    case MLKemKeySize.kem1024:
+      length = 1568; // Approximate ciphertext size for KEM-1024
+      break;
+  }
+
+  for (var i = 0; i < length; i++) {
+    result += chars[(random + i) % chars.length];
+  }
+
+  // Format with line breaks for readability
+  final formatted = result.replaceAllMapped(
+    RegExp(r'.{64}'),
+    (match) => '${match.group(0)}\n',
+  );
+
+  return 'ML-KEM-${selectedMLKemKeySize.bits} Ciphertext:\n$formatted';
 }

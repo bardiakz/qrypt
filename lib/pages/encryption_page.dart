@@ -56,7 +56,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     super.dispose();
   }
 
-  Widget _buildMLKemKeySizeSelector({
+  Widget buildMLKemKeySizeSelector({
     required BuildContext context,
     required Color primaryColor,
   }) {
@@ -322,8 +322,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       await Future.delayed(const Duration(milliseconds: 1500));
 
       // Generate mock ciphertext and shared secret
-      final mockCiphertext = _generateMockMLKemCiphertext();
-      final mockSharedSecret = _generateMockSharedSecret();
+      final mockCiphertext = generateMockMLKemCiphertext(_selectedMLKemKeySize);
+      final mockSharedSecret = generateMockSharedSecret();
 
       setState(() {
         _mlKemCiphertext = mockCiphertext;
@@ -376,7 +376,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       await Future.delayed(const Duration(milliseconds: 1000));
 
       // Generate mock shared secret
-      final mockSharedSecret = _generateMockSharedSecret();
+      final mockSharedSecret = generateMockSharedSecret();
 
       setState(() {
         _mlKemSharedSecret = mockSharedSecret;
@@ -403,59 +403,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
-  // Generate mock ML-KEM ciphertext for demonstration
-  String _generateMockMLKemCiphertext() {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    var result = '';
-
-    // Generate ciphertext based on selected key size
-    int length;
-    switch (_selectedMLKemKeySize) {
-      case MLKemKeySize.kem512:
-        length = 768; // Approximate ciphertext size for KEM-512
-        break;
-      case MLKemKeySize.kem768:
-        length = 1088; // Approximate ciphertext size for KEM-768
-        break;
-      case MLKemKeySize.kem1024:
-        length = 1568; // Approximate ciphertext size for KEM-1024
-        break;
-    }
-
-    for (var i = 0; i < length; i++) {
-      result += chars[(random + i) % chars.length];
-    }
-
-    // Format with line breaks for readability
-    final formatted = result.replaceAllMapped(
-      RegExp(r'.{64}'),
-      (match) => '${match.group(0)}\n',
-    );
-
-    return 'ML-KEM-${_selectedMLKemKeySize.bits} Ciphertext:\n$formatted';
-  }
-
-  // Generate mock shared secret for demonstration
-  String _generateMockSharedSecret() {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    var result = '';
-
-    // Generate 32-byte (256-bit) shared secret
-    for (var i = 0; i < 64; i++) {
-      // 64 hex characters = 32 bytes
-      result += chars[(random + i) % chars.length];
-    }
-
-    // Format as hex-like string
-    return result
-        .replaceAllMapped(RegExp(r'.{8}'), (match) => '${match.group(0)} ')
-        .trim();
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -466,7 +413,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
-    final isMLKemMode = _isMLKemMode();
+    final isMLKemMode = ref.read(isMLKemModeProvider);
 
     final useCustomAesKey = isEncryptMode
         ? ref.watch(useCustomEncryptAesKeyProvider)
@@ -543,7 +490,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ),
 
                 // ML-KEM Info Container (only show in ML-KEM mode)
-                if (isMLKemMode) ...[
+                if (ref.read(isMLKemModeProvider)) ...[
                   const SizedBox(height: AppConstants.defaultPadding),
                   buildMLKemInfoContainer(
                     context: context,
@@ -613,9 +560,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ? _encryptTextController
                         : _decryptTextController,
                     maxLines: AppConstants.maxInputLines,
-                    readOnly:
-                        isMLKemMode &&
-                        isEncryptMode, // Read-only for ML-KEM encrypt mode
+                    readOnly: isMLKemMode && isEncryptMode,
+                    // Read-only for ML-KEM encrypt mode
                     decoration: buildInputDecoration(
                       context: context,
                       primaryColor: primaryColor,
@@ -643,11 +589,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ],
 
                   if (!defaultEncryption || isMLKemMode) ...[
-                    const SizedBox(height: AppConstants.smallPadding),
+                    // const SizedBox(height: AppConstants.smallPadding),
 
                     // ML-KEM specific configurations
                     if (isMLKemMode) ...[
-                      _buildMLKemKeySizeSelector(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                          vertical: AppConstants.smallPadding,
+                        ),
+                        child: EncryptionsDropdownButtonForm(
+                          selectedEncryption: selectedEncryption,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+                      buildMLKemKeySizeSelector(
                         context: context,
                         primaryColor: primaryColor,
                       ),
@@ -659,8 +615,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         onChanged: (val) {
                           // Handle ML-KEM public key input
                         },
-                        validationPattern:
-                            r'^[A-Za-z0-9+/=\n\r\s-]+', // Basic validation for ML-KEM keys
+                        validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
+                        // Basic validation for ML-KEM keys
                         isEncryptMode: true,
                         labelText: 'Recipient\'s ML-KEM Public Key',
                       ),
@@ -918,7 +874,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                     // ML-KEM decrypt mode doesn't need many options
                     if (isMLKemMode) ...[
-                      _buildMLKemKeySizeSelector(
+                      buildMLKemKeySizeSelector(
                         context: context,
                         primaryColor: primaryColor,
                       ),
