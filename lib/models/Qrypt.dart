@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/rsa_key_pair.dart';
+import 'package:qrypt/models/sign_method.dart';
 import '../services/tag_manager.dart';
 import 'encryption_method.dart';
 import 'obfuscation_method.dart';
@@ -13,6 +14,7 @@ class Qrypt {
   late final EncryptionMethod encryption;
   late final ObfuscationMethod obfuscation;
   late final CompressionMethod compression;
+  final SignMethod sign = SignMethod.none;
   RSAKeyPair rsaKeyPair = RSAKeyPair(
     id: '',
     name: '',
@@ -100,6 +102,10 @@ class Qrypt {
 
   CompressionMethod getCompressionMethod() {
     return compression;
+  }
+
+  SignMethod getSignMethod() {
+    return sign;
   }
 
   // Validation method to check if RSA parameters are valid

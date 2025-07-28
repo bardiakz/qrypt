@@ -4,6 +4,7 @@ import 'package:qrypt/models/compression_method.dart';
 
 import '../../models/encryption_method.dart';
 import '../../models/obfuscation_method.dart';
+import '../../models/sign_method.dart';
 import '../../providers/encryption_providers.dart';
 
 class ObfsDropdownButtonForm extends ConsumerWidget {
@@ -92,6 +93,36 @@ class CompressionsDropdownButtonForm extends ConsumerWidget {
           ref.read(selectedCompressionProvider.notifier).state = val!,
       decoration: InputDecoration(
         labelText: 'Compression Algorithm',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class SignsDropdownButtonForm extends ConsumerWidget {
+  const SignsDropdownButtonForm({
+    super.key,
+    required this.selectedSign,
+    required this.primaryColor,
+  });
+
+  final SignMethod selectedSign;
+  final Color primaryColor;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DropdownButtonFormField<SignMethod>(
+      value: selectedSign,
+      items: SignMethod.values.map((alg) {
+        return DropdownMenuItem(value: alg, child: Text(alg.displayName));
+      }).toList(),
+      onChanged: (val) => ref.read(selectedSignProvider.notifier).state = val!,
+      decoration: InputDecoration(
+        labelText: 'Sign Algorithm',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
