@@ -191,3 +191,63 @@ Widget buildSwitchContainer({
     ),
   );
 }
+
+Widget buildPublicKeyField({
+  required BuildContext context,
+  required TextEditingController controller,
+  required Color primaryColor,
+  required ValueChanged<String> onChanged,
+  required String validationPattern,
+  required bool isEncryptMode,
+  String? labelText,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppConstants.defaultPadding,
+    ),
+    child: Stack(
+      children: [
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          decoration: buildInputDecoration(
+            context: context,
+            primaryColor: primaryColor,
+            labelText: labelText ?? 'Public Key',
+            errorText: controller.text.isEmpty
+                ? null
+                : (RegExp(validationPattern).hasMatch(controller.text)
+                      ? null
+                      : 'Invalid key format'),
+          ),
+          maxLines: 3,
+        ),
+        Positioned(
+          top: 25,
+          right: 5,
+          child: InkWell(
+            onTap: () async {
+              final pastedText = await pasteFromClipboard(context);
+              if (pastedText != null) {
+                controller.text = pastedText;
+                onChanged(pastedText);
+              }
+            },
+            borderRadius: BorderRadius.circular(
+              AppConstants.switchBorderRadius,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppConstants.smallPadding),
+              child: Icon(
+                Icons.content_paste_go,
+                color: Colors.blueGrey,
+                size: AppConstants.iconSize + 5,
+                semanticLabel: 'Paste from clipboard',
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}

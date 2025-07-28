@@ -31,25 +31,28 @@ final publicKeyProvider = StateProvider<String>((ref) => '');
 final inputQryptProvider = StateProvider<Qrypt>(
   (ref) => Qrypt(
     text: '',
-    encryption: EncryptionMethod.none,
-    obfuscation: ObfuscationMethod.none,
+    encryption: EncryptionMethod.aesGcm,
+    obfuscation: ObfuscationMethod.en2,
     compression: CompressionMethod.gZip,
+    sign: SignMethod.none,
   ),
 );
 final processedEncryptProvider = StateProvider<Qrypt>(
   (ref) => Qrypt(
     text: '',
-    encryption: EncryptionMethod.none,
-    obfuscation: ObfuscationMethod.none,
+    encryption: EncryptionMethod.aesGcm,
+    obfuscation: ObfuscationMethod.en2,
     compression: CompressionMethod.gZip,
+    sign: SignMethod.none,
   ),
 );
 final processedDecryptProvider = StateProvider<Qrypt>(
   (ref) => Qrypt(
     text: '',
-    encryption: EncryptionMethod.none,
-    obfuscation: ObfuscationMethod.none,
+    encryption: EncryptionMethod.aesGcm,
+    obfuscation: ObfuscationMethod.en2,
     compression: CompressionMethod.gZip,
+    sign: SignMethod.none,
   ),
 );
 

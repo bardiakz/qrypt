@@ -13,9 +13,11 @@ import 'package:qrypt/services/tag_manager.dart';
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
+import '../models/sign_method.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
 import 'aes_encryption.dart';
+import 'ml_dsa/ml_dsa_key_service.dart';
 import 'obfuscate.dart';
 
 class InputHandler {
@@ -215,6 +217,33 @@ class InputHandler {
     }
   }
 
+  Qrypt handleSign(Qrypt qrypt) {
+    Uint8List signText;
+
+    switch (qrypt.getSignMethod()) {
+      case SignMethod.none:
+        return qrypt;
+      case SignMethod.mlDsa:
+        MlDsaKeyService dsa = MlDsaKeyService();
+
+        Uint8List originalMessage = base64Decode(qrypt.text);
+
+        Uint8List signature = dsa.signMessage(
+          originalMessage,
+          qrypt.dsaKeyPair!.secretKey,
+        );
+
+        Map<String, String> signedPackage = {
+          'message': base64Encode(originalMessage),
+          'signature': base64Encode(signature),
+        };
+
+        // Store as JSON
+        qrypt.text = base64Encode(utf8.encode(jsonEncode(signedPackage)));
+        return qrypt;
+    }
+  }
+
   Qrypt handleObfs(Qrypt qrypt) {
     String? obfsText = qrypt.text;
     switch (qrypt.getObfuscationMethod()) {
@@ -301,6 +330,93 @@ class InputHandler {
       //   obfsText = Obfuscate.deobfuscateReverse(qrypt.text);
       //   qrypt.text = obfsText;
       //   return qrypt;
+    }
+  }
+
+  Qrypt handleVerify(Qrypt qrypt, BuildContext context) {
+    switch (qrypt.getSignMethod()) {
+      case SignMethod.none:
+        return qrypt;
+      case SignMethod.mlDsa:
+        MlDsaKeyService dsa = MlDsaKeyService();
+
+        try {
+          // CHECK: Ensure public key is available before verification
+          if (qrypt.dsaVerifyPublicKEy == null) {
+            if (kDebugMode) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ WARNING: No DSA public key provided for verification - skipping signature verification.',
+                  ),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              print(
+                '⚠️ WARNING: No DSA public key provided for verification - skipping signature verification',
+              );
+            }
+            // Extract and return the original message without verification
+            String packageJson = utf8.decode(base64Decode(qrypt.text));
+            Map<String, dynamic> signedPackage = jsonDecode(packageJson);
+            Uint8List originalMessage = base64Decode(signedPackage['message']);
+            qrypt.text = base64Encode(originalMessage);
+            return qrypt;
+          }
+
+          // Decode the signed package
+          String packageJson = utf8.decode(base64Decode(qrypt.text));
+          Map<String, dynamic> signedPackage = jsonDecode(packageJson);
+
+          // Extract message and signature
+          Uint8List originalMessage = base64Decode(signedPackage['message']);
+          Uint8List signature = base64Decode(signedPackage['signature']);
+
+          // Verify the signature - now safe to use ! operator
+          bool isValid = dsa.verifySignature(
+            originalMessage, // The original message
+            signature, // The signature
+            qrypt.dsaVerifyPublicKEy!, // The public key for verification
+          );
+
+          if (isValid) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('DSA signature verification successful ✓'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            if (kDebugMode) {
+              print('DSA signature verification successful ✓');
+            }
+            // Put the original message back for further processing
+            qrypt.text = base64Encode(originalMessage);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⚠️ WARNING: DSA signature verification failed!'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            if (kDebugMode) {
+              print('⚠️ WARNING: DSA signature verification failed!');
+            }
+            qrypt.text = base64Encode(originalMessage);
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error during DSA verification: $e'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          if (kDebugMode) {
+            print('Error during DSA verification: $e');
+          }
+          throw Exception('DSA verification failed: $e');
+        }
+
+        return qrypt;
     }
   }
 
@@ -618,7 +734,12 @@ class InputHandler {
 
   Future<Qrypt> handleProcess(Qrypt qrypt) async {
     qrypt = handleCompression(qrypt);
+
     qrypt = await handleEncrypt(qrypt);
+
+    if (qrypt.getSignMethod() != SignMethod.none) {
+      qrypt = handleSign(qrypt);
+    }
     qrypt.text = qrypt.tag + qrypt.text;
     qrypt = handleObfs(qrypt);
     return qrypt;
@@ -632,6 +753,9 @@ class InputHandler {
     Color primaryColor = Colors.blue;
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
+      if (qrypt.getSignMethod() != SignMethod.none) {
+        qrypt = handleVerify(qrypt, context);
+      }
       qrypt = await handleDecrypt(qrypt, context);
       qrypt = handleDeCompression(qrypt);
     } else {
@@ -684,7 +808,7 @@ class InputHandler {
     );
     Qrypt qrypt = Qrypt.forKem(
       ciphertext: encResult.ciphertext,
-      sharedSecret: encResult.sharedSecret,
+      kemSharedSecret: encResult.sharedSecret,
     );
     return qrypt;
   }
@@ -698,7 +822,7 @@ class InputHandler {
       keyPair.secretKey,
     );
 
-    Qrypt qrypt = Qrypt.forKemDecrypt(sharedSecret: sharedSecret);
+    Qrypt qrypt = Qrypt.forKemDecrypt(kemSharedSecret: sharedSecret);
     return qrypt;
   }
 
