@@ -939,7 +939,31 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-                      const SizedBox(height: AppConstants.defaultPadding),
+                      if (!(ref.watch(selectedEncryptionProvider) ==
+                          EncryptionMethod.rsaSign)) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: SignsDropdownButtonForm(
+                            selectedSign: ref.read(selectedSignProvider),
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+                      if (ref.watch(selectedSignProvider) ==
+                          SignMethod.mlDsa) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(
+                            AppConstants.defaultPadding,
+                          ),
+                          child: MlDsaVerifyKeySelector(
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                      ],
                       // Note: In decrypt mode, we might need private key selector for ML-KEM
                     ] else ...[
                       // Non-ML-KEM decrypt configurations
@@ -1062,8 +1086,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       if (ref.watch(selectedSignProvider) ==
                           SignMethod.mlDsa) ...[
                         Padding(
-                          padding: const EdgeInsets.all(
-                            AppConstants.defaultPadding,
+                          padding: const EdgeInsets.only(
+                            left: AppConstants.defaultPadding,
+                            right: AppConstants.defaultPadding,
+                            bottom: AppConstants.defaultPadding,
                           ),
                           child: MlDsaVerifyKeySelector(
                             primaryColor: primaryColor,
@@ -1071,7 +1097,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ],
 
-                      const SizedBox(height: AppConstants.defaultPadding),
+                      const SizedBox(height: AppConstants.smallPadding),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
