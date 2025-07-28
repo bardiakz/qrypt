@@ -638,6 +638,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ] else ...[
                       // Non-ML-KEM configurations
                       if (!isMLKemMode) ...[
+                        const SizedBox(height: AppConstants.smallPadding),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppConstants.defaultPadding,
@@ -657,6 +658,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                     : getBorderColor(context),
                               ),
                             ),
+
                             child: Row(
                               children: [
                                 const SizedBox(width: 12),
