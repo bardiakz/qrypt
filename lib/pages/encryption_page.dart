@@ -16,9 +16,11 @@ import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:qrypt/providers/kem_providers.dart';
+import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
+import '../models/ml_dsa_key_pair.dart';
 import '../models/rsa_key_pair.dart';
 import '../models/sign_method.dart';
 import '../providers/resource_providers.dart';
@@ -42,6 +44,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _customDecryptAesKeyController = TextEditingController();
   final _mlKemPublicKeyController = TextEditingController();
   final _mlKemDecryptController = TextEditingController();
+  final _dsaPublicKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
 
   // ML-KEM specific state
@@ -105,66 +108,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPublicKeyField({
-    required BuildContext context,
-    required TextEditingController controller,
-    required Color primaryColor,
-    required ValueChanged<String> onChanged,
-    required String validationPattern,
-    required bool isEncryptMode,
-    String? labelText,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-      ),
-      child: Stack(
-        children: [
-          TextField(
-            controller: controller,
-            onChanged: onChanged,
-            decoration: buildInputDecoration(
-              context: context,
-              primaryColor: primaryColor,
-              labelText: labelText ?? 'Public Key',
-              errorText: controller.text.isEmpty
-                  ? null
-                  : (RegExp(validationPattern).hasMatch(controller.text)
-                        ? null
-                        : 'Invalid key format'),
-            ),
-            maxLines: 3,
-          ),
-          Positioned(
-            top: 25,
-            right: 5,
-            child: InkWell(
-              onTap: () async {
-                final pastedText = await pasteFromClipboard(context);
-                if (pastedText != null) {
-                  controller.text = pastedText;
-                  onChanged(pastedText);
-                }
-              },
-              borderRadius: BorderRadius.circular(
-                AppConstants.switchBorderRadius,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.smallPadding),
-                child: Icon(
-                  Icons.content_paste_go,
-                  color: Colors.blueGrey,
-                  size: AppConstants.iconSize + 5,
-                  semanticLabel: 'Paste from clipboard',
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -332,7 +275,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           ref.read(processedEncryptProvider).ciphertext!,
         );
         _mlKemSharedSecret = base64Encode(
-          ref.read(processedEncryptProvider).sharedSecret!,
+          ref.read(processedEncryptProvider).kemSharedSecret!,
         );
         ;
       });
@@ -385,7 +328,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
       setState(() {
         _mlKemSharedSecret = base64Encode(
-          ref.read(processedDecryptProvider).sharedSecret!,
+          ref.read(processedDecryptProvider).kemSharedSecret!,
         );
       });
 
@@ -625,7 +568,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       //   ),
                       // ),
                       const SizedBox(height: AppConstants.defaultPadding),
-                      _buildPublicKeyField(
+                      buildPublicKeyField(
                         context: context,
                         controller: _mlKemPublicKeyController,
                         primaryColor: primaryColor,
@@ -771,7 +714,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ),
 
                         const SizedBox(height: AppConstants.smallPadding),
-                        _buildPublicKeyField(
+                        buildPublicKeyField(
                           context: context,
                           controller: _encryptPublicKeyController,
                           primaryColor: primaryColor,
@@ -955,13 +898,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       ],
                       if (ref.watch(selectedSignProvider) ==
                           SignMethod.mlDsa) ...[
-                        Padding(
-                          padding: const EdgeInsets.all(
-                            AppConstants.defaultPadding,
-                          ),
-                          child: MlDsaVerifyKeySelector(
-                            primaryColor: primaryColor,
-                          ),
+                        buildPublicKeyField(
+                          context: context,
+                          controller: _dsaPublicKeyController,
+                          primaryColor: primaryColor,
+                          onChanged: (val) {},
+                          validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
+                          isEncryptMode: isEncryptMode,
                         ),
                       ],
                       // Note: In decrypt mode, we might need private key selector for ML-KEM
@@ -1042,7 +985,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                         const SizedBox(height: AppConstants.defaultPadding),
                         if (selectedEncryption == EncryptionMethod.rsaSign)
-                          _buildPublicKeyField(
+                          buildPublicKeyField(
                             context: context,
                             controller: _decryptPublicKeyController,
                             primaryColor: primaryColor,
@@ -1087,12 +1030,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           SignMethod.mlDsa) ...[
                         Padding(
                           padding: const EdgeInsets.only(
-                            left: AppConstants.defaultPadding,
-                            right: AppConstants.defaultPadding,
-                            bottom: AppConstants.defaultPadding,
+                            bottom: AppConstants.largePadding,
                           ),
-                          child: MlDsaVerifyKeySelector(
+                          child: buildPublicKeyField(
+                            context: context,
+                            controller: _dsaPublicKeyController,
                             primaryColor: primaryColor,
+                            onChanged: (val) {
+                              ref
+                                  .read(verifyMlDsaPublicKeyProvider.notifier)
+                                  .state = _dsaPublicKeyController
+                                  .text;
+                            },
+                            validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
+                            isEncryptMode: isEncryptMode,
                           ),
                         ),
                       ],
@@ -1338,6 +1289,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             encryption: selectedEncryption,
             obfuscation: selectedObfuscation,
             compression: selectedCompression,
+            sign: ref.read(selectedSignProvider),
             useTag: useTagManually,
             rsaKeyPair:
                 selectedKeyPair ??
@@ -1359,6 +1311,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               encryption: selectedEncryption,
               obfuscation: selectedObfuscation,
               compression: selectedCompression,
+              sign: ref.read(selectedSignProvider),
               useTag: useTagManually,
             );
             ref.read(inputQryptProvider.notifier).state.customKey =
@@ -1372,9 +1325,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               encryption: selectedEncryption,
               obfuscation: selectedObfuscation,
               compression: selectedCompression,
+              sign: ref.read(selectedSignProvider),
               useTag: useTagManually,
             );
           }
+        }
+        if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
+          ref.read(inputQryptProvider.notifier).state.dsaKeyPair = ref.read(
+            selectedMlDsaSignKeyPairProvider,
+          );
         }
 
         ref.read(processedEncryptProvider.notifier).state = await ih
@@ -1399,6 +1358,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             // Use selected encryption instead of default
             obfuscation: ObfuscationMethod.en2,
             compression: CompressionMethod.brotli,
+            sign: ref.read(selectedSignProvider),
             useTag: true,
             rsaKeyPair: selectedKeyPair,
             rsaReceiverPublicKey: rsaReceiversPublicKey,
@@ -1409,6 +1369,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             encryption: EncryptionMethod.aesGcm,
             obfuscation: ObfuscationMethod.en2,
             compression: CompressionMethod.brotli,
+            sign: ref.read(selectedSignProvider),
             useTag: true,
           );
         }
@@ -1490,6 +1451,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             encryption: selectedEncryption,
             obfuscation: selectedObfuscation,
             compression: selectedCompression,
+            sign: ref.read(selectedSignProvider),
             useTag: false,
           );
           ref.read(inputQryptProvider.notifier).state.customKey = customAesKey;
@@ -1502,6 +1464,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             encryption: selectedEncryption,
             obfuscation: selectedObfuscation,
             compression: selectedCompression,
+            sign: ref.read(selectedSignProvider),
             useTag: false,
           );
         }
@@ -1512,12 +1475,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             selectedRSADecryptKeyPairProvider,
           )!;
         }
+
+        if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
+          ref.read(inputQryptProvider.notifier).state.dsaVerifyPublicKEy =
+              base64Decode(ref.read(verifyMlDsaPublicKeyProvider));
+        }
+
         ref.read(processedDecryptProvider.notifier).state = await ih
             .handleDeProcess(context, ref.read(inputQryptProvider), false);
       } else {
         ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
           text: _decryptTextController.text,
         );
+
         ref.read(processedDecryptProvider.notifier).state = await ih
             .handleDeProcess(context, ref.read(inputQryptProvider), true);
       }

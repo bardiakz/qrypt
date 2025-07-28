@@ -5,6 +5,7 @@ import 'package:qrypt/models/rsa_key_pair.dart';
 import 'package:qrypt/models/sign_method.dart';
 import '../services/tag_manager.dart';
 import 'encryption_method.dart';
+import 'ml_dsa_key_pair.dart';
 import 'obfuscation_method.dart';
 
 class Qrypt {
@@ -14,7 +15,7 @@ class Qrypt {
   late final EncryptionMethod encryption;
   late final ObfuscationMethod obfuscation;
   late final CompressionMethod compression;
-  final SignMethod sign = SignMethod.none;
+  SignMethod sign = SignMethod.none;
   RSAKeyPair rsaKeyPair = RSAKeyPair(
     id: '',
     name: '',
@@ -29,10 +30,15 @@ class Qrypt {
   bool useCustomKey = false;
   String tag = '';
 
+  //kem properties
   String inputCiphertext = '';
   Uint8List? ciphertext;
-  Uint8List? sharedSecret;
+  Uint8List? kemSharedSecret;
   bool useKem = false;
+
+  //dsa properties
+  Uint8List? dsaVerifyPublicKEy;
+  QryptMLDSAKeyPair? dsaKeyPair;
 
   Qrypt.withTag({
     required this.text,
@@ -40,6 +46,7 @@ class Qrypt {
     required this.obfuscation,
     required this.compression,
     required this.useTag,
+    required this.sign,
   }) {
     if (useTag == true) {
       TagManager.setTag(this);
@@ -54,6 +61,7 @@ class Qrypt {
     required this.useTag,
     required this.rsaKeyPair,
     required this.rsaReceiverPublicKey,
+    required this.sign,
   }) {
     // Validate RSA parameters
     if (encryption == EncryptionMethod.rsa) {
@@ -77,11 +85,11 @@ class Qrypt {
     useTag = true;
   }
 
-  Qrypt.forKem({required this.ciphertext, required this.sharedSecret}) {
+  Qrypt.forKem({required this.ciphertext, required this.kemSharedSecret}) {
     useKem = true;
   }
 
-  Qrypt.forKemDecrypt({required this.sharedSecret}) {
+  Qrypt.forKemDecrypt({required this.kemSharedSecret}) {
     useKem = true;
   }
 
@@ -90,6 +98,7 @@ class Qrypt {
     required this.encryption,
     required this.obfuscation,
     required this.compression,
+    required this.sign,
   });
 
   EncryptionMethod getEncryptionMethod() {
