@@ -4,6 +4,7 @@ import 'package:qrypt/models/obfuscation_method.dart';
 
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
+import '../models/sign_method.dart';
 
 final defaultEncryptionProvider = StateProvider<bool>((ref) => true);
 final useTagProvider = StateProvider<bool>((ref) => true);
@@ -22,6 +23,9 @@ final selectedObfuscationProvider = StateProvider<ObfuscationMethod>(
 );
 final selectedCompressionProvider = StateProvider<CompressionMethod>(
   (ref) => CompressionMethod.gZip,
+);
+final selectedSignProvider = StateProvider<SignMethod>(
+  (ref) => SignMethod.none,
 );
 final publicKeyProvider = StateProvider<String>((ref) => '');
 final inputQryptProvider = StateProvider<Qrypt>(

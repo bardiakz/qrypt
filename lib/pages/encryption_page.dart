@@ -710,6 +710,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                       const SizedBox(height: AppConstants.defaultPadding),
 
+                      if (!(ref.watch(selectedEncryptionProvider) ==
+                          EncryptionMethod.rsaSign)) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: SignsDropdownButtonForm(
+                            selectedSign: ref.read(selectedSignProvider),
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+
                       // Show obfuscation dropdown (not for ML-KEM)
                       if (!isMLKemMode) ...[
                         Padding(
