@@ -9,6 +9,7 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/kyber_widgets.dart';
+import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import 'package:qrypt/pages/widgets/ml_kem/kem_key_selector.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
@@ -19,6 +20,7 @@ import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
 import '../models/rsa_key_pair.dart';
+import '../models/sign_method.dart';
 import '../providers/resource_providers.dart';
 import '../resources/constants.dart';
 import '../resources/global_resources.dart';
@@ -638,6 +640,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ] else ...[
                       // Non-ML-KEM configurations
                       if (!isMLKemMode) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppConstants.defaultPadding,
@@ -657,6 +660,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                     : getBorderColor(context),
                               ),
                             ),
+
                             child: Row(
                               children: [
                                 const SizedBox(width: 12),
@@ -707,36 +711,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-
-                      const SizedBox(height: AppConstants.defaultPadding),
-
-                      if (!(ref.watch(selectedEncryptionProvider) ==
-                          EncryptionMethod.rsaSign)) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.defaultPadding,
-                          ),
-                          child: SignsDropdownButtonForm(
-                            selectedSign: ref.read(selectedSignProvider),
-                            primaryColor: primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: AppConstants.defaultPadding),
-                      ],
-
-                      // Show obfuscation dropdown (not for ML-KEM)
-                      if (!isMLKemMode) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.defaultPadding,
-                          ),
-                          child: ObfsDropdownButtonForm(
-                            selectedObfuscation: selectedObfuscation,
-                            primaryColor: primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: AppConstants.defaultPadding),
-                      ],
+                      const SizedBox(height: AppConstants.smallPadding),
 
                       // Custom AES Key Section - Show only for AES encryption methods
                       if (!isMLKemMode &&
@@ -776,8 +751,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             isEncryptMode: true,
                           ),
                         ],
-
-                        const SizedBox(height: AppConstants.defaultPadding),
                       ],
 
                       // RSA specific fields
@@ -787,15 +760,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   EncryptionMethod.rsaSign)) ...[
                         if (selectedEncryption == EncryptionMethod.rsaSign)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppConstants.defaultPadding,
+                            padding: const EdgeInsets.only(
+                              left: AppConstants.defaultPadding,
+                              right: AppConstants.defaultPadding,
+                              bottom: AppConstants.smallPadding,
                             ),
                             child: RSAEncryptKeySelector(
                               primaryColor: primaryColor,
                             ),
                           ),
 
-                        const SizedBox(height: AppConstants.largePadding / 2),
+                        const SizedBox(height: AppConstants.smallPadding),
                         _buildPublicKeyField(
                           context: context,
                           controller: _encryptPublicKeyController,
@@ -820,9 +795,47 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ],
                     ],
+                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
-                  const SizedBox(height: AppConstants.largePadding),
+                  const SizedBox(height: AppConstants.smallPadding),
+                  if (!(ref.watch(selectedEncryptionProvider) ==
+                          EncryptionMethod.rsaSign) &&
+                      !defaultEncryption) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: SignsDropdownButtonForm(
+                        selectedSign: ref.read(selectedSignProvider),
+                        primaryColor: primaryColor,
+                      ),
+                    ),
+                    if (ref.watch(selectedSignProvider) ==
+                        SignMethod.mlDsa) ...[
+                      Padding(
+                        padding: const EdgeInsets.all(
+                          AppConstants.defaultPadding,
+                        ),
+                        child: MlDsaSignKeySelector(primaryColor: primaryColor),
+                      ),
+                    ],
+                    const SizedBox(height: AppConstants.defaultPadding),
+                  ],
+
+                  // Show obfuscation dropdown (not for ML-KEM)
+                  if (!isMLKemMode && !defaultEncryption) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
+                      ),
+                      child: ObfsDropdownButtonForm(
+                        selectedObfuscation: selectedObfuscation,
+                        primaryColor: primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.defaultPadding),
+                  ],
 
                   // Action Button
                   Container(
@@ -950,20 +963,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-
-                      const SizedBox(height: AppConstants.defaultPadding),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.defaultPadding,
-                        ),
-                        child: ObfsDropdownButtonForm(
-                          selectedObfuscation: selectedObfuscation,
-                          primaryColor: primaryColor,
-                        ),
-                      ),
-
-                      const SizedBox(height: AppConstants.defaultPadding),
-
+                      const SizedBox(height: AppConstants.smallPadding),
                       // Custom AES Key Section for Decrypt
                       if (selectedEncryption == EncryptionMethod.aesGcm ||
                           selectedEncryption == EncryptionMethod.aesCbc ||
@@ -1044,6 +1044,43 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             isEncryptMode: false,
                           ),
                       ],
+
+                      if (!(ref.watch(selectedEncryptionProvider) ==
+                          EncryptionMethod.rsaSign)) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: SignsDropdownButtonForm(
+                            selectedSign: ref.read(selectedSignProvider),
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                      ],
+                      if (ref.watch(selectedSignProvider) ==
+                          SignMethod.mlDsa) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(
+                            AppConstants.defaultPadding,
+                          ),
+                          child: MlDsaVerifyKeySelector(
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: ObfsDropdownButtonForm(
+                          selectedObfuscation: selectedObfuscation,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
                     ],
                   ],
 
