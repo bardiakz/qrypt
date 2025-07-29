@@ -218,28 +218,84 @@ class InputHandler {
   }
 
   Qrypt handleSign(Qrypt qrypt) {
-    Uint8List signText;
-
     switch (qrypt.getSignMethod()) {
       case SignMethod.none:
         return qrypt;
       case SignMethod.mlDsa:
         MlDsaKeyService dsa = MlDsaKeyService();
 
-        Uint8List originalMessage = base64Decode(qrypt.text);
+        // Determine the format based on obfuscation method
+        bool usesMappedObfuscation = [
+          ObfuscationMethod.en1,
+          ObfuscationMethod.en2,
+          ObfuscationMethod.fa1,
+          ObfuscationMethod.fa2,
+        ].contains(qrypt.getObfuscationMethod());
 
+        bool usesBase64Obfuscation =
+            qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+        Uint8List originalMessage;
+
+        // Extract the original message based on current format
+        if (usesMappedObfuscation) {
+          // Convert hex string back to bytes
+          List<int> bytes = [];
+          for (int i = 0; i < qrypt.text.length; i += 2) {
+            String hexByte = qrypt.text.substring(i, i + 2);
+            bytes.add(int.parse(hexByte, radix: 16));
+          }
+          originalMessage = Uint8List.fromList(bytes);
+        } else if (usesBase64Obfuscation) {
+          // Convert string back to bytes
+          originalMessage = Uint8List.fromList(qrypt.text.codeUnits);
+        } else {
+          // Decode base64 to get original bytes
+          originalMessage = base64Decode(qrypt.text);
+        }
+
+        // Sign the original message
         Uint8List signature = dsa.signMessage(
           originalMessage,
           qrypt.dsaKeyPair!.secretKey,
         );
 
+        // Create signed package
         Map<String, String> signedPackage = {
           'message': base64Encode(originalMessage),
           'signature': base64Encode(signature),
         };
 
-        // Store as JSON
-        qrypt.text = base64Encode(utf8.encode(jsonEncode(signedPackage)));
+        // Encode the signed package and convert to appropriate format
+        String signedPackageJson = jsonEncode(signedPackage);
+        Uint8List signedPackageBytes = utf8.encode(signedPackageJson);
+
+        // Format according to obfuscation method
+        if (usesMappedObfuscation) {
+          // Convert to hex for mapped obfuscations
+          qrypt.text = signedPackageBytes
+              .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+              .join('');
+
+          // Verify the hex string has even length (should always be true, but let's be safe)
+          if (qrypt.text.length % 2 != 0) {
+            if (kDebugMode) {
+              print(
+                'Warning: Generated hex string has odd length: ${qrypt.text.length}',
+              );
+            }
+            // This should never happen since each byte always produces exactly 2 hex chars
+            // But if it does, we pad with a leading zero
+            qrypt.text = '0${qrypt.text}';
+          }
+        } else if (usesBase64Obfuscation) {
+          // Keep as raw string for b64 obfuscation
+          qrypt.text = String.fromCharCodes(signedPackageBytes);
+        } else {
+          // Use base64 for other obfuscations
+          qrypt.text = base64Encode(signedPackageBytes);
+        }
+
         return qrypt;
     }
   }
@@ -357,15 +413,76 @@ class InputHandler {
               );
             }
             // Extract and return the original message without verification
-            String packageJson = utf8.decode(base64Decode(qrypt.text));
-            Map<String, dynamic> signedPackage = jsonDecode(packageJson);
-            Uint8List originalMessage = base64Decode(signedPackage['message']);
-            qrypt.text = base64Encode(originalMessage);
-            return qrypt;
+            return _extractOriginalMessageFromSigned(qrypt);
           }
 
-          // Decode the signed package
-          String packageJson = utf8.decode(base64Decode(qrypt.text));
+          // Determine format and decode accordingly
+          bool usesMappedObfuscation = [
+            ObfuscationMethod.en1,
+            ObfuscationMethod.en2,
+            ObfuscationMethod.fa1,
+            ObfuscationMethod.fa2,
+          ].contains(qrypt.getObfuscationMethod());
+
+          bool usesBase64Obfuscation =
+              qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+          String packageJson;
+
+          if (usesMappedObfuscation) {
+            // Convert hex back to bytes then to string
+            String hexString = qrypt.text;
+
+            if (kDebugMode) {
+              print(
+                'DSA Verify - Original hex string length: ${hexString.length}',
+              );
+              print(
+                'DSA Verify - Hex string preview: ${hexString.length > 100 ? hexString.substring(0, 100) + "..." : hexString}',
+              );
+            }
+
+            // Ensure hex string has even length
+            if (hexString.length % 2 != 0) {
+              if (kDebugMode) {
+                print(
+                  'DSA Verify - ERROR: Hex string has odd length: ${hexString.length}',
+                );
+                print(
+                  'DSA Verify - Last 50 chars: ${hexString.substring(hexString.length - 50)}',
+                );
+              }
+              throw FormatException(
+                'Invalid hex string length: ${hexString.length}. Hex strings must have even length.',
+              );
+            }
+
+            List<int> bytes = [];
+            for (int i = 0; i < hexString.length; i += 2) {
+              String hexByte = hexString.substring(i, i + 2);
+              try {
+                bytes.add(int.parse(hexByte, radix: 16));
+              } catch (e) {
+                if (kDebugMode) {
+                  print(
+                    'DSA Verify - ERROR parsing hex byte at position $i: "$hexByte"',
+                  );
+                }
+                throw FormatException(
+                  'Invalid hex byte "$hexByte" at position $i',
+                );
+              }
+            }
+            packageJson = utf8.decode(bytes);
+          } else if (usesBase64Obfuscation) {
+            // Convert string back to bytes then decode
+            packageJson = utf8.decode(qrypt.text.codeUnits);
+          } else {
+            // Decode base64 then convert to string
+            packageJson = utf8.decode(base64Decode(qrypt.text));
+          }
+
+          // Parse the signed package
           Map<String, dynamic> signedPackage = jsonDecode(packageJson);
 
           // Extract message and signature
@@ -383,14 +500,12 @@ class InputHandler {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('DSA signature verification successful ✓'),
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.green,
               ),
             );
             if (kDebugMode) {
               print('DSA signature verification successful ✓');
             }
-            // Put the original message back for further processing
-            qrypt.text = base64Encode(originalMessage);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -401,13 +516,23 @@ class InputHandler {
             if (kDebugMode) {
               print('⚠️ WARNING: DSA signature verification failed!');
             }
+          }
+
+          // Return the original message in the correct format for further processing
+          if (usesMappedObfuscation) {
+            qrypt.text = originalMessage
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join('');
+          } else if (usesBase64Obfuscation) {
+            qrypt.text = String.fromCharCodes(originalMessage);
+          } else {
             qrypt.text = base64Encode(originalMessage);
           }
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error during DSA verification: $e'),
-              backgroundColor: Colors.orange,
+              backgroundColor: Colors.red,
             ),
           );
           if (kDebugMode) {
@@ -417,6 +542,66 @@ class InputHandler {
         }
 
         return qrypt;
+    }
+  }
+
+  // Helper method to extract original message when skipping verification
+  Qrypt _extractOriginalMessageFromSigned(Qrypt qrypt) {
+    bool usesMappedObfuscation = [
+      ObfuscationMethod.en1,
+      ObfuscationMethod.en2,
+      ObfuscationMethod.fa1,
+      ObfuscationMethod.fa2,
+    ].contains(qrypt.getObfuscationMethod());
+
+    bool usesBase64Obfuscation =
+        qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+    try {
+      String packageJson;
+
+      if (usesMappedObfuscation) {
+        String hexString = qrypt.text;
+
+        // Ensure hex string has even length
+        if (hexString.length % 2 != 0) {
+          throw FormatException(
+            'Invalid hex string length: ${hexString.length}. Hex strings must have even length.',
+          );
+        }
+
+        List<int> bytes = [];
+        for (int i = 0; i < hexString.length; i += 2) {
+          String hexByte = hexString.substring(i, i + 2);
+          bytes.add(int.parse(hexByte, radix: 16));
+        }
+        packageJson = utf8.decode(bytes);
+      } else if (usesBase64Obfuscation) {
+        packageJson = utf8.decode(qrypt.text.codeUnits);
+      } else {
+        packageJson = utf8.decode(base64Decode(qrypt.text));
+      }
+
+      Map<String, dynamic> signedPackage = jsonDecode(packageJson);
+      Uint8List originalMessage = base64Decode(signedPackage['message']);
+
+      // Format according to obfuscation method
+      if (usesMappedObfuscation) {
+        qrypt.text = originalMessage
+            .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+            .join('');
+      } else if (usesBase64Obfuscation) {
+        qrypt.text = String.fromCharCodes(originalMessage);
+      } else {
+        qrypt.text = base64Encode(originalMessage);
+      }
+
+      return qrypt;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error extracting original message: $e');
+      }
+      rethrow;
     }
   }
 

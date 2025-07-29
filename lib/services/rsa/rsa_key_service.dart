@@ -385,7 +385,7 @@ class RSAKeyService {
       final signature = signer.generateSignature(messageBytes);
       return base64.encode(signature.bytes);
     } catch (e) {
-      print('Signing error: $e');
+      debugPrint('Signing error: $e');
       rethrow;
     }
   }
