@@ -238,20 +238,31 @@ class InputHandler {
         Uint8List originalMessage;
 
         // Extract the original message based on current format
-        if (usesMappedObfuscation) {
-          // Convert hex string back to bytes
-          List<int> bytes = [];
-          for (int i = 0; i < qrypt.text.length; i += 2) {
-            String hexByte = qrypt.text.substring(i, i + 2);
-            bytes.add(int.parse(hexByte, radix: 16));
+        // Note: At this point, qrypt.text contains the encrypted data in string format
+        // For AES: "ciphertext:iv" format
+        // For no encryption with mapped obfuscation: hex string
+
+        if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
+          // Only for no encryption case, handle format conversion
+          if (usesMappedObfuscation) {
+            // Convert hex string back to bytes
+            List<int> bytes = [];
+            for (int i = 0; i < qrypt.text.length; i += 2) {
+              String hexByte = qrypt.text.substring(i, i + 2);
+              bytes.add(int.parse(hexByte, radix: 16));
+            }
+            originalMessage = Uint8List.fromList(bytes);
+          } else if (usesBase64Obfuscation) {
+            // Convert string back to bytes
+            originalMessage = Uint8List.fromList(qrypt.text.codeUnits);
+          } else {
+            // Decode base64 to get original bytes
+            originalMessage = base64Decode(qrypt.text);
           }
-          originalMessage = Uint8List.fromList(bytes);
-        } else if (usesBase64Obfuscation) {
-          // Convert string back to bytes
-          originalMessage = Uint8List.fromList(qrypt.text.codeUnits);
         } else {
-          // Decode base64 to get original bytes
-          originalMessage = base64Decode(qrypt.text);
+          // For encrypted data (AES, RSA, etc.), the text is already in the correct format
+          // Just convert the string to bytes for signing
+          originalMessage = utf8.encode(qrypt.text);
         }
 
         // Sign the original message
@@ -277,6 +288,15 @@ class InputHandler {
               .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
               .join('');
 
+          if (kDebugMode) {
+            print(
+              'DSA Sign - Generated hex string length: ${qrypt.text.length}',
+            );
+            print(
+              'DSA Sign - Encryption method: ${qrypt.getEncryptionMethod()}',
+            );
+          }
+
           // Verify the hex string has even length (should always be true, but let's be safe)
           if (qrypt.text.length % 2 != 0) {
             if (kDebugMode) {
@@ -286,7 +306,7 @@ class InputHandler {
             }
             // This should never happen since each byte always produces exactly 2 hex chars
             // But if it does, we pad with a leading zero
-            qrypt.text = '0${qrypt.text}';
+            qrypt.text = '0' + qrypt.text;
           }
         } else if (usesBase64Obfuscation) {
           // Keep as raw string for b64 obfuscation
@@ -489,6 +509,27 @@ class InputHandler {
           Uint8List originalMessage = base64Decode(signedPackage['message']);
           Uint8List signature = base64Decode(signedPackage['signature']);
 
+          if (kDebugMode) {
+            print(
+              'DSA Verify - Original message length: ${originalMessage.length}',
+            );
+            print(
+              'DSA Verify - Original message preview: ${originalMessage.take(50).map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}',
+            );
+
+            // Try to decode as string to see if it's text data
+            try {
+              String messageAsString = utf8.decode(originalMessage);
+              print(
+                'DSA Verify - Message as string preview: ${messageAsString.length > 100 ? messageAsString.substring(0, 100) + "..." : messageAsString}',
+              );
+            } catch (e) {
+              print(
+                'DSA Verify - Message is not valid UTF-8 text (likely binary data)',
+              );
+            }
+          }
+
           // Verify the signature - now safe to use ! operator
           bool isValid = dsa.verifySignature(
             originalMessage, // The original message
@@ -518,15 +559,41 @@ class InputHandler {
             }
           }
 
-          // Return the original message in the correct format for further processing
-          if (usesMappedObfuscation) {
-            qrypt.text = originalMessage
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join('');
-          } else if (usesBase64Obfuscation) {
-            qrypt.text = String.fromCharCodes(originalMessage);
+          // Return the original message - this should be the encrypted data (like "ciphertext:iv")
+          // or compressed binary data for encryption.none
+          if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
+            // For no encryption, the original message is compressed binary data
+            // We need to set it in qrypt.deCompressedText for decompression to work
+            qrypt.deCompressedText = originalMessage;
+            // Set a placeholder text that won't be used
+            qrypt.text = "BINARY_DATA_PLACEHOLDER";
+
+            if (kDebugMode) {
+              print(
+                'DSA Verify - Set binary data for decompression, length: ${originalMessage.length}',
+              );
+            }
           } else {
-            qrypt.text = base64Encode(originalMessage);
+            // For encrypted data, convert back to string format for further processing
+            try {
+              String originalDataString = utf8.decode(originalMessage);
+              qrypt.text = originalDataString;
+
+              if (kDebugMode) {
+                print(
+                  'DSA Verify - Set encrypted data string: ${originalDataString.length > 50 ? originalDataString.substring(0, 50) + "..." : originalDataString}',
+                );
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print(
+                  'DSA Verify - Failed to decode as UTF-8, treating as binary: $e',
+                );
+              }
+              // If it fails to decode as UTF-8, treat as binary
+              qrypt.deCompressedText = originalMessage;
+              qrypt.text = "BINARY_DATA_PLACEHOLDER";
+            }
           }
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -585,15 +652,38 @@ class InputHandler {
       Map<String, dynamic> signedPackage = jsonDecode(packageJson);
       Uint8List originalMessage = base64Decode(signedPackage['message']);
 
-      // Format according to obfuscation method
-      if (usesMappedObfuscation) {
-        qrypt.text = originalMessage
-            .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-            .join('');
-      } else if (usesBase64Obfuscation) {
-        qrypt.text = String.fromCharCodes(originalMessage);
+      // The original message should be the encrypted data (like "ciphertext:iv")
+      // or compressed binary data for encryption.none
+      if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
+        // For no encryption, set binary data for decompression
+        qrypt.deCompressedText = originalMessage;
+        qrypt.text = "BINARY_DATA_PLACEHOLDER";
+
+        if (kDebugMode) {
+          print(
+            'DSA Verify (no key) - Set binary data for decompression, length: ${originalMessage.length}',
+          );
+        }
       } else {
-        qrypt.text = base64Encode(originalMessage);
+        // For encrypted data, convert to string format
+        try {
+          String originalDataString = utf8.decode(originalMessage);
+          qrypt.text = originalDataString;
+
+          if (kDebugMode) {
+            print('DSA Verify (no key) - Set encrypted data string');
+          }
+        } catch (e) {
+          // If it fails to decode as UTF-8, treat as binary
+          qrypt.deCompressedText = originalMessage;
+          qrypt.text = "BINARY_DATA_PLACEHOLDER";
+
+          if (kDebugMode) {
+            print(
+              'DSA Verify (no key) - Treating as binary data due to UTF-8 decode error',
+            );
+          }
+        }
       }
 
       return qrypt;
@@ -606,6 +696,15 @@ class InputHandler {
   }
 
   Future<Qrypt> handleDecrypt(Qrypt qrypt, BuildContext buildContext) async {
+    if (qrypt.text == "BINARY_DATA_PLACEHOLDER") {
+      if (kDebugMode) {
+        print(
+          'Decrypt - Using data from DSA verification, length: ${qrypt.deCompressedText.length}',
+        );
+      }
+      return qrypt; // Skip decryption as data is already decompressed
+    }
+
     bool usesMappedObfuscation = [
       ObfuscationMethod.en1,
       ObfuscationMethod.en2,
