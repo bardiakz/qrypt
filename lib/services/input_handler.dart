@@ -213,8 +213,51 @@ class InputHandler {
           throw Exception('RSA+Sign encryption failed: $e');
         }
       case EncryptionMethod.mlKem:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        try {
+          // Validate ML-KEM public key input
+          if (qrypt.kemReceiverPublicKey.isEmpty) {
+            throw Exception('No ML-KEM public key provided for key exchange');
+          }
+
+          KemKeyService kem = KemKeyService();
+          Uint8List uint8PublicKey = base64Decode(qrypt.kemReceiverPublicKey);
+
+          KEMEncapsulationResult encResult = kem.encapsulateWithPublicKey(
+            uint8PublicKey,
+          );
+
+          // Store the ciphertext and shared secret
+          qrypt.kemCiphertext = encResult.ciphertext;
+          qrypt.kemSharedSecret = encResult.sharedSecret;
+
+          // Format the output based on obfuscation method
+          bool usesMappedObfuscation = [
+            ObfuscationMethod.en1,
+            ObfuscationMethod.en2,
+            ObfuscationMethod.fa1,
+            ObfuscationMethod.fa2,
+          ].contains(qrypt.getObfuscationMethod());
+
+          bool usesBase64Obfuscation =
+              qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+          if (usesMappedObfuscation) {
+            // Convert ciphertext to hex for mapped obfuscations
+            qrypt.text = encResult.ciphertext
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join('');
+          } else if (usesBase64Obfuscation) {
+            // For b64 obfuscation, keep as raw string
+            qrypt.text = String.fromCharCodes(encResult.ciphertext);
+          } else {
+            // For other obfuscations, use base64
+            qrypt.text = base64Encode(encResult.ciphertext);
+          }
+
+          return qrypt;
+        } catch (e) {
+          throw Exception('ML-KEM key exchange failed: $e');
+        }
     }
   }
 
@@ -979,8 +1022,54 @@ class InputHandler {
           throw Exception('RSA+Sign decryption failed: $e');
         }
       case EncryptionMethod.mlKem:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        try {
+          if (qrypt.kemKeyPair == null) {
+            throw Exception('No ML-KEM private key provided for decapsulation');
+          }
+
+          bool usesMappedObfuscation = [
+            ObfuscationMethod.en1,
+            ObfuscationMethod.en2,
+            ObfuscationMethod.fa1,
+            ObfuscationMethod.fa2,
+          ].contains(qrypt.getObfuscationMethod());
+
+          bool usesBase64Obfuscation =
+              qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+          Uint8List ciphertext;
+
+          // Convert text back to ciphertext based on obfuscation method
+          if (usesMappedObfuscation) {
+            // Convert hex back to bytes
+            List<int> bytes = [];
+            for (int i = 0; i < qrypt.text.length; i += 2) {
+              String hexByte = qrypt.text.substring(i, i + 2);
+              bytes.add(int.parse(hexByte, radix: 16));
+            }
+            ciphertext = Uint8List.fromList(bytes);
+          } else if (usesBase64Obfuscation) {
+            // Convert string back to bytes
+            ciphertext = Uint8List.fromList(qrypt.text.codeUnits);
+          } else {
+            // Decode base64
+            ciphertext = base64Decode(qrypt.text);
+          }
+
+          KemKeyService kem = KemKeyService();
+          Uint8List sharedSecret = kem.decapsulateWithSecretKey(
+            ciphertext,
+            qrypt.kemKeyPair!.secretKey,
+          );
+
+          qrypt.kemSharedSecret = sharedSecret;
+
+          qrypt.deCompressedText = sharedSecret;
+
+          return qrypt;
+        } catch (e) {
+          throw Exception('ML-KEM decapsulation failed: $e');
+        }
     }
   }
 
@@ -1107,7 +1196,7 @@ class InputHandler {
       uint8PublicKey,
     );
     Qrypt qrypt = Qrypt.forKem(
-      ciphertext: encResult.ciphertext,
+      kemCiphertext: encResult.ciphertext,
       kemSharedSecret: encResult.sharedSecret,
     );
     return qrypt;

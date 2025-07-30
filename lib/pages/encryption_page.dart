@@ -250,9 +250,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     return "Enter or paste text...";
   }
 
-  // ML-KEM Key Exchange Function
   void _performMLKemKeyExchange() async {
-    // Validate ML-KEM public key input
     if (_mlKemPublicKeyController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -265,23 +263,37 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     ref.read(isProcessingProvider.notifier).state = true;
 
     try {
-      ref.read(processedEncryptProvider.notifier).state = await ih
-          .handleKemProcess(
-            ref.read(processedEncryptProvider),
-            _mlKemPublicKeyController.text,
-          );
+      // Create Qrypt object for ML-KEM
+      ref.read(inputQryptProvider.notifier).state = Qrypt.withMLKem(
+        text: _encryptTextController.text.isEmpty
+            ? "ML-KEM Key Exchange"
+            : _encryptTextController.text,
+        kemReceiverPublicKey: _mlKemPublicKeyController.text,
+        encryption: EncryptionMethod.mlKem,
+        obfuscation: ref.read(selectedObfuscationProvider),
+        compression: ref.read(selectedCompressionProvider),
+        sign: ref.read(selectedSignProvider),
+        useTag: ref.read(useTagProvider),
+      );
 
+      // Add signing key if needed
+      if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
+        ref.read(inputQryptProvider.notifier).state.dsaKeyPair = ref.read(
+          selectedMlDsaSignKeyPairProvider,
+        );
+      }
+
+      // Use standard processing chain
+      ref.read(processedEncryptProvider.notifier).state = await ih
+          .handleProcess(ref.read(inputQryptProvider));
+
+      // Extract results for display
+      final processedData = ref.read(processedEncryptProvider);
       setState(() {
-        _mlKemCiphertext = base64Encode(
-          ref.read(processedEncryptProvider).ciphertext!,
-        );
-        _mlKemSharedSecret = base64Encode(
-          ref.read(processedEncryptProvider).kemSharedSecret!,
-        );
-        ;
+        _mlKemCiphertext = base64Encode(processedData.kemCiphertext!);
+        _mlKemSharedSecret = base64Encode(processedData.kemSharedSecret!);
       });
 
-      // Update the input field to show generation completed
       _encryptTextController.text = 'Key exchange completed - see output below';
 
       if (mounted) {
@@ -305,9 +317,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
-  // ML-KEM Shared Secret Extraction Function
   void _extractMLKemSharedSecret() async {
-    // Validate ciphertext input
     if (_decryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -318,19 +328,37 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
 
     ref.read(isProcessingProvider.notifier).state = true;
-    ref.read(processedDecryptProvider.notifier).state.inputCiphertext =
-        _decryptTextController.text;
-    try {
-      ref.read(processedDecryptProvider.notifier).state = await ih
-          .handleKemDeProcess(
-            ref.read(processedDecryptProvider),
-            ref.read(selectedKemDecryptKeyPairProvider)!,
-          );
 
+    try {
+      // Create Qrypt object for ML-KEM decryption
+      ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
+        text: _decryptTextController.text,
+        encryption: EncryptionMethod.mlKem,
+        obfuscation: ref.read(selectedObfuscationProvider),
+        compression: ref.read(selectedCompressionProvider),
+        sign: ref.read(selectedSignProvider),
+        useTag: false, // Manual settings for decrypt
+      );
+
+      // Set the KEM key pair
+      ref.read(inputQryptProvider.notifier).state.kemKeyPair = ref.read(
+        selectedKemDecryptKeyPairProvider,
+      );
+
+      // Add verification key if needed
+      if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
+        ref.read(inputQryptProvider.notifier).state.dsaVerifyPublicKEy =
+            base64Decode(ref.read(verifyMlDsaPublicKeyProvider));
+      }
+
+      // Use standard processing chain
+      ref.read(processedDecryptProvider.notifier).state = await ih
+          .handleDeProcess(context, ref.read(inputQryptProvider), false);
+
+      // Extract shared secret for display
+      final processedData = ref.read(processedDecryptProvider);
       setState(() {
-        _mlKemSharedSecret = base64Encode(
-          ref.read(processedDecryptProvider).kemSharedSecret!,
-        );
+        _mlKemSharedSecret = base64Encode(processedData.kemSharedSecret!);
       });
 
       if (mounted) {
@@ -831,8 +859,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 const SizedBox(width: 5),
                                 Text(
                                   isMLKemMode
-                                      ? "Generate Shared Key"
-                                      : "Encrypt",
+                                      ? 'Generate Shared Key'
+                                      : 'Encrypt',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,

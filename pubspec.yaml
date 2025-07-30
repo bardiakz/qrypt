@@ -30,7 +30,7 @@ dependencies:
   asn1lib: ^1.6.5
   url_launcher: ^6.3.2
   package_info_plus: ^8.3.0
-  oqs: ^1.0.6
+  oqs: ^1.0.8
 
 dev_dependencies:
   flutter_test:
