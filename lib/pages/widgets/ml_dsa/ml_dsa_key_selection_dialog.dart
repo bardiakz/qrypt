@@ -1,205 +1,210 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qrypt/models/ml_dsa_key_pair.dart';
 import '../../../providers/ml_dsa_providers.dart';
-import '../../../resources/global_resources.dart';
-import 'create_ml_dsa_key_dialog.dart';
-import 'ml_dsa_key_management_dialog.dart';
+import '../../../resources/constants.dart';
 
-enum MlDsaKeyType { sign, verify }
-
-class MlDsaKeySelector extends ConsumerWidget {
+class MlDsaPublicKeyInputDialog extends ConsumerStatefulWidget {
   final Color primaryColor;
-  final MlDsaKeyType keyType;
   final String title;
+  final String message;
 
-  const MlDsaKeySelector({
+  const MlDsaPublicKeyInputDialog({
     super.key,
     required this.primaryColor,
-    required this.keyType,
-    this.title = 'ML-DSA Key Pair',
+    this.title = 'Enter ML-DSA Public Key',
+    this.message =
+        'Please enter the sender\'s ML-DSA public key to verify the signature.',
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final keyPairsAsync = ref.watch(mlDsaKeyPairsProvider);
-    final selectedKeyPair = ref.watch(_getSelectedProvider());
+  ConsumerState<MlDsaPublicKeyInputDialog> createState() =>
+      _MlDsaPublicKeyInputDialogState();
+}
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: getContainerBackgroundColor(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              IconButton(
-                onPressed: () => _showKeyManagementDialog(context, ref),
-                icon: Icon(Icons.key, color: primaryColor),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          keyPairsAsync.when(
-            data: (keyPairs) {
-              if (keyPairs.isEmpty) {
-                return Column(
-                  children: [
-                    const Text('No key pairs available'),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => _showCreateKeyDialog(context, ref),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Create Key Pair'),
-                    ),
-                  ],
-                );
-              }
+class _MlDsaPublicKeyInputDialogState
+    extends ConsumerState<MlDsaPublicKeyInputDialog> {
+  final TextEditingController _publicKeyController = TextEditingController();
+  String? _errorText;
 
-              // Remove duplicates based on id to prevent dropdown issues
-              final uniqueKeyPairs = <String, QryptMLDSAKeyPair>{};
-              for (final keyPair in keyPairs) {
-                uniqueKeyPairs[keyPair.id] = keyPair;
-              }
-              final deduplicatedKeyPairs = uniqueKeyPairs.values.toList();
-
-              // Find the currently selected key pair by ID in the fresh list
-              QryptMLDSAKeyPair? currentSelectedKeyPair;
-
-              if (selectedKeyPair != null) {
-                // Look for a key pair with the same ID in the current list
-                try {
-                  currentSelectedKeyPair = deduplicatedKeyPairs.firstWhere(
-                    (kp) => kp.id == selectedKeyPair.id,
-                  );
-                } catch (e) {
-                  // If the selected key pair is not found, it might have been deleted
-                  currentSelectedKeyPair = null;
-                }
-              }
-
-              // If no valid selection, default to the first key pair
-              if (currentSelectedKeyPair == null &&
-                  deduplicatedKeyPairs.isNotEmpty) {
-                currentSelectedKeyPair = deduplicatedKeyPairs.first;
-                // Update the provider to reflect this default selection
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _updateSelectedProvider(ref, deduplicatedKeyPairs.first);
-                });
-              }
-
-              return DropdownButtonFormField<QryptMLDSAKeyPair>(
-                value: currentSelectedKeyPair,
-                decoration: InputDecoration(
-                  hintText: 'Select key pair',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
-                  ),
-                ),
-                items: deduplicatedKeyPairs.map((keyPair) {
-                  return DropdownMenuItem<QryptMLDSAKeyPair>(
-                    value: keyPair,
-                    child: Text(keyPair.name),
-                  );
-                }).toList(),
-                onChanged: (keyPair) {
-                  if (keyPair != null) {
-                    _updateSelectedProvider(ref, keyPair);
-                  }
-                },
-              );
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (error, stack) => Text('Error: $error'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Get the appropriate provider based on key type
-  StateProvider<QryptMLDSAKeyPair?> _getSelectedProvider() {
-    switch (keyType) {
-      case MlDsaKeyType.sign:
-        return selectedMlDsaSignKeyPairProvider;
-      case MlDsaKeyType.verify:
-        return selectedMlDsaVerifyKeyPairProvider;
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with existing public key if available
+    final existingKey = ref.read(verifyMlDsaPublicKeyProvider);
+    if (existingKey.isNotEmpty) {
+      _publicKeyController.text = existingKey;
     }
   }
 
-  // Update the appropriate provider based on key type
-  void _updateSelectedProvider(WidgetRef ref, QryptMLDSAKeyPair keyPair) {
-    switch (keyType) {
-      case MlDsaKeyType.sign:
-        ref.read(selectedMlDsaSignKeyPairProvider.notifier).state = keyPair;
-        break;
-      case MlDsaKeyType.verify:
-        ref.read(selectedMlDsaVerifyKeyPairProvider.notifier).state = keyPair;
-        break;
+  @override
+  void dispose() {
+    _publicKeyController.dispose();
+    super.dispose();
+  }
+
+  // bool _isValidPemFormat(String publicKey) {
+  //   if (publicKey.trim().isEmpty) return false;
+  //
+  //   final pemRegex = RegExp(
+  //     r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n\s]+\n-----END PUBLIC KEY-----$',
+  //     multiLine: true,
+  //   );
+  //
+  //   return pemRegex.hasMatch(publicKey.trim());
+  // }
+
+  void _validateAndSavePublicKey(String value) {
+    try {
+      // Normalize the input by removing whitespace and newlines
+      String normalized = value.trim().replaceAll(RegExp(r'\s+'), '');
+
+      setState(() {
+        if (normalized.isEmpty) {
+          _errorText = 'Public key is required';
+        }
+        // else if (!_isValidPemFormat(normalized)) {
+        //   _errorText = 'Invalid ML-DSA public key format. Expected a base64-encoded string.';
+        // }
+        else {
+          _errorText = null;
+          // Save to provider
+          ref.read(verifyMlDsaPublicKeyProvider.notifier).state = normalized;
+          verifyMlDsaPublicKeyGlobal = normalized;
+
+          if (kDebugMode) {
+            print(
+              'Saved normalized ML-DSA public key: ${normalized.substring(0, 50)}...',
+            );
+          }
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorText = 'Error processing public key: $e';
+      });
+
+      if (kDebugMode) {
+        print('Error normalizing public key: $e');
+      }
     }
   }
 
-  void _showKeyManagementDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          MlDsaKeyManagementDialog(primaryColor: primaryColor),
-    );
+  bool _canConfirm() {
+    return _publicKeyController.text.trim().isNotEmpty && _errorText == null;
   }
 
-  void _showCreateKeyDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => CreateMlDsaKeyDialog(primaryColor: primaryColor),
+  void _confirmSelection() {
+    final publicKey = _publicKeyController.text.trim();
+    if (publicKey.isNotEmpty && _errorText == null) {
+      Navigator.of(context).pop(publicKey);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.message, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 16),
+
+            // Public Key Input Field
+            TextField(
+              controller: _publicKeyController,
+              onChanged: _validateAndSavePublicKey,
+              decoration: InputDecoration(
+                labelText: 'Sender\'s ML-DSA Public Key ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
+                  borderSide: BorderSide(
+                    color: widget.primaryColor,
+                    width: AppConstants.borderWidth,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
+                  borderSide: const BorderSide(color: Colors.red, width: 1.0),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
+                  borderSide: const BorderSide(color: Colors.red, width: 1.0),
+                ),
+                errorText: _errorText,
+                errorMaxLines: 3,
+              ),
+              maxLines: 8,
+              minLines: 4,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Info message
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Enter the sender\'s public key in PEM format to verify the ML-DSA signature.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _canConfirm() ? _confirmSelection : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: widget.primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Verify'),
+        ),
+      ],
     );
   }
 }
 
-class MlDsaSignKeySelector extends StatelessWidget {
-  final Color primaryColor;
-
-  const MlDsaSignKeySelector({super.key, required this.primaryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return MlDsaKeySelector(
+// Utility function to show the ML-DSA public key input dialog
+Future<String?> showMlDsaPublicKeyInputDialog({
+  required BuildContext context,
+  required Color primaryColor,
+  String title = 'Enter ML-DSA Public Key',
+  String message =
+      'Please enter the sender\'s ML-DSA public key to verify the signature.',
+}) {
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: false, // Prevent dismissing by tapping outside
+    builder: (context) => MlDsaPublicKeyInputDialog(
       primaryColor: primaryColor,
-      keyType: MlDsaKeyType.sign,
-      title: 'ML-DSA Key Pair (Sign)',
-    );
-  }
-}
-
-class MlDsaVerifyKeySelector extends StatelessWidget {
-  final Color primaryColor;
-
-  const MlDsaVerifyKeySelector({super.key, required this.primaryColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return MlDsaKeySelector(
-      primaryColor: primaryColor,
-      keyType: MlDsaKeyType.verify,
-      title: 'ML-DSA Key Pair (Verify)',
-    );
-  }
+      title: title,
+      message: message,
+    ),
+  );
 }
