@@ -10,6 +10,7 @@ import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/kyber_widgets.dart';
 import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
+import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selector.dart';
 import 'package:qrypt/pages/widgets/ml_kem/kem_key_selector.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';

@@ -14,6 +14,7 @@ import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
 import '../models/sign_method.dart';
+import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
 import 'aes_encryption.dart';
@@ -1059,7 +1060,22 @@ class InputHandler {
         qrypt.obfuscation = methods!.obfuscation;
         qrypt.encryption = methods.encryption;
         qrypt.compression = methods.compression;
+        qrypt.sign = methods.sign;
         qrypt = handleDeObfs(qrypt);
+        if (qrypt.sign == SignMethod.mlDsa) {
+          String? dsaSenderPublicKey = await showMlDsaPublicKeyInputDialog(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Select Verification Key',
+            message:
+                'This content was signed with DSA. Please select the appropriate key pair for verification.',
+          );
+          if (dsaSenderPublicKey == null) {
+            throw Exception('Decryption cancelled: No key pair selected');
+          }
+          qrypt.dsaVerifyPublicKEy = base64Decode(dsaSenderPublicKey);
+        }
+        qrypt = handleVerify(qrypt, context);
         if (qrypt.encryption == EncryptionMethod.rsa ||
             qrypt.encryption == EncryptionMethod.rsaSign) {
           final selectedKeyPair = await showRSAKeySelectionDialog(
