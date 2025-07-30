@@ -5,6 +5,7 @@ import 'package:qrypt/models/rsa_key_pair.dart';
 import 'package:qrypt/models/sign_method.dart';
 import '../services/tag_manager.dart';
 import 'encryption_method.dart';
+import 'kem_key_pair.dart';
 import 'ml_dsa_key_pair.dart';
 import 'obfuscation_method.dart';
 
@@ -32,9 +33,11 @@ class Qrypt {
 
   //kem properties
   String inputCiphertext = '';
-  Uint8List? ciphertext;
+  Uint8List? kemCiphertext;
   Uint8List? kemSharedSecret;
+  String kemReceiverPublicKey = '';
   bool useKem = false;
+  QryptKEMKeyPair? kemKeyPair;
 
   //dsa properties
   Uint8List? dsaVerifyPublicKEy;
@@ -81,11 +84,25 @@ class Qrypt {
     }
   }
 
+  Qrypt.withMLKem({
+    required this.text,
+    required this.kemReceiverPublicKey,
+    required this.encryption,
+    required this.obfuscation,
+    required this.compression,
+    required this.sign,
+    required this.useTag,
+  }) {
+    if (useTag) {
+      TagManager.setTag(this);
+    }
+  }
+
   Qrypt.autoDecrypt({required this.text}) {
     useTag = true;
   }
 
-  Qrypt.forKem({required this.ciphertext, required this.kemSharedSecret}) {
+  Qrypt.forKem({required this.kemCiphertext, required this.kemSharedSecret}) {
     useKem = true;
   }
 
