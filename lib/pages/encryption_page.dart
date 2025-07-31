@@ -540,6 +540,51 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                     // ML-KEM specific configurations
                     if (isMLKemMode) ...[
+                      // Padding(
+                      //   padding: const EdgeInsets.only(
+                      //     left: AppConstants.defaultPadding,
+                      //     right: AppConstants.defaultPadding,
+                      //     bottom: AppConstants.defaultPadding,
+                      //   ),
+                      //   child: Container(
+                      //     padding: const EdgeInsets.all(2),
+                      //     decoration: BoxDecoration(
+                      //       color: useTagManually
+                      //           ? primaryColor.withOpacity(0.1)
+                      //           : getContainerBackgroundColor(context),
+                      //       borderRadius: BorderRadius.circular(
+                      //         AppConstants.borderRadius,
+                      //       ),
+                      //       border: Border.all(
+                      //         color: useTagManually
+                      //             ? primaryColor.withOpacity(0.3)
+                      //             : getBorderColor(context),
+                      //       ),
+                      //     ),
+                      //
+                      //     child: Row(
+                      //       children: [
+                      //         const SizedBox(width: 12),
+                      //         const Expanded(
+                      //           child: Text(
+                      //             "Include Tag",
+                      //             style: TextStyle(
+                      //               fontWeight: FontWeight.w600,
+                      //               fontSize: 14,
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         Switch(
+                      //           value: useTagManually,
+                      //           onChanged: (val) =>
+                      //               ref.read(useTagProvider.notifier).state =
+                      //                   val,
+                      //           activeColor: primaryColor,
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
@@ -579,52 +624,50 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       ),
                     ] else ...[
                       // Non-ML-KEM configurations
-                      if (!isMLKemMode) ...[
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.defaultPadding,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: useTagManually
-                                  ? primaryColor.withOpacity(0.1)
-                                  : getContainerBackgroundColor(context),
-                              borderRadius: BorderRadius.circular(
-                                AppConstants.borderRadius,
-                              ),
-                              border: Border.all(
-                                color: useTagManually
-                                    ? primaryColor.withOpacity(0.3)
-                                    : getBorderColor(context),
-                              ),
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: useTagManually
+                                ? primaryColor.withOpacity(0.1)
+                                : getContainerBackgroundColor(context),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
                             ),
+                            border: Border.all(
+                              color: useTagManually
+                                  ? primaryColor.withOpacity(0.3)
+                                  : getBorderColor(context),
+                            ),
+                          ),
 
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    "Include Tag",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  "Include Tag",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
                                 ),
-                                Switch(
-                                  value: useTagManually,
-                                  onChanged: (val) =>
-                                      ref.read(useTagProvider.notifier).state =
-                                          val,
-                                  activeColor: primaryColor,
-                                ),
-                              ],
-                            ),
+                              ),
+                              Switch(
+                                value: useTagManually,
+                                onChanged: (val) =>
+                                    ref.read(useTagProvider.notifier).state =
+                                        val,
+                                activeColor: primaryColor,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
 
                       const SizedBox(height: AppConstants.defaultPadding),
 

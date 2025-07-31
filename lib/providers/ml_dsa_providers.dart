@@ -18,6 +18,6 @@ final selectedMlDsaSignKeyPairProvider = StateProvider<QryptMLDSAKeyPair?>(
 final selectedMlDsaVerifyKeyPairProvider = StateProvider<QryptMLDSAKeyPair?>(
   (ref) => null,
 );
-final verifyMlDsaPublicKeyProvider = StateProvider<String>((ref) => 'n');
-final signMlDsaPublicKeyProvider = StateProvider<String>((ref) => 'n');
-String verifyMlDsaPublicKeyGlobal = 'n';
+final verifyMlDsaPublicKeyProvider = StateProvider<String>((ref) => '');
+final signMlDsaPublicKeyProvider = StateProvider<String>((ref) => '');
+String verifyMlDsaPublicKeyGlobal = '';

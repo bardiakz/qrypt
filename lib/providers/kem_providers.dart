@@ -16,6 +16,6 @@ final selectedKemEncryptKeyPairProvider = StateProvider<QryptKEMKeyPair?>(
 final selectedKemDecryptKeyPairProvider = StateProvider<QryptKEMKeyPair?>(
   (ref) => null,
 );
-final receiverKemPublicKeyProvider = StateProvider<String>((ref) => 'n');
-final decryptKemPublicKeyProvider = StateProvider<String>((ref) => 'n');
-String decryptKemPublicKeyGlobal = 'n';
+final receiverKemPublicKeyProvider = StateProvider<String>((ref) => '');
+final decryptKemPublicKeyProvider = StateProvider<String>((ref) => '');
+String decryptKemPublicKeyGlobal = '';
