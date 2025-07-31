@@ -51,7 +51,7 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<EncryptionMethod>(
-      value: selectedEncryption,
+      value: ref.watch(selectedEncryptionProvider),
       items: EncryptionMethod.values.map((alg) {
         return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),

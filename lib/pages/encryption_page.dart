@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +8,6 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/Dropdown_button_forms.dart';
 import 'package:qrypt/pages/widgets/kyber_widgets.dart';
-import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selector.dart';
 import 'package:qrypt/pages/widgets/ml_kem/kem_key_selector.dart';
 import 'package:qrypt/pages/widgets/mode_switch.dart';
@@ -21,7 +19,6 @@ import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
-import '../models/ml_dsa_key_pair.dart';
 import '../models/rsa_key_pair.dart';
 import '../models/sign_method.dart';
 import '../providers/resource_providers.dart';
@@ -278,7 +275,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         _mlKemSharedSecret = base64Encode(
           ref.read(processedEncryptProvider).kemSharedSecret!,
         );
-        ;
       });
 
       // Update the input field to show generation completed
@@ -745,7 +741,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   const SizedBox(height: AppConstants.smallPadding),
                   if (!(ref.watch(selectedEncryptionProvider) ==
                           EncryptionMethod.rsaSign) &&
-                      !defaultEncryption) ...[
+                      !defaultEncryption &&
+                      !(ref.watch(selectedEncryptionProvider) ==
+                          EncryptionMethod.mlKem)) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppConstants.defaultPadding,
@@ -884,7 +882,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
                       if (!(ref.watch(selectedEncryptionProvider) ==
-                          EncryptionMethod.rsaSign)) ...[
+                              EncryptionMethod.rsaSign &&
+                          !(ref.watch(isMLKemModeProvider)))) ...[
                         const SizedBox(height: AppConstants.defaultPadding),
                         Padding(
                           padding: const EdgeInsets.symmetric(
@@ -1011,6 +1010,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
                             isEncryptMode: false,
                           ),
+                        const SizedBox(height: AppConstants.defaultPadding),
                       ],
 
                       if (!(ref.watch(selectedEncryptionProvider) ==
