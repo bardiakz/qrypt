@@ -25,6 +25,7 @@ import '../providers/resource_providers.dart';
 import '../resources/constants.dart';
 import '../resources/global_resources.dart';
 import '../services/input_handler.dart';
+import 'key_management_page.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
@@ -403,7 +404,22 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 // Header with mode switch and settings
                 Row(
                   children: [
-                    Expanded(child: Container()),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const KeyManagementPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.admin_panel_settings),
+                        ),
+                      ),
+                    ),
+                    // Expanded(child: Container()),
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.only(
