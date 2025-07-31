@@ -33,7 +33,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Qrypt',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
         // switchTheme: SwitchThemeData(
         //   thumbColor: WidgetStateProperty.all(Colors.white),
