@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:qrypt/providers/kem_providers.dart';
+import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -419,7 +421,7 @@ class SettingsPage extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Final Confirmation'),
         content: const Text(
-          'Type "DELETE" to confirm you want to permanently delete all data.',
+          'are you sure you want to permanently delete all secure storage data?',
         ),
         actions: [
           TextButton(
@@ -432,6 +434,8 @@ class SettingsPage extends ConsumerWidget {
               final storage = FlutterSecureStorage();
               storage.deleteAll();
               ref.refresh(rsaKeyPairsProvider);
+              ref.refresh(kemKeyPairsProvider);
+              ref.refresh(mlDsaKeyPairsProvider);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Data cleared successfully')),
               );
