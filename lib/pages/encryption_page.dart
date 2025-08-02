@@ -86,7 +86,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               'ML-KEM Key Size',
               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppConstants.smallPadding),
             DropdownButtonFormField<MLKemKeySize>(
               value: _selectedMLKemKeySize,
               decoration: buildInputDecoration(
@@ -146,8 +146,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             maxLines: 1,
           ),
           Positioned(
-            top: 5,
-            right: 5,
+            top: AppConstants.smallPadding,
+            right: AppConstants.smallPadding,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -172,10 +172,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppConstants.smallPadding),
                 InkWell(
                   onTap: () {
-                    // Generate a random 32-byte AES key
                     final randomKey = generateRandomAesKey();
                     controller.text = randomKey;
                     ref.read(keyProvider.notifier).state = randomKey;
@@ -379,12 +378,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     return SafeArea(
       child: Scaffold(
         body: Padding(
-          padding: const EdgeInsets.only(
-            left: 2,
-            right: 2,
-            top: 4,
-            bottom: AppConstants.smallPadding,
-          ),
+          padding: const EdgeInsets.all(AppConstants.smallPadding),
           child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) {
               const double sensitivity = 100.0;
@@ -402,29 +396,29 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             child: ListView(
               children: [
                 // Header with mode switch and settings
-                Row(
-                  children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const KeyManagementPage(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.admin_panel_settings),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppConstants.smallPadding,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const KeyManagementPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.admin_panel_settings),
+                          ),
                         ),
                       ),
-                    ),
-                    // Expanded(child: Container()),
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: AppConstants.defaultPadding,
-                        ),
+                      Center(
                         child: modeSwitch(
                           appMode,
                           primaryColor,
@@ -433,23 +427,23 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           _decryptTextController,
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const SettingsPage(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.settings),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const SettingsPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.settings),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 // ML-KEM Info Container (only show in ML-KEM mode)
@@ -460,6 +454,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     primaryColor: primaryColor,
                   ),
                 ],
+
+                const SizedBox(height: AppConstants.defaultPadding),
 
                 // Message input section
                 buildSectionHeader(
@@ -510,6 +506,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ],
                 ),
 
+                const SizedBox(height: AppConstants.smallPadding),
+
                 // Message input field
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -524,7 +522,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         : _decryptTextController,
                     maxLines: AppConstants.maxInputLines,
                     readOnly: isMLKemMode && isEncryptMode,
-                    // Read-only for ML-KEM encrypt mode
                     decoration: buildInputDecoration(
                       context: context,
                       primaryColor: primaryColor,
@@ -534,7 +531,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ),
                 ),
 
-                const SizedBox(height: AppConstants.largePadding),
+                const SizedBox(height: AppConstants.defaultPadding),
 
                 // Mode-specific configuration sections
                 if (isEncryptMode) ...[
@@ -549,62 +546,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               val,
                       primaryColor: primaryColor,
                     ),
+                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
                   if (!defaultEncryption || isMLKemMode) ...[
-                    // const SizedBox(height: AppConstants.smallPadding),
-
                     // ML-KEM specific configurations
                     if (isMLKemMode) ...[
-                      // Padding(
-                      //   padding: const EdgeInsets.only(
-                      //     left: AppConstants.defaultPadding,
-                      //     right: AppConstants.defaultPadding,
-                      //     bottom: AppConstants.defaultPadding,
-                      //   ),
-                      //   child: Container(
-                      //     padding: const EdgeInsets.all(2),
-                      //     decoration: BoxDecoration(
-                      //       color: useTagManually
-                      //           ? primaryColor.withOpacity(0.1)
-                      //           : getContainerBackgroundColor(context),
-                      //       borderRadius: BorderRadius.circular(
-                      //         AppConstants.borderRadius,
-                      //       ),
-                      //       border: Border.all(
-                      //         color: useTagManually
-                      //             ? primaryColor.withOpacity(0.3)
-                      //             : getBorderColor(context),
-                      //       ),
-                      //     ),
-                      //
-                      //     child: Row(
-                      //       children: [
-                      //         const SizedBox(width: 12),
-                      //         const Expanded(
-                      //           child: Text(
-                      //             "Include Tag",
-                      //             style: TextStyle(
-                      //               fontWeight: FontWeight.w600,
-                      //               fontSize: 14,
-                      //             ),
-                      //           ),
-                      //         ),
-                      //         Switch(
-                      //           value: useTagManually,
-                      //           onChanged: (val) =>
-                      //               ref.read(useTagProvider.notifier).state =
-                      //                   val,
-                      //           activeColor: primaryColor,
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
-                          vertical: AppConstants.smallPadding,
                         ),
                         child: EncryptionsDropdownButtonForm(
                           selectedEncryption: selectedEncryption,
@@ -612,19 +562,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
 
-                      // buildMLKemKeySizeSelector(
-                      //   context: context,
-                      //   primaryColor: primaryColor,
-                      // ),
-                      // Padding(
-                      //   padding: const EdgeInsets.symmetric(
-                      //     horizontal: AppConstants.defaultPadding,
-                      //     vertical: AppConstants.defaultPadding,
-                      //   ),
-                      //   child: KemEncryptKeySelector(
-                      //     primaryColor: primaryColor,
-                      //   ),
-                      // ),
                       const SizedBox(height: AppConstants.defaultPadding),
                       buildPublicKeyField(
                         context: context,
@@ -634,19 +571,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           // Handle ML-KEM public key input
                         },
                         validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
-                        // Basic validation for ML-KEM keys
                         isEncryptMode: true,
                         labelText: 'Recipient\'s ML-KEM Public Key',
                       ),
                     ] else ...[
                       // Non-ML-KEM configurations
-                      const SizedBox(height: AppConstants.defaultPadding),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
                         ),
                         child: Container(
-                          padding: const EdgeInsets.all(2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                            vertical: AppConstants.smallPadding,
+                          ),
                           decoration: BoxDecoration(
                             color: useTagManually
                                 ? primaryColor.withOpacity(0.1)
@@ -660,10 +598,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   : getBorderColor(context),
                             ),
                           ),
-
                           child: Row(
                             children: [
-                              const SizedBox(width: 12),
                               const Expanded(
                                 child: Text(
                                   "Include Tag",
@@ -688,18 +624,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       const SizedBox(height: AppConstants.defaultPadding),
 
                       // Show compression dropdown (not for ML-KEM)
-                      if (!isMLKemMode) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppConstants.defaultPadding,
-                          ),
-                          child: CompressionsDropdownButtonForm(
-                            selectedCompression: selectedCompression,
-                            primaryColor: primaryColor,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
                         ),
-                        const SizedBox(height: AppConstants.defaultPadding),
-                      ],
+                        child: CompressionsDropdownButtonForm(
+                          selectedCompression: selectedCompression,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+
+                      const SizedBox(height: AppConstants.defaultPadding),
 
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -710,14 +645,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-                      const SizedBox(height: AppConstants.smallPadding),
 
                       // Custom AES Key Section - Show only for AES encryption methods
-                      if (!isMLKemMode &&
-                          (selectedEncryption == EncryptionMethod.aesGcm ||
-                              selectedEncryption == EncryptionMethod.aesCbc ||
-                              selectedEncryption ==
-                                  EncryptionMethod.aesCtr)) ...[
+                      if (selectedEncryption == EncryptionMethod.aesGcm ||
+                          selectedEncryption == EncryptionMethod.aesCbc ||
+                          selectedEncryption == EncryptionMethod.aesCtr) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
                         buildSwitchContainer(
                           context: context,
                           title: "Use Custom AES Key",
@@ -753,23 +686,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       ],
 
                       // RSA specific fields
-                      if (!isMLKemMode &&
-                          (selectedEncryption == EncryptionMethod.rsa ||
-                              selectedEncryption ==
-                                  EncryptionMethod.rsaSign)) ...[
-                        if (selectedEncryption == EncryptionMethod.rsaSign)
+                      if (selectedEncryption == EncryptionMethod.rsa ||
+                          selectedEncryption == EncryptionMethod.rsaSign) ...[
+                        if (selectedEncryption == EncryptionMethod.rsaSign) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
                           Padding(
-                            padding: const EdgeInsets.only(
-                              left: AppConstants.defaultPadding,
-                              right: AppConstants.defaultPadding,
-                              bottom: AppConstants.smallPadding,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.defaultPadding,
                             ),
                             child: RSAEncryptKeySelector(
                               primaryColor: primaryColor,
                             ),
                           ),
+                        ],
 
-                        const SizedBox(height: AppConstants.smallPadding),
+                        const SizedBox(height: AppConstants.defaultPadding),
                         buildPublicKeyField(
                           context: context,
                           controller: _encryptPublicKeyController,
@@ -794,15 +725,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ],
                     ],
-                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
-                  const SizedBox(height: AppConstants.smallPadding),
                   if (!(ref.watch(selectedEncryptionProvider) ==
                           EncryptionMethod.rsaSign) &&
                       !defaultEncryption &&
                       !(ref.watch(selectedEncryptionProvider) ==
                           EncryptionMethod.mlKem)) ...[
+                    const SizedBox(height: AppConstants.defaultPadding),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppConstants.defaultPadding,
@@ -814,18 +744,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ),
                     if (ref.watch(selectedSignProvider) ==
                         SignMethod.mlDsa) ...[
+                      const SizedBox(height: AppConstants.defaultPadding),
                       Padding(
-                        padding: const EdgeInsets.all(
-                          AppConstants.defaultPadding,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
                         ),
                         child: MlDsaSignKeySelector(primaryColor: primaryColor),
                       ),
                     ],
-                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
                   // Show obfuscation dropdown (not for ML-KEM)
                   if (!isMLKemMode && !defaultEncryption) ...[
+                    const SizedBox(height: AppConstants.defaultPadding),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppConstants.defaultPadding,
@@ -835,8 +766,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         primaryColor: primaryColor,
                       ),
                     ),
-                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
+
+                  const SizedBox(height: AppConstants.defaultPadding),
 
                   // Action Button
                   Container(
@@ -885,7 +817,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(isMLKemMode ? Icons.sync_alt : Icons.lock),
-                                const SizedBox(width: 5),
+                                const SizedBox(
+                                  width: AppConstants.smallPadding,
+                                ),
                                 Text(
                                   isMLKemMode
                                       ? "Generate Shared Key"
@@ -920,21 +854,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
-                          vertical: AppConstants.smallPadding,
                         ),
                         child: EncryptionsDropdownButtonForm(
                           selectedEncryption: selectedEncryption,
                           primaryColor: primaryColor,
                         ),
                       ),
-                      // buildMLKemKeySizeSelector(
-                      //   context: context,
-                      //   primaryColor: primaryColor,
-                      // ),
+                      const SizedBox(height: AppConstants.defaultPadding),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
-                          vertical: AppConstants.defaultPadding,
                         ),
                         child: KemDecryptKeySelector(
                           primaryColor: primaryColor,
@@ -953,10 +882,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             primaryColor: primaryColor,
                           ),
                         ),
-                        const SizedBox(height: AppConstants.defaultPadding),
                       ],
                       if (ref.watch(selectedSignProvider) ==
                           SignMethod.mlDsa) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
                         buildPublicKeyField(
                           context: context,
                           controller: _dsaPublicKeyController,
@@ -966,7 +895,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           isEncryptMode: isEncryptMode,
                         ),
                       ],
-                      // Note: In decrypt mode, we might need private key selector for ML-KEM
                     ] else ...[
                       // Non-ML-KEM decrypt configurations
                       Padding(
@@ -989,11 +917,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           primaryColor: primaryColor,
                         ),
                       ),
-                      const SizedBox(height: AppConstants.smallPadding),
+
                       // Custom AES Key Section for Decrypt
                       if (selectedEncryption == EncryptionMethod.aesGcm ||
                           selectedEncryption == EncryptionMethod.aesCbc ||
                           selectedEncryption == EncryptionMethod.aesCtr) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
                         buildSwitchContainer(
                           context: context,
                           title: "Use Custom AES Key",
@@ -1026,13 +955,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             isEncryptMode: false,
                           ),
                         ],
-
-                        const SizedBox(height: AppConstants.defaultPadding),
                       ],
 
                       // RSA decrypt configurations
                       if (selectedEncryption == EncryptionMethod.rsa ||
                           selectedEncryption == EncryptionMethod.rsaSign) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppConstants.defaultPadding,
@@ -1042,8 +970,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ),
                         ),
 
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        if (selectedEncryption == EncryptionMethod.rsaSign)
+                        if (selectedEncryption == EncryptionMethod.rsaSign) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
                           buildPublicKeyField(
                             context: context,
                             controller: _decryptPublicKeyController,
@@ -1069,7 +997,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
                             isEncryptMode: false,
                           ),
-                        const SizedBox(height: AppConstants.defaultPadding),
+                        ],
                       ],
 
                       if (!(ref.watch(selectedEncryptionProvider) ==
@@ -1084,31 +1012,26 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             primaryColor: primaryColor,
                           ),
                         ),
-                        const SizedBox(height: AppConstants.defaultPadding),
                       ],
                       if (ref.watch(selectedSignProvider) ==
                           SignMethod.mlDsa) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: AppConstants.largePadding,
-                          ),
-                          child: buildPublicKeyField(
-                            context: context,
-                            controller: _dsaPublicKeyController,
-                            primaryColor: primaryColor,
-                            onChanged: (val) {
-                              ref
-                                  .read(verifyMlDsaPublicKeyProvider.notifier)
-                                  .state = _dsaPublicKeyController
-                                  .text;
-                            },
-                            validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
-                            isEncryptMode: isEncryptMode,
-                          ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        buildPublicKeyField(
+                          context: context,
+                          controller: _dsaPublicKeyController,
+                          primaryColor: primaryColor,
+                          onChanged: (val) {
+                            ref
+                                    .read(verifyMlDsaPublicKeyProvider.notifier)
+                                    .state =
+                                _dsaPublicKeyController.text;
+                          },
+                          validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
+                          isEncryptMode: isEncryptMode,
                         ),
                       ],
 
-                      const SizedBox(height: AppConstants.smallPadding),
+                      const SizedBox(height: AppConstants.defaultPadding),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppConstants.defaultPadding,
@@ -1121,7 +1044,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ],
                   ],
 
-                  const SizedBox(height: AppConstants.largePadding),
+                  const SizedBox(height: AppConstants.defaultPadding),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppConstants.defaultPadding,
@@ -1167,7 +1090,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(isMLKemMode ? Icons.key : Icons.lock_open),
-                                const SizedBox(width: 5),
+                                const SizedBox(
+                                  width: AppConstants.smallPadding,
+                                ),
                                 Text(
                                   isMLKemMode
                                       ? "Extract Shared Key"
@@ -1184,13 +1109,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ],
 
                 // Output section
-                const SizedBox(height: AppConstants.xlargePadding),
+                const SizedBox(height: AppConstants.defaultPadding),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppConstants.defaultPadding,
                   ),
                   child: const Divider(),
                 ),
+
+                const SizedBox(height: AppConstants.defaultPadding),
 
                 // ML-KEM specific output or regular output
                 if (isMLKemMode) ...[
@@ -1238,6 +1165,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: AppConstants.smallPadding),
 
                   Padding(
                     padding: const EdgeInsets.symmetric(
