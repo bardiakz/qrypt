@@ -844,6 +844,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ref.read(autoDetectTagProvider.notifier).state = val,
                       primaryColor: primaryColor,
                     ),
+                    const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
                   if (!autoDetectTag || isMLKemMode) ...[
