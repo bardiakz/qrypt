@@ -180,7 +180,7 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                           RegExp(r'\r\n|\r|\n'),
                           '\n',
                         );
-                        ref.read(decryptPublicKeyProvider.notifier).state =
+                        ref.read(rsaDecryptPublicKeyProvider.notifier).state =
                             normalized;
                         decryptPublicKeyGlobal = normalized;
                         // if (kDebugMode) {
@@ -209,11 +209,13 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                           width: AppConstants.borderWidth,
                         ),
                       ),
-                      errorText: ref.watch(decryptPublicKeyProvider).isEmpty
+                      errorText: ref.watch(rsaDecryptPublicKeyProvider).isEmpty
                           ? null
                           : (RegExp(
                                   r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----$',
-                                ).hasMatch(ref.watch(decryptPublicKeyProvider))
+                                ).hasMatch(
+                                  ref.watch(rsaDecryptPublicKeyProvider),
+                                )
                                 ? null
                                 : 'Invalid PEM format'),
                     ),

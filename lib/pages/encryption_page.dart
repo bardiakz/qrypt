@@ -713,6 +713,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               );
                               ref.read(publicKeyProvider.notifier).state =
                                   normalized;
+                              // debugPrint(
+                              //   'selected rsa pKey: ${ref.read(publicKeyProvider)}',
+                              // );
                             } catch (e) {
                               if (kDebugMode) {
                                 print('Error normalizing public key: $e');
@@ -984,7 +987,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   '\n',
                                 );
                                 ref
-                                        .read(decryptPublicKeyProvider.notifier)
+                                        .read(
+                                          rsaDecryptPublicKeyProvider.notifier,
+                                        )
                                         .state =
                                     normalized;
                                 decryptPublicKeyGlobal = normalized;
@@ -1259,9 +1264,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             }
           }
 
-          String rsaReceiversPublicKey = ref
-              .read(receiverPublicKeyProvider)
-              .trim();
+          String rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
 
           if (rsaReceiversPublicKey.isEmpty) {
             throw Exception('Please enter the receiver\'s public key');
