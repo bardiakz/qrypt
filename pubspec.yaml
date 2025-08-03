@@ -2,7 +2,7 @@ name: qrypt
 description: "Qrypt is a flexible and privacy-first app that allows users to manually encrypt, compress, and obfuscate text — designed for use cases when encryption doesn't exist, restricted or unavailable. Qrypt puts full control in the hands of the user, enabling secure message sharing across any medium (e.g., SMS, chat, email)."
 publish_to: 'none'
 repository: 'https://github.com/bardiakz/qrypt'
-version: 4.3.3+14
+version: 4.3.4+15
 
 environment:
   sdk: ^3.8.1
@@ -59,7 +59,6 @@ flutter_launcher_icons:
     image_path: "assets/icon/qrypt_icon.png"
   android:
     generate: true
-    adaptive_icon_background: "#ffffff"
     adaptive_icon_foreground: "assets/icon/icon.png"
   macos:
     generate: true
