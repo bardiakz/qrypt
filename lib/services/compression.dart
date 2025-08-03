@@ -68,7 +68,7 @@ class Compression {
     if (Platform.isWindows) {
       lz4LibPath = path.join(basePath, 'eslz4-win64.dll');
     } else if (Platform.isLinux) {
-      lz4LibPath = path.join(basePath, 'eslz4-linux64.so');
+      lz4LibPath = path.join(basePath, 'lib/eslz4-linux64.so');
     } else if (Platform.isMacOS) {
       lz4LibPath = path.join(basePath, 'eslz4-mac64.dylib');
     } else {
@@ -80,7 +80,7 @@ class Compression {
     if (Platform.isWindows) {
       brotliLibPath = path.join(basePath, 'esbrotli-win64.dll');
     } else if (Platform.isLinux) {
-      brotliLibPath = path.join(basePath, 'esbrotli-linux64.so');
+      brotliLibPath = path.join(basePath, 'lib/esbrotli-linux64.so');
     } else if (Platform.isMacOS) {
       brotliLibPath = path.join(basePath, 'esbrotli-mac64.dylib');
     } else {
@@ -92,7 +92,7 @@ class Compression {
     if (Platform.isWindows) {
       zstdLibPath = path.join(basePath, 'eszstd-win64.dll');
     } else if (Platform.isLinux) {
-      zstdLibPath = path.join(basePath, 'eszstd-linux64.so');
+      zstdLibPath = path.join(basePath, 'lib/eszstd-linux64.so');
     } else if (Platform.isMacOS) {
       zstdLibPath = path.join(basePath, 'eszstd-mac64.dylib');
     } else {
