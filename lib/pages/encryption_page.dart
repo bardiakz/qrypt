@@ -874,8 +874,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
                       if (!(ref.watch(selectedEncryptionProvider) ==
-                              EncryptionMethod.rsaSign &&
-                          !(ref.watch(isMLKemModeProvider)))) ...[
+                              EncryptionMethod.rsaSign) &&
+                          !(ref.watch(selectedEncryptionProvider) ==
+                              EncryptionMethod.mlKem)) ...[
                         const SizedBox(height: AppConstants.defaultPadding),
                         Padding(
                           padding: const EdgeInsets.symmetric(
