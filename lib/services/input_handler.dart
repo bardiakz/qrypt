@@ -35,7 +35,6 @@ class InputHandler {
         compText = Compression.gZipCompress(utf8.encode(qrypt.text));
         qrypt.compressedText = compText;
         return qrypt;
-
       case CompressionMethod.lZ4:
         compText = Compression.lz4Compress(utf8.encode(qrypt.text));
         qrypt.compressedText = compText;
@@ -69,10 +68,12 @@ class InputHandler {
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
         if (usesMappedObfuscation) {
-          // For mapped obfuscations, convert to hex
-          qrypt.text = qrypt.compressedText
-              .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-              .join('');
+          // For mapped obfuscations, convert to hex using StringBuffer for efficiency
+          StringBuffer hexBuffer = StringBuffer();
+          for (var byte in qrypt.compressedText) {
+            hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+          }
+          qrypt.text = hexBuffer.toString();
         } else if (usesBase64Obfuscation) {
           // For b64 obfuscation, keep as raw bytes (don't pre-encode)
           qrypt.text = String.fromCharCodes(qrypt.compressedText);
@@ -127,9 +128,11 @@ class InputHandler {
           if (usesMappedObfuscation) {
             // Convert base64 RSA result to hex for mapped obfuscations
             Uint8List rsaBytes = base64.decode(encryptedResult);
-            qrypt.text = rsaBytes
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join('');
+            StringBuffer hexBuffer = StringBuffer();
+            for (var byte in rsaBytes) {
+              hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+            }
+            qrypt.text = hexBuffer.toString();
           } else if (usesBase64Obfuscation) {
             // For b64 obfuscation, decode base64 to raw string
             Uint8List rsaBytes = base64.decode(encryptedResult);
@@ -166,7 +169,7 @@ class InputHandler {
           RSAKeyService rsa = RSAKeyService();
           String textToEncrypt = base64.encode(qrypt.compressedText);
 
-          // First sign the data
+          //sign the data
           final String signature = await rsa.signWithPrivateKey(
             textToEncrypt,
             normalizedPrivateKey,
@@ -181,7 +184,7 @@ class InputHandler {
           // Convert to JSON string
           final String packageJson = jsonEncode(signedPackage);
 
-          // Then encrypt the entire package using hybrid encryption
+          // encrypt the entire package using hybrid encryption
           Map<String, String> encryptedPackage = await rsa.encryptLargeData(
             packageJson,
             qrypt.rsaReceiverPublicKey,
@@ -193,12 +196,12 @@ class InputHandler {
 
           // Convert RSA result to appropriate format for obfuscation
           if (usesMappedObfuscation) {
-            Uint8List rsaBytes = base64.decode(
-              base64.encode(utf8.encode(encryptedResult)),
-            );
-            qrypt.text = rsaBytes
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join('');
+            Uint8List rsaBytes = utf8.encode(encryptedResult);
+            StringBuffer hexBuffer = StringBuffer();
+            for (var byte in rsaBytes) {
+              hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+            }
+            qrypt.text = hexBuffer.toString();
           } else if (usesBase64Obfuscation) {
             qrypt.text = encryptedResult;
           } else {
@@ -248,9 +251,16 @@ class InputHandler {
           if (usesMappedObfuscation) {
             // Convert hex string back to bytes
             List<int> bytes = [];
-            for (int i = 0; i < qrypt.text.length; i += 2) {
-              String hexByte = qrypt.text.substring(i, i + 2);
-              bytes.add(int.parse(hexByte, radix: 16));
+            try {
+              for (int i = 0; i < qrypt.text.length; i += 2) {
+                String hexByte = qrypt.text.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing error in sign: $e');
+              }
+              throw FormatException('Invalid hex format for signing');
             }
             originalMessage = Uint8List.fromList(bytes);
           } else if (usesBase64Obfuscation) {
@@ -263,7 +273,14 @@ class InputHandler {
         } else {
           // For encrypted data (AES, RSA, etc.), the text is already in the correct format
           // Just convert the string to bytes for signing
-          originalMessage = utf8.encode(qrypt.text);
+          try {
+            originalMessage = utf8.encode(qrypt.text);
+          } catch (e) {
+            if (kDebugMode) {
+              print('UTF8 encode error in sign: $e');
+            }
+            throw Exception('Invalid data for signing');
+          }
         }
 
         // Sign the original message
@@ -285,9 +302,11 @@ class InputHandler {
         // Format according to obfuscation method
         if (usesMappedObfuscation) {
           // Convert to hex for mapped obfuscations
-          qrypt.text = signedPackageBytes
-              .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-              .join('');
+          StringBuffer hexBuffer = StringBuffer();
+          for (var byte in signedPackageBytes) {
+            hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+          }
+          qrypt.text = hexBuffer.toString();
 
           if (kDebugMode) {
             print(
@@ -298,16 +317,15 @@ class InputHandler {
             );
           }
 
-          // Verify the hex string has even length (should always be true, but let's be safe)
+          // Verify the hex string has even length (should always be true)
           if (qrypt.text.length % 2 != 0) {
             if (kDebugMode) {
               print(
                 'Warning: Generated hex string has odd length: ${qrypt.text.length}',
               );
             }
-            // This should never happen since each byte always produces exactly 2 hex chars
-            // But if it does, we pad with a leading zero
-            qrypt.text = '0' + qrypt.text;
+            // Pad with leading zero if odd
+            qrypt.text = '0${qrypt.text}';
           }
         } else if (usesBase64Obfuscation) {
           // Keep as raw string for b64 obfuscation
@@ -336,7 +354,6 @@ class InputHandler {
         return qrypt;
       case ObfuscationMethod.fa1:
         obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
-        // print('crypt txt is:${obfsText}');
         qrypt.text = obfsText;
         return qrypt;
       case ObfuscationMethod.fa2:
@@ -354,14 +371,12 @@ class InputHandler {
         return qrypt;
 
       case ObfuscationMethod.xor:
-        obfsText = Obfuscate.obfuscateXOR(qrypt.text, 42);
+        obfsText = Obfuscate.obfuscateXOR(
+          qrypt.text,
+          42,
+        ); // TODO: Consider random key for better security
         qrypt.text = obfsText;
         return qrypt;
-
-      // case ObfuscationMethod.reverse:
-      //   obfsText = Obfuscate.obfuscateReverse(qrypt.text);
-      //   qrypt.text = obfsText;
-      //   return qrypt;
     }
   }
 
@@ -380,7 +395,6 @@ class InputHandler {
         return qrypt;
       case ObfuscationMethod.fa1:
         obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA1Map);
-        // print('crypt txt is:${obfsText}');
         qrypt.text = obfsText;
         return qrypt;
       case ObfuscationMethod.fa2:
@@ -402,11 +416,6 @@ class InputHandler {
         obfsText = Obfuscate.deobfuscateXOR(qrypt.text, 42); // Same key
         qrypt.text = obfsText;
         return qrypt;
-
-      // case ObfuscationMethod.reverse:
-      //   obfsText = Obfuscate.deobfuscateReverse(qrypt.text);
-      //   qrypt.text = obfsText;
-      //   return qrypt;
     }
   }
 
@@ -479,28 +488,38 @@ class InputHandler {
             }
 
             List<int> bytes = [];
-            for (int i = 0; i < hexString.length; i += 2) {
-              String hexByte = hexString.substring(i, i + 2);
-              try {
+            try {
+              for (int i = 0; i < hexString.length; i += 2) {
+                String hexByte = hexString.substring(i, i + 2);
                 bytes.add(int.parse(hexByte, radix: 16));
-              } catch (e) {
-                if (kDebugMode) {
-                  print(
-                    'DSA Verify - ERROR parsing hex byte at position $i: "$hexByte"',
-                  );
-                }
-                throw FormatException(
-                  'Invalid hex byte "$hexByte" at position $i',
-                );
               }
+              packageJson = utf8.decode(bytes);
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing or UTF8 decode error in verify: $e');
+              }
+              throw FormatException('Invalid format in verification: $e');
             }
-            packageJson = utf8.decode(bytes);
           } else if (usesBase64Obfuscation) {
             // Convert string back to bytes then decode
-            packageJson = utf8.decode(qrypt.text.codeUnits);
+            try {
+              packageJson = utf8.decode(qrypt.text.codeUnits);
+            } catch (e) {
+              if (kDebugMode) {
+                print('UTF8 decode error in verify (base64): $e');
+              }
+              throw Exception('Invalid data in verification');
+            }
           } else {
             // Decode base64 then convert to string
-            packageJson = utf8.decode(base64Decode(qrypt.text));
+            try {
+              packageJson = utf8.decode(base64Decode(qrypt.text));
+            } catch (e) {
+              if (kDebugMode) {
+                print('Base64 or UTF8 decode error in verify: $e');
+              }
+              throw Exception('Invalid data in verification');
+            }
           }
 
           // Parse the signed package
@@ -721,9 +740,16 @@ class InputHandler {
         if (usesMappedObfuscation) {
           // Convert hex back to bytes
           List<int> bytes = [];
-          for (int i = 0; i < qrypt.text.length; i += 2) {
-            String hexByte = qrypt.text.substring(i, i + 2);
-            bytes.add(int.parse(hexByte, radix: 16));
+          try {
+            for (int i = 0; i < qrypt.text.length; i += 2) {
+              String hexByte = qrypt.text.substring(i, i + 2);
+              bytes.add(int.parse(hexByte, radix: 16));
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('Hex parsing error in decrypt: $e');
+            }
+            throw FormatException('Invalid hex format in decryption');
           }
           qrypt.deCompressedText = Uint8List.fromList(bytes);
         } else if (usesBase64Obfuscation) {
@@ -839,9 +865,16 @@ class InputHandler {
           if (usesMappedObfuscation) {
             // Convert hex back to base64
             List<int> bytes = [];
-            for (int i = 0; i < qrypt.text.length; i += 2) {
-              String hexByte = qrypt.text.substring(i, i + 2);
-              bytes.add(int.parse(hexByte, radix: 16));
+            try {
+              for (int i = 0; i < qrypt.text.length; i += 2) {
+                String hexByte = qrypt.text.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing error in RSA decrypt: $e');
+              }
+              throw FormatException('Invalid hex format in RSA decryption');
             }
             rsaInputText = base64.encode(bytes);
           } else if (usesBase64Obfuscation) {
@@ -894,15 +927,33 @@ class InputHandler {
           String rsaInputText;
           if (usesMappedObfuscation) {
             List<int> bytes = [];
-            for (int i = 0; i < qrypt.text.length; i += 2) {
-              String hexByte = qrypt.text.substring(i, i + 2);
-              bytes.add(int.parse(hexByte, radix: 16));
+            try {
+              for (int i = 0; i < qrypt.text.length; i += 2) {
+                String hexByte = qrypt.text.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+              rsaInputText = utf8.decode(bytes);
+            } catch (e) {
+              if (kDebugMode) {
+                print(
+                  'Hex parsing or UTF8 decode error in RSA+Sign decrypt: $e',
+                );
+              }
+              throw FormatException(
+                'Invalid format in RSA+Sign decryption: $e',
+              );
             }
-            rsaInputText = utf8.decode(bytes);
           } else if (usesBase64Obfuscation) {
             rsaInputText = qrypt.text;
           } else {
-            rsaInputText = utf8.decode(base64.decode(qrypt.text));
+            try {
+              rsaInputText = utf8.decode(base64.decode(qrypt.text));
+            } catch (e) {
+              if (kDebugMode) {
+                print('Base64 or UTF8 decode error in RSA+Sign decrypt: $e');
+              }
+              throw Exception('Invalid data in RSA+Sign decryption');
+            }
           }
 
           // Parse the hybrid encryption format
@@ -987,7 +1038,14 @@ class InputHandler {
   Qrypt handleDeCompression(Qrypt qrypt) {
     switch (qrypt.getCompressionMethod()) {
       case CompressionMethod.none:
-        qrypt.text = utf8.decode(qrypt.deCompressedText);
+        try {
+          qrypt.text = utf8.decode(qrypt.deCompressedText);
+        } catch (e) {
+          if (kDebugMode) {
+            print('UTF8 decode error in decompression: $e');
+          }
+          qrypt.text = ''; // Fallback to empty on error
+        }
         return qrypt;
       case CompressionMethod.gZip:
         qrypt.deCompressedText = Compression.gZipDeCompress(
@@ -1046,8 +1104,9 @@ class InputHandler {
     } else {
       String? tag = TagManager.matchedTag(qrypt.text);
       if (tag == null) {
-        qrypt.text = 'Invalid tag format';
-        // throw FormatException('Invalid tag format');
+        throw FormatException(
+          'Invalid tag format',
+        ); // Changed to throw for better error handling
       } else {
         if (kDebugMode) {
           print('tag is $tag');
@@ -1241,24 +1300,26 @@ class InputHandler {
                     controller: keyController,
                     decoration: InputDecoration(
                       labelText: 'Enter Custom AES Key',
-                      hintText: '16, 24, or 32 characters',
+                      hintText: '16, 24, or 32 bytes (characters if ASCII)',
                       prefixIcon: Icon(Icons.vpn_key),
                       border: OutlineInputBorder(),
                       errorText: errorText,
                       helperText:
-                          'Current length: ${keyController.text.length}',
+                          'Current byte length: ${utf8.encode(keyController.text).length}',
                     ),
+                    obscureText: true, // Obscure input for security
                     maxLines: 1,
                     autofocus: true,
                     onChanged: (value) {
                       setState(() {
-                        final length = value.length;
+                        final byteLength = utf8
+                            .encode(value)
+                            .length; // Check byte length
                         if (value.isNotEmpty &&
-                            length != 16 &&
-                            length != 24 &&
-                            length != 32) {
-                          errorText =
-                              'Key must be exactly 16, 24, or 32 characters';
+                            byteLength != 16 &&
+                            byteLength != 24 &&
+                            byteLength != 32) {
+                          errorText = 'Key must be exactly 16, 24, or 32 bytes';
                         } else {
                           errorText = null;
                         }
@@ -1267,7 +1328,7 @@ class InputHandler {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '• AES-128: 16 characters\n• AES-192: 24 characters\n• AES-256: 32 characters',
+                    '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
@@ -1282,9 +1343,10 @@ class InputHandler {
                       ? null
                       : () {
                           final key = keyController.text.trim();
-                          if (key.length == 16 ||
-                              key.length == 24 ||
-                              key.length == 32) {
+                          final byteLength = utf8.encode(key).length;
+                          if (byteLength == 16 ||
+                              byteLength == 24 ||
+                              byteLength == 32) {
                             Navigator.of(context).pop(key);
                           }
                         },
