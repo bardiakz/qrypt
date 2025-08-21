@@ -14,7 +14,6 @@ A comprehensive Flutter application for text encryption, compression, obfuscatio
 - **RSA**: RSA encryption with public-key cryptography and built-in key pair generation
 - **RSA+Sign**: RSA encryption combined with RSA digital signatures for authenticated encryption
 - **ML-KEM (Kyber)**: Post-quantum key encapsulation mechanism for quantum-safe key exchange
-- **None**: Base64 encoding without encryption
 
 ### 🛡️ Quantum-Safe Cryptography
 
