@@ -173,8 +173,8 @@ OBF_FA1_ا=persian_word
 
 ### Encryption Performance
 
-| Algorithm  | Key Size | Speed  | Quantum Safe | Use Case                  |
-|------------|----------|--------|--------------|---------------------------|
-| AES-256    | 256-bit  | Fast   | No           | Symmetric encryption      |
-| RSA-2048   | 2048-bit | Medium | No           | Asymmetric encryption     |
-| ML-KEM-768 | 1184-bit | Fast   | Yes          | Post-quantum key exchange |
+| Algorithm  | Key Size   | Speed  | Quantum Safe | Use Case                  |
+|------------|------------|--------|--------------|---------------------------|
+| AES-256    | 256-bit    | Fast   | No           | Symmetric encryption      |
+| RSA-2048   | 2048-bit   | Medium | No           | Asymmetric encryption     |
+| ML-KEM-768 | 1184-bytes | Fast   | Yes          | Post-quantum key exchange |
