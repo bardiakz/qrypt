@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:es_compression/lz4.dart';
 import 'package:es_compression/brotli.dart';
 import 'package:es_compression/zstd.dart';

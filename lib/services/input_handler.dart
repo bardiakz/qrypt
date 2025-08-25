@@ -472,7 +472,7 @@ class InputHandler {
                 'DSA Verify - Original hex string length: ${hexString.length}',
               );
               print(
-                'DSA Verify - Hex string preview: ${hexString.length > 100 ? hexString.substring(0, 100) + "..." : hexString}',
+                'DSA Verify - Hex string preview: ${hexString.length > 100 ? "${hexString.substring(0, 100)}..." : hexString}',
               );
             }
 
@@ -545,7 +545,7 @@ class InputHandler {
             try {
               String messageAsString = utf8.decode(originalMessage);
               print(
-                'DSA Verify - Message as string preview: ${messageAsString.length > 100 ? messageAsString.substring(0, 100) + "..." : messageAsString}',
+                'DSA Verify - Message as string preview: ${messageAsString.length > 100 ? "${messageAsString.substring(0, 100)}..." : messageAsString}',
               );
             } catch (e) {
               print(
@@ -605,7 +605,7 @@ class InputHandler {
 
               if (kDebugMode) {
                 print(
-                  'DSA Verify - Set encrypted data string: ${originalDataString.length > 50 ? originalDataString.substring(0, 50) + "..." : originalDataString}',
+                  'DSA Verify - Set encrypted data string: ${originalDataString.length > 50 ? "${originalDataString.substring(0, 50)}..." : originalDataString}',
                 );
               }
             } catch (e) {

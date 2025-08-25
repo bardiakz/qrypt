@@ -88,7 +88,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             ),
             const SizedBox(height: AppConstants.smallPadding),
             DropdownButtonFormField<MLKemKeySize>(
-              value: _selectedMLKemKeySize,
+              initialValue: _selectedMLKemKeySize,
               decoration: buildInputDecoration(
                 context: context,
                 primaryColor: primaryColor,
@@ -614,7 +614,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 onChanged: (val) =>
                                     ref.read(useTagProvider.notifier).state =
                                         val,
-                                activeColor: primaryColor,
+                                activeThumbColor: primaryColor,
                               ),
                             ],
                           ),

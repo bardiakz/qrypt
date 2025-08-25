@@ -104,7 +104,7 @@ class MlDsaKeySelector extends ConsumerWidget {
               }
 
               return DropdownButtonFormField<QryptMLDSAKeyPair>(
-                value: currentSelectedKeyPair,
+                initialValue: currentSelectedKeyPair,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(
