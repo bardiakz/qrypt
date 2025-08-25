@@ -75,12 +75,3 @@ msix_config:
   vs_generated_images_folder_path: windows/runner/resources
   icons_background_color: transparent
   architecture: x64
-  assets:
-    - target: native_libs/esbrotli-win64.dll
-      path: native_libs/esbrotli-win64.dll
-    - target: native_libs/eslz4-win64.dll
-      path: native_libs/eslz4-win64.dll
-    - target: native_libs/eszstd-win64.dll
-      path: native_libs/eszstd-win64.dll
-    - target: bin/windows/oqs.dll
-      path: bin/windows/oqs.dll

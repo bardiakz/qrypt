@@ -65,7 +65,7 @@ class Compression {
     if (kDebugMode) {
       basePath = path.join(Directory.current.path, 'native_libs');
     } else {
-      if (Platform.isLinux || Platform.isMacOS) {
+      if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
         basePath = path.join(
           getExecutableDir(),
           'data',
