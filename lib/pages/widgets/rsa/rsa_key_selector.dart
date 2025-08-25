@@ -104,7 +104,7 @@ class RSAKeySelector extends ConsumerWidget {
               }
 
               return DropdownButtonFormField<RSAKeyPair>(
-                value: currentSelectedKeyPair,
+                initialValue: currentSelectedKeyPair,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(

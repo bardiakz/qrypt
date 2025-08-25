@@ -53,7 +53,7 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
             const SizedBox(height: 16),
             if (!_useManualInput) ...[
               DropdownButtonFormField<String>(
-                value: _selectedAlgorithm,
+                initialValue: _selectedAlgorithm,
                 decoration: const InputDecoration(
                   labelText: 'Algorithm',
                   border: OutlineInputBorder(),
@@ -91,7 +91,7 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
             if (_useManualInput) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedAlgorithm,
+                initialValue: _selectedAlgorithm,
                 decoration: const InputDecoration(
                   labelText: 'Algorithm',
                   border: OutlineInputBorder(),

@@ -1,12 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qrypt/providers/resource_providers.dart';
 import '../../../models/rsa_key_pair.dart';
-import '../../../providers/encryption_providers.dart';
 import '../../../providers/rsa_providers.dart';
 import '../../../resources/constants.dart';
-import '../../encryption_page.dart';
 import 'create_rsa_key_dialog.dart';
 
 class RSAKeySelectionDialog extends ConsumerStatefulWidget {

@@ -104,7 +104,7 @@ class KemKeySelector extends ConsumerWidget {
               }
 
               return DropdownButtonFormField<QryptKEMKeyPair>(
-                value: currentSelectedKeyPair,
+                initialValue: currentSelectedKeyPair,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(

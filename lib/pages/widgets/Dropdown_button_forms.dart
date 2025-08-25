@@ -20,7 +20,7 @@ class ObfsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<ObfuscationMethod>(
-      value: selectedObfuscation,
+      initialValue: selectedObfuscation,
       items: ObfuscationMethod.values.map((obf) {
         return DropdownMenuItem(value: obf, child: Text(obf.displayName));
       }).toList(),
@@ -51,7 +51,7 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<EncryptionMethod>(
-      value: ref.watch(selectedEncryptionProvider),
+      initialValue: ref.watch(selectedEncryptionProvider),
       items: EncryptionMethod.values.map((alg) {
         return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),
@@ -82,7 +82,7 @@ class CompressionsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<CompressionMethod>(
-      value: selectedCompression,
+      initialValue: selectedCompression,
       items: CompressionMethod.values.map((alg) {
         return DropdownMenuItem(
           value: alg,
@@ -116,7 +116,7 @@ class SignsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<SignMethod>(
-      value: selectedSign,
+      initialValue: selectedSign,
       items: SignMethod.values.map((alg) {
         return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),

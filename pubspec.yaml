@@ -50,7 +50,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env
-    - native_libs/
+#    - native_libs/
 
 flutter_launcher_icons:
   ios: true
