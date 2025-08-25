@@ -175,6 +175,8 @@ OBF_FA1_ا=persian_word
 
 | Algorithm  | Key Size   | Speed  | Quantum Safe | Use Case                  |
 |------------|------------|--------|--------------|---------------------------|
-| AES-256    | 256-bit    | Fast   | No           | Symmetric encryption      |
+| AES-256    | 256-bit    | Fast   | Yes*         | Symmetric encryption      |
 | RSA-2048   | 2048-bit   | Medium | No           | Asymmetric encryption     |
 | ML-KEM-768 | 1184-bytes | Fast   | Yes          | Post-quantum key exchange |
+
+*Note: AES-256 is considered quantum-resistant for confidentiality due to its large key size, as Grover's algorithm reduces its effective security to 128 bits.
