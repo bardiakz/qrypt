@@ -68,7 +68,7 @@ class InputHandler {
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
         if (qrypt.getObfuscationMethod() == ObfuscationMethod.none) {
-          qrypt.text = utf8.decode(qrypt.compressedText);
+          qrypt.text = base64.encode(qrypt.compressedText);
         } else if (usesMappedObfuscation) {
           // For mapped obfuscations, convert to hex using StringBuffer for efficiency
           StringBuffer hexBuffer = StringBuffer();
@@ -741,9 +741,7 @@ class InputHandler {
 
     switch (qrypt.getEncryptionMethod()) {
       case EncryptionMethod.none:
-        if (qrypt.getObfuscationMethod() == ObfuscationMethod.none) {
-          qrypt.deCompressedText = utf8.encode(qrypt.text);
-        } else if (usesMappedObfuscation) {
+        if (usesMappedObfuscation) {
           // Convert hex back to bytes
           List<int> bytes = [];
           try {
