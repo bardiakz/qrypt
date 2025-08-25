@@ -2,7 +2,7 @@ name: qrypt
 description: "Qrypt is a flexible and privacy-first app that allows users to manually encrypt, compress, and obfuscate text — designed for use cases when encryption doesn't exist, restricted or unavailable. Qrypt puts full control in the hands of the user, enabling secure message sharing across any medium (e.g., SMS, chat, email)."
 publish_to: 'none'
 repository: 'https://github.com/bardiakz/qrypt'
-version: 4.4.2+17
+version: 4.4.3+18
 
 environment:
   sdk: ^3.8.1
@@ -82,3 +82,5 @@ msix_config:
       path: native_libs/eslz4-win64.dll
     - target: native_libs/eszstd-win64.dll
       path: native_libs/eszstd-win64.dll
+    - target: bin/windows/oqs.dll
+      path: bin/windows/oqs.dll
