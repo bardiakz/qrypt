@@ -129,16 +129,17 @@ class Obfuscate {
     String text,
     Map<String, String> obfuscationMap,
   ) {
-    // Create reverse mapping
-    Map<String, String> reverseMap = obfuscationMap.map(
-      (key, value) => MapEntry(value, key),
-    );
-
-    if (reverseMap.length < obfuscationMap.length) {
-      debugPrint(
-        'Warning: Duplicate substitutions detected; deobfuscation may be incomplete.',
-      );
-    }
+    // Create reverse mapping with lowered keys for case-insensitivity
+    Map<String, String> reverseMap = {};
+    obfuscationMap.forEach((key, value) {
+      var lowerValue = value.toLowerCase();
+      if (reverseMap.containsKey(lowerValue)) {
+        debugPrint(
+          'Warning: Duplicate lowered substitution for $value; deobfuscation may be incomplete.',
+        );
+      }
+      reverseMap[lowerValue] = key;
+    });
 
     // Split by spaces and deobfuscate each word
     final deobfuscatedContent = text
@@ -151,7 +152,6 @@ class Obfuscate {
           return word == word.toUpperCase() ? original.toUpperCase() : original;
         })
         .join(''); // Join without spaces
-
     return deobfuscatedContent;
   }
 
