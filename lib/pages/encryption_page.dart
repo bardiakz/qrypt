@@ -1362,7 +1362,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             text: _encryptTextController.text,
             encryption: EncryptionMethod.aesGcm,
             obfuscation: ObfuscationMethod.en2,
-            compression: CompressionMethod.brotli,
+            compression: CompressionMethod.gZip,
             sign: ref.read(selectedSignProvider),
             useTag: true,
           );
