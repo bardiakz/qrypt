@@ -28,7 +28,7 @@ dependencies:
   asn1lib: ^1.6.5
   url_launcher: ^6.3.2
   package_info_plus: ^8.3.0
-  oqs: ^1.0.8
+  oqs: ^2.1.4
   obfuscate: ^0.0.1
 
 dev_dependencies:
