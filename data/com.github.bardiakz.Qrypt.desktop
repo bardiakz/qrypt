@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Qrypt
+Exec=qrypt
+Icon=com.github.bardiakz.Qrypt
+Type=Application
+Categories=Utility;Security;
