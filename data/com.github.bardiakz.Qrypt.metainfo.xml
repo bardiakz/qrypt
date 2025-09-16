@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>com.github.bardiakz.Qrypt</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>MIT</project_license> <name>Qrypt</name>
+    <summary>A short and catchy summary of your app</summary>
+    <description>
+        <p>
+            A longer, more detailed description of what your application does, using HTML-style p tags.
+        </p>
+    </description>
+    <launchable type="desktop-id">com.github.bardiakz.Qrypt.desktop</launchable>
+    <screenshots>
+    </screenshots>
+    <releases>
+        <release version="1.0.0" date="2025-09-16">
+            <description>
+                <p>Initial release.</p>
+            </description>
+        </release>
+    </releases>
+    <content_rating type="oars-1.1" />
+    <url type="homepage">https://github.com/bardiakz/qrypt</url>
+    <url type="bugtracker">https://github.com/bardiakz/qrypt/issues</url>
+</component>

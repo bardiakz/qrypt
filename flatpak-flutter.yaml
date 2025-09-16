@@ -1,0 +1,88 @@
+id: com.github.bardiakz.Qrypt
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: qrypt
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --share=network
+  - --filesystem=home  # Tighten to --filesystem=xdg-documents if only file I/O for text is needed
+  - --device=dri
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /man
+  - /share/doc
+  - /share/man
+  - "*.a"
+  - "*.la"
+
+modules:
+  - name: liboqs
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DOQS_BUILD_ONLY_LIB=ON
+    sources:
+      - type: git
+        url: https://github.com/open-quantum-safe/liboqs.git
+        tag: 0.14.0
+
+  - name: lz4
+    buildsystem: simple
+    build-commands:
+      - make -j$FLATPAK_BUILDER_N_JOBS
+      - make install PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/lz4/lz4.git
+        tag: v1.10.0  # Latest stable
+
+  - name: brotli
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: git
+        url: https://github.com/google/brotli.git
+        tag: v1.1.0
+
+  - name: zstd
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    post-install:
+      - install -Dm644 lib/libzstd.so /app/lib/libzstd.so
+    sources:
+      - type: git
+        url: https://github.com/facebook/zstd.git
+        tag: v1.5.6
+
+  - name: zlib
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: git
+        url: https://github.com/madler/zlib.git
+        tag: v1.3.1
+
+  - name: qrypt
+    buildsystem: simple
+    build-commands:
+      - flutter pub get --offline  # Offline after script pre-fetches
+      - flutter build linux --release --no-pub
+      - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
+      - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop  # Create this file if missing
+      - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml  # Create if missing
+      - install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.github.bardiakz.Qrypt.png
+    sources:
+      - type: git
+        url: https://github.com/bardiakz/qrypt.git
+        branch: main
+      - type: git
+        url: https://github.com/flutter/flutter.git
+        tag: 3.35.3
+        dest: flutter
