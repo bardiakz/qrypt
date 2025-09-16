@@ -596,10 +596,10 @@ packages:
     dependency: "direct main"
     description:
       name: oqs
-      sha256: "116acea155a9042e5cc7f5e5a362cb1b265aa37a8688e62e00857befe1c76274"
+      sha256: "80ed08f16db61e27e9414530d3be1e28480edcec22f5c257c714ecdbf1c43e23"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.9"
+    version: "2.1.4"
   package_config:
     dependency: transitive
     description:
