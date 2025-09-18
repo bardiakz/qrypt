@@ -8,7 +8,7 @@ finish-args:
   - --socket=fallback-x11
   - --socket=wayland
   - --share=network
-  - --filesystem=home  # Tighten to --filesystem=xdg-documents if only file I/O for text is needed
+  - --filesystem=home # Tighten to --filesystem=xdg-documents if only file I/O for text is needed
   - --device=dri
 cleanup:
   - /include
@@ -38,7 +38,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/lz4/lz4.git
-        tag: v1.10.0  # Latest stable
+        tag: v1.10.0 # Latest stable
   - name: brotli
     buildsystem: cmake
     config-opts:
@@ -63,10 +63,8 @@ modules:
     buildsystem: simple
     build-commands:
       - export PATH=$PWD/flutter/bin:$PATH
-      - flutter doctor
       - flutter pub get
       - flutter build linux --release
-      # Install the built application and related files
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
       - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
       - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
@@ -77,5 +75,5 @@ modules:
         tag: v4.4.6
       - type: git
         url: https://github.com/flutter/flutter.git
-        tag: 3.35.3
+        tag: 3.24.3
         dest: flutter
