@@ -5,32 +5,7 @@ sdk: org.freedesktop.Sdk
 command: qrypt
 finish-args:
   - --share=ipc
-  - --socket=fallback-x11- name: qrypt
-    buildsystem: simple
-    build-commands:
-      # The flutter binary is now in a subdirectory, tell the shell where to find it
-      - export PATH=$PWD/flutter/bin:$PATH
-
-      # Fetch dependencies and build the app
-      - flutter pub get
-      - flutter build linux --release
-
-      # Install the built application and related files
-      - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
-      - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
-      - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
-      - install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.github.bardiakz.Qrypt.png
-    sources:
-      # 1. Your application's source code
-      - type: git
-        url: https://github.com/bardiakz/qrypt.git
-        tag: v4.4.6
-
-      # 2. The Flutter SDK itself
-      - type: git
-        url: https://github.com/flutter/flutter.git
-        tag: 3.22.2 # Use a recent stable tag
-        dest: flutter # Download it into a directory named 'flutter'
+  - --socket=fallback-x11
   - --socket=wayland
   - --share=network
   - --filesystem=home  # Tighten to --filesystem=xdg-documents if only file I/O for text is needed
@@ -65,7 +40,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/lz4/lz4.git
-        tag: v1.10.0  # Latest stable
+        tag: v1.10.0
 
   - name: brotli
     buildsystem: cmake
@@ -85,7 +60,7 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_INSTALL_PREFIX=/app
       - -DBUILD_SHARED_LIBS=ON
-      - -DZSTD_BUILD_STATIC=OFF      # Disable static to save space
+      - -DZSTD_BUILD_STATIC=OFF
     sources:
       - type: git
         url: https://github.com/facebook/zstd.git
@@ -94,14 +69,16 @@ modules:
   - name: qrypt
     buildsystem: simple
     build-commands:
-      # The flutter binary is now in a subdirectory, tell the shell where to find it
+      # Manual Flutter setup (replacing setup-flutter.sh)
+      - mkdir -p flutter
+      - tar -xzf flutter-sdk-3.24.3.tar.gz -C flutter --strip-components=1
+      - cd flutter && patch -p1 < ../flutter-shared.sh.patch
+      - cd flutter && ./bin/flutter precache --no-android
+      - cd flutter && ./bin/flutter doctor --android-licenses
       - export PATH=$PWD/flutter/bin:$PATH
-
-      # Fetch dependencies and build the app
-      - flutter pub get
-      - flutter build linux --release
-
-      # Install the built application and related files
+      # Build app offline
+      - flutter pub get --offline
+      - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
       - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
       - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
@@ -110,7 +87,7 @@ modules:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
-      - type: git
-        url: https://github.com/flutter/flutter.git
-        tag: 3.35.3
-        dest: flutter
+      - type: file
+        path: flutter-shared.sh.patch
+    modules:
+      - flutter-sdk-3.24.3.json
