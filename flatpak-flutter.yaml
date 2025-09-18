@@ -52,7 +52,7 @@ modules:
   - name: zstd
     buildsystem: simple
     build-commands:
-      - cmake -S build/cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DBUILD_SHARED_LIBS=ON -DZSTD_BUILD_STATIC=OFF
+      - cmake -S build/cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DBUILD_SHARED_LIBS=ON -DZSTD_BUILD_STATIC=ON
       - cmake --build build -j$FLATPAK_BUILDER_N_JOBS
       - cmake --install build
     sources:
