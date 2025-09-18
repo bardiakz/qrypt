@@ -62,7 +62,8 @@ modules:
   - name: qrypt
     buildsystem: simple
     build-commands:
-      - flutter build linux --release --no-pub
+      - flutter pub get
+      - flutter build linux --release
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
       - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
       - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
@@ -71,7 +72,3 @@ modules:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
-      - type: git
-        url: https://github.com/flutter/flutter.git
-        tag: 3.35.3
-        dest: flutter
