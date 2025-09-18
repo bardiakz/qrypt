@@ -1,0 +1,81 @@
+# Generated from flatpak-flutter.yaml, do not edit
+# Visit the flatpak-flutter project at https://github.com/TheAppgineer/flatpak-flutter
+id: com.github.bardiakz.Qrypt
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: qrypt
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --share=network
+  - --filesystem=home
+  - --device=dri
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /man
+  - /share/doc
+  - /share/man
+  - '*.a'
+  - '*.la'
+modules:
+  - name: liboqs
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DOQS_BUILD_ONLY_LIB=ON
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DBUILD_SHARED_LIBS=ON
+    sources:
+      - type: git
+        url: https://github.com/open-quantum-safe/liboqs.git
+        tag: 0.14.0
+  - name: lz4
+    buildsystem: simple
+    build-commands:
+      - make -j$FLATPAK_BUILDER_N_JOBS
+      - make install PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/lz4/lz4.git
+        tag: v1.10.0
+  - name: brotli
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DBUILD_SHARED_LIBS=ON
+    sources:
+      - type: git
+        url: https://github.com/google/brotli.git
+        tag: v1.1.0
+#  - name: zstd
+#    buildsystem: cmake
+#    builddir: build/cmake
+#    config-opts:
+#      - -DCMAKE_BUILD_TYPE=Release
+#      - -DCMAKE_INSTALL_PREFIX=/app
+#      - -DBUILD_SHARED_LIBS=ON
+#      - -DZSTD_BUILD_STATIC=OFF
+#    sources:
+#      - type: git
+#        url: https://github.com/facebook/zstd.git
+#        tag: v1.5.6
+  - name: qrypt
+    buildsystem: simple
+    build-commands:
+      - setup-flutter.sh -C .
+      - flutter build linux --release --no-pub
+      - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
+      - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
+      - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
+      - install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.github.bardiakz.Qrypt.png
+    sources:
+      - pubspec-sources.json
+      - type: git
+        url: https://github.com/bardiakz/qrypt.git
+        tag: v4.4.6
+    modules:
+      - flutter-sdk-3.35.3.json
