@@ -89,7 +89,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/facebook/zstd.git
-        tag: v1.5.6
+        tag: v1.5.7
 
   - name: qrypt
     buildsystem: simple
