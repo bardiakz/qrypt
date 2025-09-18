@@ -59,22 +59,10 @@ modules:
       - type: git
         url: https://github.com/facebook/zstd.git
         tag: v1.5.7
-  - name: flutter
-    buildsystem: simple
-    build-commands:
-      - install -d /app/flutter
-      - cp -r . /app/flutter
-      - export PATH=/app/flutter/bin:$PATH
-      - flutter --version
-      - flutter precache --linux
-    sources:
-      - type: git
-        url: https://github.com/flutter/flutter.git
-        tag: 3.35.3
   - name: qrypt
     buildsystem: simple
     build-commands:
-      - export PATH=/app/flutter/bin:$PATH
+      - export PATH=$PWD/flutter/bin:$PATH
       - flutter pub get
       - flutter build linux --release
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
@@ -85,3 +73,7 @@ modules:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
+      - type: git
+        url: https://github.com/flutter/flutter.git
+        tag: 3.35.3
+        dest: flutter
