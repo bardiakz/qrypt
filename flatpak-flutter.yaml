@@ -50,33 +50,24 @@ modules:
         url: https://github.com/google/brotli.git
         tag: v1.1.0
   - name: zstd
-    buildsystem: simple
-    build-commands:
-      - cmake -S build/cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DBUILD_SHARED_LIBS=ON -DZSTD_BUILD_STATIC=ON
-      - cmake --build build -j$FLATPAK_BUILDER_N_JOBS
-      - cmake --install build
+    buildsystem: cmake
+    builddir: build/cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DBUILD_SHARED_LIBS=ON
+      - -DZSTD_BUILD_STATIC=OFF
     sources:
       - type: git
         url: https://github.com/facebook/zstd.git
         tag: v1.5.7
   - name: qrypt
     buildsystem: simple
-    build-options:
-      append-path: /app/flutter/bin
     build-commands:
-      # Verify Flutter works
-      - flutter --version
-
-      # Fetch Dart/Flutter dependencies
-      - flutter pub get
-
-      # Build release binary
-      - flutter build linux --release
-
-      # Install the app binary
+      - setup-flutter.sh -C .
+      - flutter pub get --offline
+      - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
-
-      # Desktop integration
       - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
       - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
       - install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.github.bardiakz.Qrypt.png
@@ -84,9 +75,7 @@ modules:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
-
-      # Vendor Flutter SDK
       - type: git
         url: https://github.com/flutter/flutter.git
-        tag: 3.35.3
+        tag: 3.24.3
         dest: flutter
