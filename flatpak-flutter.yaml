@@ -61,11 +61,22 @@ modules:
         tag: v1.5.7
   - name: qrypt
     buildsystem: simple
+    build-options:
+      append-path: /app/flutter/bin
     build-commands:
-      - export PATH=$PWD/flutter/bin:$PATH
+      # Verify Flutter works
+      - flutter --version
+
+      # Fetch Dart/Flutter dependencies
       - flutter pub get
+
+      # Build release binary
       - flutter build linux --release
+
+      # Install the app binary
       - install -Dm755 build/linux/x64/release/bundle/qrypt /app/bin/qrypt
+
+      # Desktop integration
       - install -Dm644 data/com.github.bardiakz.Qrypt.desktop /app/share/applications/com.github.bardiakz.Qrypt.desktop
       - install -Dm644 data/com.github.bardiakz.Qrypt.metainfo.xml /app/share/metainfo/com.github.bardiakz.Qrypt.metainfo.xml
       - install -Dm644 assets/icon.png /app/share/icons/hicolor/512x512/apps/com.github.bardiakz.Qrypt.png
@@ -73,6 +84,8 @@ modules:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
+
+      # Vendor Flutter SDK
       - type: git
         url: https://github.com/flutter/flutter.git
         tag: 3.35.3
