@@ -66,45 +66,22 @@ modules:
   - name: qrypt
     buildsystem: simple
     build-commands:
-      # Copy prebuilt Qrypt binary
       - cp -r Qrypt /app/
       - chmod +x /app/Qrypt/qrypt
-
-      # Create bin folder and symlink
       - mkdir -p /app/bin
       - ln -s /app/Qrypt/qrypt /app/bin/qrypt
-
-      # Copy shared libraries if any
-      - cp /app/lib/*.so /app/Qrypt/lib/ || true
-
-      # Handle .desktop file
-      - install -Dm644 git_repo/data/io.github.bardiakz.Qrypt.desktop \
-        "${FLATPAK_DEST}/share/applications/io.github.bardiakz.Qrypt.desktop"
-      - desktop-file-edit "${FLATPAK_DEST}/share/applications/io.github.bardiakz.Qrypt.desktop" \
-        --set-icon=io.github.bardiakz.Qrypt
-
-      # Install icon
-      - install -Dm644 git_repo/assets/icon/qrypt_icon.png \
-        "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/io.github.bardiakz.Qrypt.png"
-
-      # Install metainfo
-      - install -Dm644 git_repo/data/io.github.bardiakz.Qrypt.metainfo.xml \
-        /app/share/metainfo/io.github.bardiakz.Qrypt.metainfo.xml
-
-      # Install screenshots (robust version)
-      - mkdir -p "${FLATPAK_DEST}/share/metainfo/screenshots"
-      - |
-        for f in git_repo/flatpak/screenshots/*.png; do
-          [ -e "$f" ] && install -Dm644 "$f" "${FLATPAK_DEST}/share/metainfo/screenshots/$(basename $f)"
-        done
-
+      - cp /app/lib/*.so /app/Qrypt/lib/
+      - mv git_repo/data/${FLATPAK_ID}.desktop ${FLATPAK_ID}.desktop
+      - desktop-file-edit ${FLATPAK_ID}.desktop --set-icon=${FLATPAK_ID}
+      - install -Dm644 -t "${FLATPAK_DEST}/share/applications/" ${FLATPAK_ID}.desktop
+      - install -Dm644 git_repo/assets/icon/qrypt_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png"
+      - install -Dm644 git_repo/data/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
     sources:
-      # Prebuilt x86_64 tar.gz
       - type: archive
-        only-arches: [ x86_64 ]
+        only-arches: [x86_64]
         dest: Qrypt
-        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-x86_64.tar.gz
-        sha256: eb18b8264650a3fa093a8e2bbee96344712788a3c8ba7f6bf32750960247f958
+        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-x86_64-bundle.tar.gz
+        sha256: d5782a700370cc91ffdf90360b1e64253180a317b6847ecd5578822b1ebec9ff
         strip-components: 1
         x-checker-data:
           type: json
@@ -112,13 +89,24 @@ modules:
           tag-query: .tag_name
           timestamp-query: .published_at
           version-query: $tag | sub("^[vV]"; "")
-          url-query: '"https://github.com/bardiakz/qrypt/releases/download/\($tag)/qrypt-linux-x86_64.tar.gz"'
-
-      # Git repo for .desktop, icons, and screenshots
+          url-query: '"https://github.com/bardiakz/qrypt/releases/download/\($tag)/qrypt-linux-x86_64-bundle.tar.gz"'
+      # - type: archive
+      #   only-arches: [aarch64]
+      #   dest: Qrypt
+      #   url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-aarch64.tar.gz
+      #   sha256:
+      #   strip-components: 1
+      #   x-checker-data:
+      #     type: json
+      #     url: https://api.github.com/repos/bardiakz/qrypt/releases/latest
+      #     tag-query: .tag_name
+      #     timestamp-query: .published_at
+      #     version-query: $tag | sub("^[vV]"; "")
+      #     url-query: '"https://github.com/bardiakz/qrypt/releases/download/\($tag)/qrypt-linux-aarch64.tar.gz"'
       - type: git
         dest: git_repo
         url: https://github.com/bardiakz/qrypt.git
-        branch: main
+        tag: v4.4.7
         x-checker-data:
           type: git
           tag-pattern: ^v([0-9.]+)$
