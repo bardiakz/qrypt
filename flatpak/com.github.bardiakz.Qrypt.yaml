@@ -94,7 +94,7 @@ modules:
       #   only-arches: [aarch64]
       #   dest: Qrypt
       #   url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-aarch64.tar.gz
-      #   sha256: # Add if available
+      #   sha256:
       #   strip-components: 1
       #   x-checker-data:
       #     type: json
