@@ -21,7 +21,7 @@ cleanup:
   - "*.a"
   - "*.la"
   - /git_repo
-  - /com.github.bardiakz.Qrypt.desktop
+  - /io.github.bardiakz.Qrypt.desktop
 modules:
   - name: liboqs
     buildsystem: cmake-ninja
