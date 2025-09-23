@@ -48,4 +48,4 @@ app.*.map.json
 .env
 /bin/
 
-.flatpak-builder
+.flatpak-builder/
