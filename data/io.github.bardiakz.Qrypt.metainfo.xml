@@ -21,19 +21,19 @@
     </description>
     <screenshots>
         <screenshot type="default">
-            <image>screenshots/1.png</image>
+            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/1.png</image>
             <caption>Default encryption</caption>
         </screenshot>
         <screenshot type="default">
-            <image>screenshots/2.png</image>
+            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/2.png</image>
             <caption>Default decryption</caption>
         </screenshot>
         <screenshot type="default">
-            <image>screenshots/3.png</image>
-            <caption>ml-kem</caption>
+            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/3.png</image>
+            <caption>ml-kem pqc algorithm</caption>
         </screenshot>
         <screenshot type="default">
-            <image>screenshots/4.png</image>
+            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/4.png</image>
             <caption>Encryption settings</caption>
         </screenshot>
     </screenshots>
