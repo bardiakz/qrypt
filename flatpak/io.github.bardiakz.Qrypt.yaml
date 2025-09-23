@@ -80,7 +80,7 @@ modules:
       - type: archive
         only-arches: [x86_64]
         dest: Qrypt
-        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-x86_64-bundle.tar.gz
+        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.7/qrypt-linux-x86_64.tar.gz
         sha256: d5782a700370cc91ffdf90360b1e64253180a317b6847ecd5578822b1ebec9ff
         strip-components: 1
         x-checker-data:
