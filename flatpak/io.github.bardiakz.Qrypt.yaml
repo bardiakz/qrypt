@@ -76,12 +76,14 @@ modules:
       - install -Dm644 -t "${FLATPAK_DEST}/share/applications/" ${FLATPAK_ID}.desktop
       - install -Dm644 git_repo/assets/icon/qrypt_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png"
       - install -Dm644 git_repo/data/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 flatpak/screenshots/*.png "${FLATPAK_DEST}/share/metainfo/screenshots/"
+
     sources:
       - type: archive
         only-arches: [x86_64]
         dest: Qrypt
-        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-x86_64-bundle.tar.gz
-        sha256: d5782a700370cc91ffdf90360b1e64253180a317b6847ecd5578822b1ebec9ff
+        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.6/qrypt-linux-x86_64.tar.gz
+        sha256: eb18b8264650a3fa093a8e2bbee96344712788a3c8ba7f6bf32750960247f958
         strip-components: 1
         x-checker-data:
           type: json
@@ -89,7 +91,7 @@ modules:
           tag-query: .tag_name
           timestamp-query: .published_at
           version-query: $tag | sub("^[vV]"; "")
-          url-query: '"https://github.com/bardiakz/qrypt/releases/download/\($tag)/qrypt-linux-x86_64-bundle.tar.gz"'
+          url-query: '"https://github.com/bardiakz/qrypt/releases/download/\($tag)/qrypt-linux-x86_64.tar.gz"'
       # - type: archive
       #   only-arches: [aarch64]
       #   dest: Qrypt
