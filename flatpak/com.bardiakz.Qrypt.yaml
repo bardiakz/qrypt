@@ -1,4 +1,4 @@
-id: com.github.bardiakz.Qrypt
+id: com.bardiakz.Qrypt
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
