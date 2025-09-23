@@ -74,7 +74,7 @@ modules:
       - mv git_repo/data/${FLATPAK_ID}.desktop ${FLATPAK_ID}.desktop
       - desktop-file-edit ${FLATPAK_ID}.desktop --set-icon=${FLATPAK_ID}
       - install -Dm644 -t "${FLATPAK_DEST}/share/applications/" ${FLATPAK_ID}.desktop
-      - install -Dm644 assets/icon/qrypt_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png" || true
+      - install -Dm644 git_repo/assets/icon/qrypt_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png"
       - install -Dm644 git_repo/data/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
     sources:
       - type: archive
