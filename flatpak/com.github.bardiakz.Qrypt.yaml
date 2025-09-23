@@ -4,6 +4,7 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: qrypt
 separate-locales: false
+appstream-compose: false
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
