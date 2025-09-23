@@ -20,65 +20,7 @@
     </description>
     <launchable type="desktop-id">com.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
-        <release version="4.4.6" date="2025-09-22">
-            <description>
-                <p>No changelog provided.</p>
-            </description>
-        </release>
-        <release version="4.4.3" date="2025-08-25">
-            <description>
-                <p>Multiple bug fixes and logic improvements.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.5...v4.4.3</p>
-            </description>
-        </release>
-        <release version="4.3.5" date="2025-08-03">
-            <description>
-                <p>Fixed RSA public key bug.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.4...v4.3.5</p>
-            </description>
-        </release>
-        <release version="4.3.3" date="2025-08-02">
-            <description>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.1...v4.3.3</p>
-            </description>
-        </release>
-        <release version="4.3.1" date="2025-07-31">
-            <description>
-                <p>⚠️ .env Compatibility Warning: The original .env file was lost. Obfuscation mappings have been regenerated. Obfuscated data from earlier versions is not compatible with v4.3.1+.</p>
-                <p>Added: ML-DSA (Dilithium) Signing for post-quantum digital signatures and a new key management page.</p>
-                <p>Fixed: Obfuscation logic for one-to-one reversible mappings, UI layout stability, and theming.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.0.0...v4.3.1</p>
-            </description>
-        </release>
-        <release version="4.0.0" date="2025-07-27">
-            <description>
-                <p>Added ML-KEM PQC algorithm support.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v3.1.1...v4.0.0</p>
-            </description>
-        </release>
-        <release version="3.1.1" date="2025-07-26">
-            <description>
-                <p>Added custom AES key support.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.5.5...v3.1.1</p>
-            </description>
-        </release>
-        <release version="2.5.5" date="2025-07-21">
-            <description>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.5.3...v2.5.5</p>
-            </description>
-        </release>
-        <release version="2.5.3" date="2025-07-21">
-            <description>
-                <p>What's Changed: rsa+sign setup in #1.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.0.1...v2.5.3</p>
-            </description>
-        </release>
-        <release version="2.0.1" date="2025-07-20">
-            <description>
-                <p>Added RSA support, multi key pair support, fixed mapped obfuscations bug.</p>
-                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v1.8.5...v2.0.1</p>
-            </description>
-        </release>
+        <release version="4.4.6" date="2025-09-22" />
     </releases>
     <content_rating type="oars-1.1" />
     <url type="homepage">https://github.com/bardiakz/qrypt</url>
