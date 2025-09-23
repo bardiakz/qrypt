@@ -109,7 +109,7 @@ modules:
         dest: git_repo
         url: https://github.com/bardiakz/qrypt.git
         tag: v4.4.6
-        commit: b2fb1dac1e86a38e2a16f9b426d7680a7f5b4248
+        commit: 6bfb92238c279df4ce043aeab4cd56214ffc9d0c
         x-checker-data:
           type: git
           tag-pattern: ^v([0-9.]+)$
