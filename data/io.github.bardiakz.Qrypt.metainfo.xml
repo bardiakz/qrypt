@@ -19,6 +19,25 @@
             <li>Security: Quantum resistance, hybrid security, message integrity, and more.</li>
         </ul>
     </description>
+    <screenshots>
+        <screenshot type="default">
+            <image>screenshots/1.png</image>
+            <caption>Default encryption</caption>
+        </screenshot>
+        <screenshot type="default">
+            <image>screenshots/2.png</image>
+            <caption>Default decryption</caption>
+        </screenshot>
+        <screenshot type="default">
+            <image>screenshots/3.png</image>
+            <caption>ml-kem</caption>
+        </screenshot>
+        <screenshot type="default">
+            <image>screenshots/4.png</image>
+            <caption>Encryption settings</caption>
+        </screenshot>
+    </screenshots>
+
     <launchable type="desktop-id">com.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
         <release version="4.4.6" date="2025-09-22" />
