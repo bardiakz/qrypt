@@ -4,13 +4,12 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: qrypt
 separate-locales: false
-appstream-compose: false
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
   - --share=network
-  - --filesystem=home # Tighten to --filesystem=xdg-documents if only file I/O for text is needed
+  - --filesystem=xdg-documents
   - --device=dri
 cleanup:
   - /include
@@ -70,7 +69,7 @@ modules:
       - chmod +x /app/Qrypt/qrypt
       - mkdir -p /app/bin
       - ln -s /app/Qrypt/qrypt /app/bin/qrypt
-      - cp /app/lib/*.so /app/Qrypt/lib/ || true
+      - cp /app/lib/*.so /app/Qrypt/lib/
       - mv git_repo/data/${FLATPAK_ID}.desktop ${FLATPAK_ID}.desktop
       - desktop-file-edit ${FLATPAK_ID}.desktop --set-icon=${FLATPAK_ID}
       - install -Dm644 -t "${FLATPAK_DEST}/share/applications/" ${FLATPAK_ID}.desktop

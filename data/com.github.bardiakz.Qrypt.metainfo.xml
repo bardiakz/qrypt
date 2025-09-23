@@ -1,21 +1,91 @@
-<?xml version="1.0" encoding="UTF-8"?>
+```
+    <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
     <id>com.github.bardiakz.Qrypt</id>
     <metadata_license>CC0-1.0</metadata_license>
-    <project_license>MIT</project_license> <name>Qrypt</name>
-    <summary>A short and catchy summary of your app</summary>
+    <project_license>MIT</project_license>
+    <name>Qrypt</name>
+    <summary>Flexible and privacy-first app for manual text encryption, compression, and obfuscation</summary>
     <description>
-        <p>
-            A longer, more detailed description of what your application does, using HTML-style p tags.
-        </p>
+        <p>Qrypt is a comprehensive Flutter application for text encryption, compression, obfuscation, and digital signing, with support for multiple algorithms, customizable processing pipelines, and quantum-safe cryptography. It puts full control in the hands of the user, enabling secure message sharing across any medium (e.g., SMS, chat, email) when encryption is restricted or unavailable.</p>
+        <p>Key Features:</p>
+        <ul>
+            <li>Encryption Methods: AES-CBC, AES-CTR, AES-GCM, RSA, RSA+Sign, ML-KEM (Kyber).</li>
+            <li>Quantum-Safe Cryptography: ML-KEM for key encapsulation, ML-DSA for digital signatures.</li>
+            <li>Compression Algorithms: GZip, LZ4, Brotli, Zstd.</li>
+            <li>Obfuscation Techniques: Character Mapping (EN1/EN2, FA1/FA2), Base64, ROT13, XOR.</li>
+            <li>Smart Tagging System: Automatic method detection and version-aware parsing.</li>
+            <li>Key Management: Generate and manage RSA, ML-KEM, and ML-DSA key pairs.</li>
+            <li>Security: Quantum resistance, hybrid security, message integrity, and more.</li>
+        </ul>
     </description>
     <launchable type="desktop-id">com.github.bardiakz.Qrypt.desktop</launchable>
     <screenshots>
+        <!-- Add screenshots here, e.g.:
+        <screenshot type="default">
+            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/assets/screenshot1.png</image>
+            <caption>Main encryption interface</caption>
+        </screenshot>
+        Upload actual screenshots to your GitHub repo and reference them for Flathub approval. -->
     </screenshots>
     <releases>
-        <release version="1.0.0" date="2025-09-16">
+        <release version="4.4.6" date="2025-09-22">
             <description>
-                <p>Initial release.</p>
+                <p>No changelog provided.</p>
+            </description>
+        </release>
+        <release version="4.4.3" date="2025-08-25">
+            <description>
+                <p>Multiple bug fixes and logic improvements.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.5...v4.4.3</p>
+            </description>
+        </release>
+        <release version="4.3.5" date="2025-08-03">
+            <description>
+                <p>Fixed RSA public key bug.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.4...v4.3.5</p>
+            </description>
+        </release>
+        <release version="4.3.3" date="2025-08-02">
+            <description>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.3.1...v4.3.3</p>
+            </description>
+        </release>
+        <release version="4.3.1" date="2025-07-31">
+            <description>
+                <p>⚠️ .env Compatibility Warning: The original .env file was lost. Obfuscation mappings have been regenerated. Obfuscated data from earlier versions is not compatible with v4.3.1+.</p>
+                <p>Added: ML-DSA (Dilithium) Signing for post-quantum digital signatures and a new key management page.</p>
+                <p>Fixed: Obfuscation logic for one-to-one reversible mappings, UI layout stability, and theming.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v4.0.0...v4.3.1</p>
+            </description>
+        </release>
+        <release version="4.0.0" date="2025-07-27">
+            <description>
+                <p>Added ML-KEM PQC algorithm support.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v3.1.1...v4.0.0</p>
+            </description>
+        </release>
+        <release version="3.1.1" date="2025-07-26">
+            <description>
+                <p>Added custom AES key support.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.5.5...v3.1.1</p>
+            </description>
+        </release>
+        <release version="2.5.5" date="2025-07-21">
+            <description>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.5.3...v2.5.5</p>
+            </description>
+        </release>
+        <release version="2.5.3" date="2025-07-21">
+            <description>
+                <p>What's Changed: rsa+sign setup in #1.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v2.0.1...v2.5.3</p>
+            </description>
+        </release>
+        <release version="2.0.1" date="2025-07-20">
+            <description>
+                <p>Added RSA support, multi key pair support, fixed mapped obfuscations bug.</p>
+                <p>Full Changelog: https://github.com/bardiakz/qrypt/compare/v1.8.5...v2.0.1</p>
             </description>
         </release>
     </releases>
@@ -23,3 +93,4 @@
     <url type="homepage">https://github.com/bardiakz/qrypt</url>
     <url type="bugtracker">https://github.com/bardiakz/qrypt/issues</url>
 </component>
+    ```
