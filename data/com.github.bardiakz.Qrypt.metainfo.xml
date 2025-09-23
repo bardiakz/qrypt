@@ -1,5 +1,4 @@
-```
-    <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
     <id>com.github.bardiakz.Qrypt</id>
     <metadata_license>CC0-1.0</metadata_license>
@@ -20,14 +19,6 @@
         </ul>
     </description>
     <launchable type="desktop-id">com.github.bardiakz.Qrypt.desktop</launchable>
-    <screenshots>
-        <!-- Add screenshots here, e.g.:
-        <screenshot type="default">
-            <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/assets/screenshot1.png</image>
-            <caption>Main encryption interface</caption>
-        </screenshot>
-        Upload actual screenshots to your GitHub repo and reference them for Flathub approval. -->
-    </screenshots>
     <releases>
         <release version="4.4.6" date="2025-09-22">
             <description>
@@ -93,4 +84,3 @@
     <url type="homepage">https://github.com/bardiakz/qrypt</url>
     <url type="bugtracker">https://github.com/bardiakz/qrypt/issues</url>
 </component>
-    ```
