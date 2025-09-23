@@ -76,7 +76,8 @@ modules:
       - install -Dm644 -t "${FLATPAK_DEST}/share/applications/" ${FLATPAK_ID}.desktop
       - install -Dm644 git_repo/assets/icon/qrypt_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png"
       - install -Dm644 git_repo/data/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 flatpak/screenshots/*.png "${FLATPAK_DEST}/share/metainfo/screenshots/"
+      - install -Dm644 git_repo/flatpak/screenshots/*.png "${FLATPAK_DEST}/share/metainfo/screenshots/"
+
 
     sources:
       - type: archive
