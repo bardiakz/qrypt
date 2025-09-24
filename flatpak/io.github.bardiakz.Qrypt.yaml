@@ -4,7 +4,7 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: qrypt
 separate-locales: false
-appstream-compose: false
+#appstream-compose: false
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -106,8 +106,8 @@ modules:
       - type: git
         dest: git_repo
         url: https://github.com/bardiakz/qrypt.git
-#        tag: v4.4.8
-        branch: main
+        tag: v4.4.9
+#        branch: main
         x-checker-data:
           type: git
           tag-pattern: ^v([0-9.]+)$
