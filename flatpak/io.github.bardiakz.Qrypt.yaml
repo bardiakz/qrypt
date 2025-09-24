@@ -106,7 +106,8 @@ modules:
       - type: git
         dest: git_repo
         url: https://github.com/bardiakz/qrypt.git
-        tag: v4.4.8
+#        tag: v4.4.8
+        branch: main
         x-checker-data:
           type: git
           tag-pattern: ^v([0-9.]+)$
