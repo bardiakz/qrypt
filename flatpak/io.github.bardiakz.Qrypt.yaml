@@ -80,8 +80,8 @@ modules:
       - type: archive
         only-arches: [x86_64]
         dest: Qrypt
-        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.8/qrypt-linux-x86_64.tar.gz
-        sha256: e2d5eb753fa83c8d4975055b0fe6bf9c5894c12a12380cee962ee4780c4626b7
+        url: https://github.com/bardiakz/qrypt/releases/download/v4.4.9/qrypt-linux-x86_64.tar.gz
+        sha256: a1f8f14f580a04140088b96536b2ac8f114093628de213b3461f30c5c4903b0d
         strip-components: 1
         x-checker-data:
           type: json
