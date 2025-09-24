@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
     <id>io.github.bardiakz.Qrypt</id>
-    <developer_name>Bardia Kz</developer_name>
+    <developer id="github.com/bardiakz">
+        <name>Bardia Kz</name>
+    </developer>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <name>Qrypt</name>
