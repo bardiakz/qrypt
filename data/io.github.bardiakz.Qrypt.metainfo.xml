@@ -19,25 +19,28 @@
             <li>Security: Quantum resistance, hybrid security, message integrity, and more.</li>
         </ul>
     </description>
+    <categories>
+        <category>Utility</category>
+        <category>Security</category>
+    </categories>
     <screenshots>
         <screenshot type="default">
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/1.png</image>
             <caption>Default encryption</caption>
         </screenshot>
-        <screenshot type="default">
+        <screenshot>
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/2.png</image>
             <caption>Default decryption</caption>
         </screenshot>
-        <screenshot type="default">
+        <screenshot>
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/3.png</image>
             <caption>ML-KEM pqc algorithm</caption>
         </screenshot>
-        <screenshot type="default">
+        <screenshot>
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/4.png</image>
             <caption>Encryption settings</caption>
         </screenshot>
     </screenshots>
-
     <launchable type="desktop-id">io.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
         <release version="4.4.8" date="2025-09-23" />
