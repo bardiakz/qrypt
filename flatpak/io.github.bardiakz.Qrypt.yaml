@@ -28,7 +28,6 @@ modules:
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DOQS_BUILD_ONLY_LIB=ON
-      - -DCMAKE_INSTALL_PREFIX=/app
       - -DBUILD_SHARED_LIBS=ON
     sources:
       - type: git
@@ -47,7 +46,6 @@ modules:
     buildsystem: cmake
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
-      - -DCMAKE_INSTALL_PREFIX=/app
       - -DBUILD_SHARED_LIBS=ON
     sources:
       - type: git
@@ -56,7 +54,7 @@ modules:
   - name: zstd
     buildsystem: simple
     build-commands:
-      - cmake -S build/cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app -DBUILD_SHARED_LIBS=ON -DZSTD_BUILD_STATIC=ON
+      - cmake -S build/cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DZSTD_BUILD_STATIC=ON
       - cmake --build build -j$FLATPAK_BUILDER_N_JOBS
       - cmake --install build
     sources:
