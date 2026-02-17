@@ -12,7 +12,7 @@ import 'package:oqs/oqs.dart';
 
 void main() async {
   await dotenv.load();
-  Obfuscate.setAllMaps();
+  await Obfuscate.setAllMaps();
   if (!(Platform.isAndroid || Platform.isIOS)) {
     Compression.setNativeLibPaths();
   }
