@@ -200,6 +200,59 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
+  Widget _buildDefaultAesKeyWarning({
+    required BuildContext context,
+    required String message,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final warningColor = isDarkMode ? Colors.red.shade300 : Colors.red.shade800;
+    final warningBackground = isDarkMode
+        ? Colors.red.shade900.withValues(alpha: 0.22)
+        : Colors.red.shade50;
+    final warningBorder = isDarkMode
+        ? Colors.red.shade300.withValues(alpha: 0.55)
+        : Colors.red.shade700.withValues(alpha: 0.35);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: BoxDecoration(
+          color: warningBackground,
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          border: Border.all(color: warningBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: warningColor,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: AppConstants.smallPadding),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                  color: warningColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -546,6 +599,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               val,
                       primaryColor: primaryColor,
                     ),
+                    if (defaultEncryption) ...[
+                      const SizedBox(height: AppConstants.smallPadding),
+                      _buildDefaultAesKeyWarning(
+                        context: context,
+                        message:
+                            'Warning: You are using the app\'s default AES key. Not recommended for sensitive data. Turn on "Use Custom AES Key" to use your own key.',
+                      ),
+                    ],
                     const SizedBox(height: AppConstants.defaultPadding),
                   ],
 
@@ -674,6 +735,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           },
                           primaryColor: primaryColor,
                         ),
+
+                        if (!useCustomAesKey) ...[
+                          const SizedBox(height: AppConstants.smallPadding),
+                          _buildDefaultAesKeyWarning(
+                            context: context,
+                            message:
+                                'Warning: AES is using the app\'s default key because no custom key is set. Not recommended for sensitive data.',
+                          ),
+                        ],
 
                         if (useCustomAesKey) ...[
                           const SizedBox(height: AppConstants.defaultPadding),
@@ -951,6 +1021,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           },
                           primaryColor: primaryColor,
                         ),
+
+                        if (!useCustomAesKey) ...[
+                          const SizedBox(height: AppConstants.smallPadding),
+                          _buildDefaultAesKeyWarning(
+                            context: context,
+                            message:
+                                'Warning: AES decryption will try the app\'s default key first because no custom key is set.',
+                          ),
+                        ],
 
                         if (useCustomAesKey) ...[
                           const SizedBox(height: AppConstants.defaultPadding),
