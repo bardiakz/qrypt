@@ -42,4 +42,14 @@ PRs should include:
 - notes about platform-specific impact (Android/iOS/Desktop/Web)
 
 ## Security & Configuration Tips
-Never commit secrets. Keep `.env` local; use `.env.example` as the template for required keys and obfuscation mappings.
+Never commit secrets. Keep `.env` local; use `.env.example` as the template for required keys.
+
+Obfuscation maps are now code-defined and user-overridable:
+- built-in maps live in `lib/resources/obfuscation/built_in_obfuscation_maps.dart`
+- runtime resolution/custom overrides go through `lib/services/obfuscation/obfuscation_map_repository.dart`
+
+When editing encryption UX, preserve user-facing warnings for insecure defaults:
+- warn when AES uses the app default key instead of a custom key
+- warn when both encryption and obfuscation are `NONE` (output falls back to Base64)
+
+Also keep default-mode behavior and visible advanced selections aligned. If default mode uses `AES-GCM + GZip + EN2 + tag`, switching to manual mode should prefill the same values.

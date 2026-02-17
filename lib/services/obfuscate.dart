@@ -1,65 +1,70 @@
 import 'dart:convert';
 import 'package:obfuscate/obfuscate.dart' as obfs;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:qrypt/models/obfuscation_method.dart';
+import 'package:qrypt/resources/obfuscation/built_in_obfuscation_maps.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_map_repository.dart';
 
-Map<String, String> obfuscationFA2Map = {};
-Map<String, String> obfuscationFA1Map = {};
-Map<String, String> obfuscationEN2Map = {};
-Map<String, String> obfuscationEN1Map = {};
+Map<String, String> obfuscationFA2Map = Map<String, String>.from(builtInFa2Map);
+Map<String, String> obfuscationFA1Map = Map<String, String>.from(builtInFa1Map);
+Map<String, String> obfuscationEN2Map = Map<String, String>.from(builtInEn2Map);
+Map<String, String> obfuscationEN1Map = Map<String, String>.from(builtInEn1Map);
 
 class Obfuscate {
-  static Map<String, String> loadObfuscationMap(String prefix) {
-    return Map.fromEntries(
-      dotenv.env.entries.where((entry) => entry.key.startsWith(prefix)).map((
-        entry,
-      ) {
-        var key = entry.key.substring(prefix.length).toLowerCase();
-        var value = entry.value;
-        if (value.contains(' ')) {
-          debugPrint(
-            'Warning: Substitution for ${entry.key} contains space; trimming.',
-          );
-          value = value.replaceAll(' ', '');
-        }
-        return MapEntry(key, value);
-      }),
-    );
-  }
+  static final ObfuscationMapRepository _repository =
+      ObfuscationMapRepository.instance;
 
-  static void setObfuscationFA2Map() {
-    obfuscationFA2Map = loadObfuscationMap('OBF_FA2_');
+  static void _setObfuscationFA2Map() {
+    obfuscationFA2Map = _repository.getMap(ObfuscationMethod.fa2);
     if (obfuscationFA2Map.isEmpty) {
-      debugPrint('Warning: OBF_FA2 map is empty; obfuscation will be no-op.');
+      debugPrint('Warning: FA2 map is empty; obfuscation will be no-op.');
     }
   }
 
-  static void setObfuscationFA1Map() {
-    obfuscationFA1Map = loadObfuscationMap('OBF_FA1_');
+  static void _setObfuscationFA1Map() {
+    obfuscationFA1Map = _repository.getMap(ObfuscationMethod.fa1);
     if (obfuscationFA1Map.isEmpty) {
-      debugPrint('Warning: OBF_FA1 map is empty; obfuscation will be no-op.');
+      debugPrint('Warning: FA1 map is empty; obfuscation will be no-op.');
     }
   }
 
-  static void setObfuscationEN2Map() {
-    obfuscationEN2Map = loadObfuscationMap('OBF_EN2_');
+  static void _setObfuscationEN2Map() {
+    obfuscationEN2Map = _repository.getMap(ObfuscationMethod.en2);
     if (obfuscationEN2Map.isEmpty) {
-      debugPrint('Warning: OBF_EN2 map is empty; obfuscation will be no-op.');
+      debugPrint('Warning: EN2 map is empty; obfuscation will be no-op.');
     }
   }
 
-  static void setObfuscationEN1Map() {
-    obfuscationEN1Map = loadObfuscationMap('OBF_EN1_');
+  static void _setObfuscationEN1Map() {
+    obfuscationEN1Map = _repository.getMap(ObfuscationMethod.en1);
     if (obfuscationEN1Map.isEmpty) {
-      debugPrint('Warning: OBF_EN1 map is empty; obfuscation will be no-op.');
+      debugPrint('Warning: EN1 map is empty; obfuscation will be no-op.');
     }
   }
 
-  static void setAllMaps() {
-    setObfuscationFA1Map();
-    setObfuscationFA2Map();
-    setObfuscationEN1Map();
-    setObfuscationEN2Map();
+  static Future<void> setAllMaps() async {
+    await _repository.initialize();
+    _setObfuscationFA1Map();
+    _setObfuscationFA2Map();
+    _setObfuscationEN1Map();
+    _setObfuscationEN2Map();
+  }
+
+  static Future<void> setCustomMap(
+    ObfuscationMethod method,
+    Map<String, String> map,
+  ) async {
+    await _repository.setCustomMap(method, map);
+    await setAllMaps();
+  }
+
+  static Future<void> clearCustomMap(ObfuscationMethod method) async {
+    await _repository.clearCustomMap(method);
+    await setAllMaps();
+  }
+
+  static Map<String, String> getMapForMethod(ObfuscationMethod method) {
+    return _repository.getMap(method);
   }
 
   static String obfuscateText(
