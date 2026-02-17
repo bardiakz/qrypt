@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:qrypt/providers/simple_state_provider.dart';
 
 enum AppMode { encrypt, decrypt }
 
-final appModeProvider = StateProvider<AppMode>((ref) => AppMode.encrypt);
+final appModeProvider = simpleStateProvider<AppMode>(AppMode.encrypt);
 
 final primaryColorProvider = Provider<Color>((ref) {
   final mode = ref.watch(appModeProvider);
   return mode == AppMode.encrypt ? Colors.blue : Colors.green;
 });
 
-final currentTextControllerProvider = StateProvider<TextEditingController>(
-  (ref) => TextEditingController(),
-);
+final currentTextControllerProvider =
+    simpleStateProvider<TextEditingController>(TextEditingController());
 
-final isDarkModeProvider = StateProvider<bool>((ref) => false);
+final isDarkModeProvider = simpleStateProvider<bool>(false);
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+class ThemeModeNotifier extends Notifier<ThemeMode> {
   static const String _themeKey = 'app_theme_mode';
   static const _storage = FlutterSecureStorage();
 
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  @override
+  ThemeMode build() {
     _loadTheme();
+    return ThemeMode.system;
   }
 
   Future<void> _loadTheme() async {
@@ -80,8 +82,8 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-  (ref) => ThemeModeNotifier(),
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
 );
 
 extension ThemeModeLabel on ThemeMode {
