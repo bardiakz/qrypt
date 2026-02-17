@@ -594,9 +594,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       context: context,
                       title: "Use Default Encryption",
                       value: defaultEncryption,
-                      onChanged: (val) =>
-                          ref.read(defaultEncryptionProvider.notifier).state =
-                              val,
+                      onChanged: (val) {
+                        ref.read(defaultEncryptionProvider.notifier).state = val;
+
+                        // When leaving default mode, preload the same pipeline
+                        // used by default encryption so the visible options match.
+                        if (!val) {
+                          ref.read(selectedCompressionProvider.notifier).state =
+                              CompressionMethod.gZip;
+                          ref.read(selectedEncryptionProvider.notifier).state =
+                              EncryptionMethod.aesGcm;
+                          ref.read(selectedObfuscationProvider.notifier).state =
+                              ObfuscationMethod.en2;
+                          ref.read(useTagProvider.notifier).state = true;
+                        }
+                      },
                       primaryColor: primaryColor,
                     ),
                     if (defaultEncryption) ...[
