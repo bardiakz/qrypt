@@ -839,6 +839,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         primaryColor: primaryColor,
                       ),
                     ),
+
+                    if (selectedEncryption == EncryptionMethod.none &&
+                        selectedObfuscation == ObfuscationMethod.none) ...[
+                      const SizedBox(height: AppConstants.smallPadding),
+                      _buildDefaultAesKeyWarning(
+                        context: context,
+                        message:
+                            'Warning: No encryption or obfuscation is selected. Output will be Base64-encoded by default.',
+                      ),
+                    ],
                   ],
 
                   const SizedBox(height: AppConstants.defaultPadding),
@@ -1189,10 +1199,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   ),
                                 ),
                               ],
-                            ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+
+                  ],
 
                 // Output section
                 const SizedBox(height: AppConstants.defaultPadding),
@@ -1277,10 +1288,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             ? ref.watch(processedEncryptProvider).text
                             : ref.watch(processedDecryptProvider).text,
                         style: const TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+
+                  ],
 
                 const SizedBox(height: AppConstants.defaultPadding),
               ],
