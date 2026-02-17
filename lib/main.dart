@@ -8,6 +8,7 @@ import 'package:qrypt/providers/resource_providers.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/tag_manager.dart';
+import 'package:oqs/oqs.dart';
 
 void main() async {
   await dotenv.load();
@@ -20,7 +21,7 @@ void main() async {
   //   final storage = FlutterSecureStorage();
   //   await storage.deleteAll();
   // }
-
+  LibOQSLoader.loadLibrary(binaryRoot: 'liboqs-0.15.0');
   runApp(ProviderScope(child: const MyApp()));
 }
 

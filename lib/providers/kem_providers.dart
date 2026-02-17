@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
+import 'package:qrypt/providers/simple_state_provider.dart';
 
 import '../services/kem/kem_service.dart';
 
@@ -10,12 +11,10 @@ final kemKeyPairsProvider = FutureProvider<List<QryptKEMKeyPair>>((ref) async {
   return await service.getKeyPairs();
 });
 
-final selectedKemEncryptKeyPairProvider = StateProvider<QryptKEMKeyPair?>(
-  (ref) => null,
-);
-final selectedKemDecryptKeyPairProvider = StateProvider<QryptKEMKeyPair?>(
-  (ref) => null,
-);
-final receiverKemPublicKeyProvider = StateProvider<String>((ref) => '');
-final decryptKemPublicKeyProvider = StateProvider<String>((ref) => '');
+final selectedKemEncryptKeyPairProvider =
+    simpleStateProvider<QryptKEMKeyPair?>(null);
+final selectedKemDecryptKeyPairProvider =
+    simpleStateProvider<QryptKEMKeyPair?>(null);
+final receiverKemPublicKeyProvider = simpleStateProvider<String>('');
+final decryptKemPublicKeyProvider = simpleStateProvider<String>('');
 String decryptKemPublicKeyGlobal = '';

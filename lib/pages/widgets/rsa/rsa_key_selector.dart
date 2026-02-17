@@ -137,7 +137,7 @@ class RSAKeySelector extends ConsumerWidget {
   }
 
   // Get the appropriate provider based on key type
-  StateProvider<RSAKeyPair?> _getSelectedProvider() {
+  _getSelectedProvider() {
     switch (keyType) {
       case RSAKeyType.encrypt:
         return selectedRSAEncryptKeyPairProvider;

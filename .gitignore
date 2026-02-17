@@ -49,3 +49,5 @@ app.*.map.json
 /bin/
 
 .flatpak-builder/
+
+oldbin/

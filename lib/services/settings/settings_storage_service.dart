@@ -91,9 +91,11 @@ class SettingsStorageService {
 
 // State notifier for managing default encryption settings
 class DefaultEncryptionSettingsNotifier
-    extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
-  DefaultEncryptionSettingsNotifier() : super(const AsyncValue.loading()) {
+    extends Notifier<AsyncValue<Map<String, dynamic>>> {
+  @override
+  AsyncValue<Map<String, dynamic>> build() {
     _loadSettings();
+    return const AsyncValue.loading();
   }
 
   Future<void> _loadSettings() async {

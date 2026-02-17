@@ -137,7 +137,7 @@ class KemKeySelector extends ConsumerWidget {
   }
 
   // Get the appropriate provider based on key type
-  StateProvider<QryptKEMKeyPair?> _getSelectedProvider() {
+  _getSelectedProvider() {
     switch (keyType) {
       case KemKeyType.encrypt:
         return selectedKemEncryptKeyPairProvider;

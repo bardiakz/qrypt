@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/providers/simple_state_provider.dart';
 
 import '../models/rsa_key_pair.dart';
 import '../services/rsa/rsa_key_service.dart';
@@ -10,12 +11,12 @@ final rsaKeyPairsProvider = FutureProvider<List<RSAKeyPair>>((ref) async {
   return await service.getKeyPairs();
 });
 
-final selectedRSAEncryptKeyPairProvider = StateProvider<RSAKeyPair?>(
-  (ref) => null,
+final selectedRSAEncryptKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
+  null,
 );
-final selectedRSADecryptKeyPairProvider = StateProvider<RSAKeyPair?>(
-  (ref) => null,
+final selectedRSADecryptKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
+  null,
 );
-final rsaReceiverPublicKeyProvider = StateProvider<String>((ref) => '');
-final rsaDecryptPublicKeyProvider = StateProvider<String>((ref) => '');
+final rsaReceiverPublicKeyProvider = simpleStateProvider<String>('');
+final rsaDecryptPublicKeyProvider = simpleStateProvider<String>('');
 String decryptPublicKeyGlobal = '';
