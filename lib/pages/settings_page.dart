@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
+import 'package:qrypt/services/obfuscate.dart';
+import 'package:qrypt/services/tag_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../providers/resource_providers.dart';
 import '../providers/rsa_providers.dart';
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -26,6 +34,10 @@ class SettingsPage extends ConsumerWidget {
           // App Theme Section
           _buildSectionHeader('Appearance'),
           _buildThemeSelector(context, ref),
+          const SizedBox(height: 24),
+
+          _buildSectionHeader('Obfuscation Maps'),
+          _buildObfuscationMapSettings(context),
           const SizedBox(height: 24),
 
           // Security Section
@@ -239,6 +251,280 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildObfuscationMapSettings(BuildContext context) {
+    const editableMethods = <ObfuscationMethod>[
+      ObfuscationMethod.en1,
+      ObfuscationMethod.en2,
+      ObfuscationMethod.fa1,
+      ObfuscationMethod.fa2,
+    ];
+
+    return Card(
+      child: Column(
+        children: [
+          const ListTile(
+            leading: Icon(Icons.map_outlined),
+            title: Text('Custom Obfuscation Maps'),
+            subtitle: Text(
+              'Customize EN1, EN2, FA1, and FA2 substitution maps.',
+            ),
+          ),
+          const Divider(height: 1),
+          ...editableMethods.map((method) {
+            return FutureBuilder<Map<String, String>?>(
+              future: Obfuscate.getCustomMap(method),
+              builder: (context, snapshot) {
+                final hasCustomMap =
+                    snapshot.hasData &&
+                    snapshot.data != null &&
+                    snapshot.data!.isNotEmpty;
+
+                return ListTile(
+                  leading: Icon(
+                    hasCustomMap ? Icons.tune : Icons.lock_outline,
+                    color: hasCustomMap
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
+                  ),
+                  title: Text(method.displayName),
+                  subtitle: Text(
+                    hasCustomMap
+                        ? 'Custom map active (built-in remains unchanged)'
+                        : 'Using built-in map (read-only)',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openObfuscationMapEditor(context, method),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openObfuscationMapEditor(
+    BuildContext context,
+    ObfuscationMethod method,
+  ) async {
+    final customMap = await Obfuscate.getCustomMap(method);
+    final builtInMap = Obfuscate.getBuiltInMapForMethod(method);
+    final hasCustomMap = customMap != null && customMap.isNotEmpty;
+    final controller = TextEditingController(
+      text: hasCustomMap ? _mapToEditorText(customMap) : '',
+    );
+
+    if (!context.mounted) {
+      controller.dispose();
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        String? errorText;
+        bool isSaving = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> saveMap() async {
+              setState(() {
+                isSaving = true;
+                errorText = null;
+              });
+
+              try {
+                final parsed = _parseEditorText(controller.text);
+                await Obfuscate.setCustomMap(method, parsed);
+                TagManager.initializeTags();
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${method.displayName} custom map saved'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                setState(() {
+                  errorText = e.toString().replaceFirst('Exception: ', '');
+                  isSaving = false;
+                });
+              }
+            }
+
+            Future<void> resetMap() async {
+              setState(() {
+                isSaving = true;
+                errorText = null;
+              });
+
+              try {
+                await Obfuscate.clearCustomMap(method);
+                TagManager.initializeTags();
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${method.displayName} reset to built-in map',
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                setState(() {
+                  errorText = e.toString().replaceFirst('Exception: ', '');
+                  isSaving = false;
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: Text(
+                hasCustomMap
+                    ? 'Edit Custom ${method.displayName}'
+                    : 'Add Custom ${method.displayName}',
+              ),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Built-in map is read-only. Add your custom map below. Format: key => value (one mapping per line). Use [space] for a space key.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: controller,
+                      maxLines: 16,
+                      minLines: 12,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'A => atom\\nB => binary\\n[space] => blank',
+                      ),
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        errorText!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () {
+                          controller.text = _mapToEditorText(builtInMap);
+                        },
+                  child: const Text('Use Built-in as Template'),
+                ),
+                if (hasCustomMap)
+                  TextButton(
+                    onPressed: isSaving ? null : resetMap,
+                    child: const Text('Reset to Built-in'),
+                  ),
+                ElevatedButton(
+                  onPressed: isSaving ? null : saveMap,
+                  child: isSaving
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _mapToEditorText(Map<String, String> map) {
+    final entries = map.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    return entries
+        .map((entry) => '${_serializeKey(entry.key)} => ${entry.value}')
+        .join('\n');
+  }
+
+  String _serializeKey(String key) {
+    if (key == ' ') return '[space]';
+    return key;
+  }
+
+  Map<String, String> _parseEditorText(String text) {
+    final map = <String, String>{};
+    final lines = text.split('\n');
+
+    for (var i = 0; i < lines.length; i++) {
+      final rawLine = lines[i];
+      final trimmed = rawLine.trim();
+      if (trimmed.isEmpty || trimmed.startsWith('#')) {
+        continue;
+      }
+
+      final separator = rawLine.indexOf('=>');
+      if (separator < 0) {
+        throw FormatException('Line ${i + 1}: expected key => value');
+      }
+
+      final rawKey = rawLine.substring(0, separator).trim();
+      final value = rawLine.substring(separator + 2).trim();
+      final key = rawKey == '[space]' ? ' ' : rawKey;
+
+      if (key.isEmpty) {
+        throw FormatException('Line ${i + 1}: key cannot be empty');
+      }
+      if (value.isEmpty) {
+        throw FormatException('Line ${i + 1}: value cannot be empty');
+      }
+      if (map.containsKey(key)) {
+        throw FormatException('Line ${i + 1}: duplicate key "$rawKey"');
+      }
+
+      map[key] = value;
+    }
+
+    if (map.isEmpty) {
+      throw FormatException('Map cannot be empty');
+    }
+
+    return map;
+  }
+
   void _showTimeoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -433,9 +719,9 @@ class SettingsPage extends ConsumerWidget {
               Navigator.pop(context);
               final storage = FlutterSecureStorage();
               storage.deleteAll();
-              ref.refresh(rsaKeyPairsProvider);
-              ref.refresh(kemKeyPairsProvider);
-              ref.refresh(mlDsaKeyPairsProvider);
+              ref.invalidate(rsaKeyPairsProvider);
+              ref.invalidate(kemKeyPairsProvider);
+              ref.invalidate(mlDsaKeyPairsProvider);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Data cleared successfully')),
               );

@@ -59,6 +59,13 @@ class ObfuscationMapRepository {
     );
   }
 
+  Map<String, String> getBuiltInMap(ObfuscationMethod method) {
+    if (!_mappedMethods.contains(method)) {
+      return <String, String>{};
+    }
+    return Map<String, String>.unmodifiable(builtInMapForMethod(method));
+  }
+
   Future<void> setCustomMap(
     ObfuscationMethod method,
     Map<String, String> map,

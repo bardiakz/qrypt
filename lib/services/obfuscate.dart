@@ -63,8 +63,18 @@ class Obfuscate {
     await setAllMaps();
   }
 
+  static Future<Map<String, String>?> getCustomMap(
+    ObfuscationMethod method,
+  ) async {
+    return _repository.getCustomMap(method);
+  }
+
   static Map<String, String> getMapForMethod(ObfuscationMethod method) {
     return _repository.getMap(method);
+  }
+
+  static Map<String, String> getBuiltInMapForMethod(ObfuscationMethod method) {
+    return _repository.getBuiltInMap(method);
   }
 
   static String obfuscateText(
