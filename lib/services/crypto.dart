@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Crypto {
+  // This key only namespaces internal tag IDs (method metadata prefix), and is only kept due to backward compatibility
+  // not used for user secrets or ciphertext encryption.
+  static const String _tagHashSecret = 'c6277aa66f020fbb83f8b307f3b43adc';
+
   static String generateSHA224Hash(String input) {
-    final secretKey =
-        dotenv.env['HASH_SECRET'] ??
-        '933b5a33bdf532c9b9aad4efd26c2263'; //if key isnt loaded it uses the default secret
+    final secretKey = _tagHashSecret;
     // String secretKey = 'faf';
     final key = utf8.encode(secretKey);
     final bytes = utf8.encode(input);
