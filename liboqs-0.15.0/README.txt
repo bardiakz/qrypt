@@ -1,18 +1,18 @@
-liboqs 0.15.0 - All Platforms Combined
-================================================================
-
-This archive contains pre-built binaries for all supported platforms.
+liboqs - All Platforms Combined
+================================
 
 Structure:
-  lib/     - Compiled libraries for all platforms
-  include/ - Header files (shared across platforms)
-  bin/     - Windows DLLs
+  lib/x86_64/liboqs.so      - Linux x86_64
+  lib/aarch64/liboqs.so     - Linux ARM64
+  lib/liboqs.dylib          - macOS ARM64
+  lib/cmake/                - CMake config
+  bin/oqs.dll               - Windows x64
+  include/oqs/              - Headers
+  android/arm64-v8a/        - Android ARM64
+  android/armeabi-v7a/      - Android ARM32
+  android/x86_64/           - Android x86_64
+  android/x86/              - Android x86
+  liboqs.xcframework/       - iOS XCFramework
 
-Individual platform archives are also available in the release.
-
-For platform-specific builds, download the individual archives:
-- liboqs-*-linux-x86_64.tar.gz
-- liboqs-*-macos-arm64.tar.gz
-- liboqs-*-windows-x64.zip
-- liboqs-*-ios.xcframework.zip
-- liboqs-*-android-*.tar.gz
+Usage with LibOQSLoader:
+  LibOQSLoader.loadLibrary(binaryRoot: '/path/to/liboqs-VERSION');
