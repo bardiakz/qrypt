@@ -21,7 +21,8 @@ void main() async {
   //   final storage = FlutterSecureStorage();
   //   await storage.deleteAll();
   // }
-  LibOQSLoader.loadLibrary(binaryRoot: 'liboqs-0.15.0');
+  LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive('liboqs-0.16.0');
+  LibOQS.init();
   runApp(ProviderScope(child: const MyApp()));
 }
 
