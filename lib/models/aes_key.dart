@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class AESKey {
   final String id;
   final String name;
@@ -10,6 +12,12 @@ class AESKey {
     required this.key,
     required this.createdAt,
   });
+
+  /// Key length in bytes according to UTF-8 encoding
+  int get byteLength => utf8.encode(key).length;
+
+  /// Key length in bits
+  int get bitLength => byteLength * 8;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -38,6 +46,9 @@ class AESKey {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  @override
+  String toString() => 'AESKey(id: $id, name: $name, createdAt: $createdAt)';
 
   @override
   bool operator ==(Object other) =>

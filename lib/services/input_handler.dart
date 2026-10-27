@@ -1224,9 +1224,7 @@ class InputHandler {
                           items: savedKeys.map((k) {
                             return DropdownMenuItem<AESKey>(
                               value: k,
-                              child: Text(
-                                '${k.name} (${k.key.length * 8}-bit)',
-                              ),
+                              child: Text('${k.name} (${k.bitLength}-bit)'),
                             );
                           }).toList(),
                           onChanged: (k) {

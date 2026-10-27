@@ -60,6 +60,30 @@ void main() {
       expect(key1, isNot(equals(key3)));
     });
 
+    test('calculates byteLength and bitLength accurately', () {
+      final key = AESKey(
+        id: 'k-1',
+        name: 'Key',
+        key: '12345678901234567890123456789012',
+        createdAt: DateTime.now(),
+      );
+      expect(key.byteLength, equals(32));
+      expect(key.bitLength, equals(256));
+    });
+
+    test('toString redacts the secret key', () {
+      final key = AESKey(
+        id: 'safe-id',
+        name: 'SafeKey',
+        key: 'super-secret-key-12345678901234',
+        createdAt: DateTime.now(),
+      );
+      final str = key.toString();
+      expect(str.contains('safe-id'), isTrue);
+      expect(str.contains('SafeKey'), isTrue);
+      expect(str.contains('super-secret-key'), isFalse);
+    });
+
     test('copyWith updates specified fields', () {
       final now = DateTime.now();
       final original = AESKey(
@@ -214,6 +238,11 @@ void main() {
         validateAesKey('1234567890123456789012345'),
         isNotNull,
       ); // 25 chars
+    });
+
+    test('validates multibyte UTF-8 strings by byte count, not code units', () {
+      // '123456789012345é' has 16 characters (code units), but 17 UTF-8 bytes
+      expect(validateAesKey('123456789012345é'), isNotNull);
     });
 
     test('returns null for empty string (not active error)', () {

@@ -62,7 +62,7 @@ class AESKeyManagementDialog extends ConsumerWidget {
                           itemCount: keys.length,
                           itemBuilder: (context, index) {
                             final key = keys[index];
-                            final bitLength = key.key.length * 8;
+                            final bitLength = key.bitLength;
                             return Card(
                               child: ListTile(
                                 onTap: onKeySelected != null
@@ -78,7 +78,7 @@ class AESKeyManagementDialog extends ConsumerWidget {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '$bitLength-bit (${key.key.length} chars) • ${key.createdAt.toString().split('.')[0]}',
+                                  '$bitLength-bit (${key.byteLength} bytes) • ${key.createdAt.toString().split('.')[0]}',
                                 ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,

@@ -94,11 +94,17 @@ class AESKeySelector extends ConsumerWidget {
                 }
               }
 
-              if (currentSelectedKey == null && deduplicatedKeys.isNotEmpty) {
-                currentSelectedKey = deduplicatedKeys.first;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _updateSelectedProvider(ref, deduplicatedKeys.first);
-                });
+              if (currentSelectedKey == null) {
+                if (deduplicatedKeys.isNotEmpty) {
+                  currentSelectedKey = deduplicatedKeys.first;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _updateSelectedProvider(ref, deduplicatedKeys.first);
+                  });
+                } else if (selectedKey != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _updateSelectedProvider(ref, null);
+                  });
+                }
               }
 
               return DropdownButtonFormField<AESKey>(
@@ -116,7 +122,7 @@ class AESKeySelector extends ConsumerWidget {
                 items: deduplicatedKeys.map((k) {
                   return DropdownMenuItem<AESKey>(
                     value: k,
-                    child: Text('${k.name} (${k.key.length * 8}-bit)'),
+                    child: Text('${k.name} (${k.bitLength}-bit)'),
                   );
                 }).toList(),
                 onChanged: (k) {
@@ -144,25 +150,41 @@ class AESKeySelector extends ConsumerWidget {
     }
   }
 
-  void _updateSelectedProvider(WidgetRef ref, AESKey key) {
+  void _updateSelectedProvider(WidgetRef ref, AESKey? key) {
+    if (key == null) {
+      switch (keyType) {
+        case AESKeyType.both:
+          ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+          ref.read(customEncryptAesKeyProvider.notifier).state = '';
+          ref.read(customDecryptAesKeyProvider.notifier).state = '';
+          break;
+        case AESKeyType.encrypt:
+          ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
+          ref.read(customEncryptAesKeyProvider.notifier).state = '';
+          break;
+        case AESKeyType.decrypt:
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+          ref.read(customDecryptAesKeyProvider.notifier).state = '';
+          break;
+      }
+      return;
+    }
+
     switch (keyType) {
       case AESKeyType.both:
         ref.read(selectedAESEncryptKeyProvider.notifier).state = key;
         ref.read(selectedAESDecryptKeyProvider.notifier).state = key;
         ref.read(customEncryptAesKeyProvider.notifier).state = key.key;
         ref.read(customDecryptAesKeyProvider.notifier).state = key.key;
-        ref.read(useCustomEncryptAesKeyProvider.notifier).state = true;
-        ref.read(useCustomDecryptAesKeyProvider.notifier).state = true;
         break;
       case AESKeyType.encrypt:
         ref.read(selectedAESEncryptKeyProvider.notifier).state = key;
         ref.read(customEncryptAesKeyProvider.notifier).state = key.key;
-        ref.read(useCustomEncryptAesKeyProvider.notifier).state = true;
         break;
       case AESKeyType.decrypt:
         ref.read(selectedAESDecryptKeyProvider.notifier).state = key;
         ref.read(customDecryptAesKeyProvider.notifier).state = key.key;
-        ref.read(useCustomDecryptAesKeyProvider.notifier).state = true;
         break;
     }
     onKeyChanged?.call(key);

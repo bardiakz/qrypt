@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,9 +48,9 @@ InputDecoration buildInputDecoration({
 String? validateAesKey(String key) {
   if (key.isEmpty) return null;
 
-  final keyLength = key.length;
-  if (keyLength != 16 && keyLength != 24 && keyLength != 32) {
-    return 'AES key must be 16, 24, or 32 characters long';
+  final byteLength = utf8.encode(key).length;
+  if (byteLength != 16 && byteLength != 24 && byteLength != 32) {
+    return 'AES key must be 16, 24, or 32 bytes (got $byteLength bytes)';
   }
   return null;
 }
