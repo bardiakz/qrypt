@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qrypt/pages/widgets/aes/aes_key_selector.dart';
 import 'package:qrypt/pages/widgets/ml_dsa/ml_dsa_key_selector.dart';
 import 'package:qrypt/pages/widgets/ml_kem/kem_key_selector.dart';
 import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
@@ -60,6 +61,19 @@ class KeyManagementPage extends ConsumerWidget {
               ),
 
               const SizedBox(height: 24),
+
+              // AES Keys Section
+              _buildSectionHeader(
+                context,
+                'AES Keys',
+                'Symmetric encryption keys (128, 192, or 256-bit)',
+                Icons.vpn_key,
+                primaryColor,
+              ),
+              const SizedBox(height: 12),
+              AESEncryptKeySelector(primaryColor: primaryColor),
+
+              const SizedBox(height: 32),
 
               // RSA Keys Section
               _buildSectionHeader(

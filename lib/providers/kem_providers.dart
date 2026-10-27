@@ -11,10 +11,12 @@ final kemKeyPairsProvider = FutureProvider<List<QryptKEMKeyPair>>((ref) async {
   return await service.getKeyPairs();
 });
 
-final selectedKemEncryptKeyPairProvider =
-    simpleStateProvider<QryptKEMKeyPair?>(null);
-final selectedKemDecryptKeyPairProvider =
-    simpleStateProvider<QryptKEMKeyPair?>(null);
+final selectedKemEncryptKeyPairProvider = simpleStateProvider<QryptKEMKeyPair?>(
+  null,
+);
+final selectedKemDecryptKeyPairProvider = simpleStateProvider<QryptKEMKeyPair?>(
+  null,
+);
 final receiverKemPublicKeyProvider = simpleStateProvider<String>('');
 final decryptKemPublicKeyProvider = simpleStateProvider<String>('');
 String decryptKemPublicKeyGlobal = '';

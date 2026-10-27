@@ -1,7 +1,1 @@
-enum CompressionMethod {
-  none,
-  gZip,
-  lZ4,
-  brotli,
-  zstd,
-}
+enum CompressionMethod { none, gZip, lZ4, brotli, zstd }

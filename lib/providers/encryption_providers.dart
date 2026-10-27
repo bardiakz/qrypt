@@ -16,12 +16,15 @@ final isProcessingProvider = simpleStateProvider<bool>(false);
 
 // Advanced settings
 final publicKeyRequiredProvider = simpleStateProvider<bool>(false);
-final selectedEncryptionProvider =
-    simpleStateProvider<EncryptionMethod>(EncryptionMethod.none);
-final selectedObfuscationProvider =
-    simpleStateProvider<ObfuscationMethod>(ObfuscationMethod.none);
-final selectedCompressionProvider =
-    simpleStateProvider<CompressionMethod>(CompressionMethod.gZip);
+final selectedEncryptionProvider = simpleStateProvider<EncryptionMethod>(
+  EncryptionMethod.none,
+);
+final selectedObfuscationProvider = simpleStateProvider<ObfuscationMethod>(
+  ObfuscationMethod.none,
+);
+final selectedCompressionProvider = simpleStateProvider<CompressionMethod>(
+  CompressionMethod.gZip,
+);
 final selectedSignProvider = simpleStateProvider<SignMethod>(SignMethod.none);
 final publicKeyProvider = simpleStateProvider<String>('');
 final inputQryptProvider = simpleStateProvider<Qrypt>(

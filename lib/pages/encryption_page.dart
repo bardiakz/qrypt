@@ -14,9 +14,11 @@ import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/pages/widgets/rsa/rsa_key_selector.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
 import 'package:flutter/services.dart';
+import 'package:qrypt/providers/aes_providers.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
+import '../models/aes_key.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
 import '../models/rsa_key_pair.dart';
@@ -26,6 +28,8 @@ import '../resources/constants.dart';
 import '../resources/global_resources.dart';
 import '../services/input_handler.dart';
 import 'key_management_page.dart';
+import 'widgets/aes/aes_key_management_dialog.dart';
+import 'widgets/aes/create_aes_key_dialog.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
@@ -189,6 +193,104 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       color: Colors.blueGrey,
                       size: AppConstants.iconSize + 2,
                       semanticLabel: 'Generate random key',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppConstants.smallPadding),
+                InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AESKeyManagementDialog(
+                        primaryColor: primaryColor,
+                        onKeySelected: (key) {
+                          controller.text = key.key;
+                          ref.read(keyProvider.notifier).state = key.key;
+                          if (isEncryptMode) {
+                            ref
+                                    .read(
+                                      selectedAESEncryptKeyProvider.notifier,
+                                    )
+                                    .state =
+                                key;
+                            ref
+                                    .read(
+                                      useCustomEncryptAesKeyProvider.notifier,
+                                    )
+                                    .state =
+                                true;
+                          } else {
+                            ref
+                                    .read(
+                                      selectedAESDecryptKeyProvider.notifier,
+                                    )
+                                    .state =
+                                key;
+                            ref
+                                    .read(
+                                      useCustomDecryptAesKeyProvider.notifier,
+                                    )
+                                    .state =
+                                true;
+                          }
+                        },
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.switchBorderRadius,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppConstants.smallPadding),
+                    child: Icon(
+                      Icons.vpn_key_outlined,
+                      color: Colors.blueGrey,
+                      size: AppConstants.iconSize + 2,
+                      semanticLabel: 'Saved keys',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppConstants.smallPadding),
+                InkWell(
+                  onTap: () async {
+                    final currentKey = controller.text.trim();
+                    final savedKey = await showDialog<AESKey>(
+                      context: context,
+                      builder: (context) => CreateAESKeyDialog(
+                        primaryColor: primaryColor,
+                        initialKey: currentKey,
+                      ),
+                    );
+                    if (savedKey != null) {
+                      controller.text = savedKey.key;
+                      ref.read(keyProvider.notifier).state = savedKey.key;
+                      if (isEncryptMode) {
+                        ref.read(selectedAESEncryptKeyProvider.notifier).state =
+                            savedKey;
+                        ref
+                                .read(useCustomEncryptAesKeyProvider.notifier)
+                                .state =
+                            true;
+                      } else {
+                        ref.read(selectedAESDecryptKeyProvider.notifier).state =
+                            savedKey;
+                        ref
+                                .read(useCustomDecryptAesKeyProvider.notifier)
+                                .state =
+                            true;
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.switchBorderRadius,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppConstants.smallPadding),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      color: Colors.blueGrey,
+                      size: AppConstants.iconSize + 2,
+                      semanticLabel: 'Save key',
                     ),
                   ),
                 ),
@@ -423,6 +525,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
 
+    ref.listen(selectedAESEncryptKeyProvider, (previous, next) {
+      if (next != null && _customAesKeyController.text != next.key) {
+        _customAesKeyController.text = next.key;
+      }
+    });
+    ref.listen(selectedAESDecryptKeyProvider, (previous, next) {
+      if (next != null && _customDecryptAesKeyController.text != next.key) {
+        _customDecryptAesKeyController.text = next.key;
+      }
+    });
+
     Future(() {
       ref.read(currentTextControllerProvider.notifier).state =
           _encryptTextController;
@@ -595,7 +708,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       title: "Use Default Encryption",
                       value: defaultEncryption,
                       onChanged: (val) {
-                        ref.read(defaultEncryptionProvider.notifier).state = val;
+                        ref.read(defaultEncryptionProvider.notifier).state =
+                            val;
 
                         // When leaving default mode, preload the same pipeline
                         // used by default encryption so the visible options match.
@@ -1211,11 +1325,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   ),
                                 ),
                               ],
-                        ),
-                      ),
+                            ),
                     ),
-
-                  ],
+                  ),
+                ],
 
                 // Output section
                 const SizedBox(height: AppConstants.defaultPadding),
@@ -1300,11 +1413,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             ? ref.watch(processedEncryptProvider).text
                             : ref.watch(processedDecryptProvider).text,
                         style: const TextStyle(fontSize: 16),
-                        ),
                       ),
                     ),
-
-                  ],
+                  ),
+                ],
 
                 const SizedBox(height: AppConstants.defaultPadding),
               ],
