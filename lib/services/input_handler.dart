@@ -11,12 +11,14 @@ import 'package:qrypt/services/kem/kem_service.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 import '../models/Qrypt.dart';
+import '../models/aes_key.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
 import '../models/sign_method.dart';
 import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
+import 'aes/aes_key_storage_service.dart';
 import 'aes_encryption.dart';
 import 'ml_dsa/ml_dsa_key_service.dart';
 import 'obfuscate.dart';
@@ -1176,6 +1178,8 @@ class InputHandler {
   Future<String?> _showCustomKeyDialog(BuildContext context) async {
     final TextEditingController keyController = TextEditingController();
     String? errorText;
+    final List<AESKey> savedKeys = await const AesKeyStorageService().getKeys();
+    AESKey? selectedSavedKey;
 
     return showDialog<String>(
       context: context,
@@ -1184,58 +1188,115 @@ class InputHandler {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Row(
+              title: const Row(
                 children: [
                   Icon(Icons.key, color: Colors.orange, size: 24),
                   SizedBox(width: 8),
                   Text('Custom Key Required'),
                 ],
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Decryption failed with the default key. This content appears to be encrypted with a custom AES key.',
-                    style: TextStyle(fontSize: 14),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Decryption failed with the default key. This content appears to be encrypted with a custom AES key.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      if (savedKeys.isNotEmpty) ...[
+                        DropdownButtonFormField<AESKey>(
+                          initialValue: selectedSavedKey,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Choose Saved Key',
+                            prefixIcon: Icon(Icons.bookmark_outline),
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          hint: const Text('Select a saved key...'),
+                          items: savedKeys.map((k) {
+                            return DropdownMenuItem<AESKey>(
+                              value: k,
+                              child: Text(
+                                '${k.name} (${k.key.length * 8}-bit)',
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (k) {
+                            if (k != null) {
+                              setState(() {
+                                selectedSavedKey = k;
+                                keyController.text = k.key;
+                                errorText = null;
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        const Row(
+                          children: [
+                            Expanded(child: Divider()),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                'OR ENTER MANUALLY',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      TextField(
+                        controller: keyController,
+                        decoration: InputDecoration(
+                          labelText: 'Enter Custom AES Key',
+                          hintText: '16, 24, or 32 bytes (characters if ASCII)',
+                          prefixIcon: const Icon(Icons.vpn_key),
+                          border: const OutlineInputBorder(),
+                          errorText: errorText,
+                          helperText:
+                              'Current byte length: ${utf8.encode(keyController.text).length}',
+                        ),
+                        obscureText: true, // Obscure input for security
+                        maxLines: 1,
+                        autofocus: savedKeys.isEmpty,
+                        onChanged: (value) {
+                          setState(() {
+                            final byteLength = utf8
+                                .encode(value)
+                                .length; // Check byte length
+                            if (value.isNotEmpty &&
+                                byteLength != 16 &&
+                                byteLength != 24 &&
+                                byteLength != 32) {
+                              errorText =
+                                  'Key must be exactly 16, 24, or 32 bytes';
+                            } else {
+                              errorText = null;
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: keyController,
-                    decoration: InputDecoration(
-                      labelText: 'Enter Custom AES Key',
-                      hintText: '16, 24, or 32 bytes (characters if ASCII)',
-                      prefixIcon: Icon(Icons.vpn_key),
-                      border: OutlineInputBorder(),
-                      errorText: errorText,
-                      helperText:
-                          'Current byte length: ${utf8.encode(keyController.text).length}',
-                    ),
-                    obscureText: true, // Obscure input for security
-                    maxLines: 1,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        final byteLength = utf8
-                            .encode(value)
-                            .length; // Check byte length
-                        if (value.isNotEmpty &&
-                            byteLength != 16 &&
-                            byteLength != 24 &&
-                            byteLength != 32) {
-                          errorText = 'Key must be exactly 16, 24, or 32 bytes';
-                        } else {
-                          errorText = null;
-                        }
-                      });
-                    },
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
+                ),
               ),
               actions: [
                 TextButton(

@@ -60,9 +60,73 @@ void main() {
 
       expect(find.text('Primary Key (256-bit)'), findsOneWidget);
     });
+
+    testWidgets(
+      'AESDecryptKeySelector shows and allows selecting decrypt key',
+      (WidgetTester tester) async {
+        const storageService = AesKeyStorageService();
+        await storageService.saveKey(
+          AESKey(
+            id: 'decrypt-1',
+            name: 'Decrypt Shared Key',
+            key: '12345678901234567890123456789012',
+            createdAt: DateTime.now(),
+          ),
+        );
+
+        AESKey? selectedKey;
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: AESDecryptKeySelector(
+                  primaryColor: Colors.blue,
+                  onKeyChanged: (k) => selectedKey = k,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('AES Key (Decrypt)'), findsOneWidget);
+        expect(find.text('Decrypt Shared Key (256-bit)'), findsOneWidget);
+        expect(selectedKey?.id, equals('decrypt-1'));
+      },
+    );
   });
 
   group('CreateAESKeyDialog Widget', () {
+    testWidgets('toggles manual input stably', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: CreateAESKeyDialog(primaryColor: Colors.blue)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initially in generate mode
+      expect(find.text('Key Length'), findsOneWidget);
+      expect(find.text('Manual Input / Paste'), findsOneWidget);
+
+      // Toggle manual input switch
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      // Now in manual input mode
+      expect(find.text('AES Secret Key'), findsOneWidget);
+      expect(find.text('Key Length'), findsNothing);
+
+      // Toggle back to generate mode
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Key Length'), findsOneWidget);
+      expect(find.text('AES Secret Key'), findsNothing);
+    });
+
     testWidgets('validates empty name and saves valid key', (
       WidgetTester tester,
     ) async {

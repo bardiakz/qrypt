@@ -29,6 +29,7 @@ import '../resources/global_resources.dart';
 import '../services/input_handler.dart';
 import 'key_management_page.dart';
 import 'widgets/aes/aes_key_management_dialog.dart';
+import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
@@ -873,6 +874,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                         if (useCustomAesKey) ...[
                           const SizedBox(height: AppConstants.defaultPadding),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.defaultPadding,
+                            ),
+                            child: AESEncryptKeySelector(
+                              primaryColor: primaryColor,
+                              onKeyChanged: (k) {
+                                _customAesKeyController.text = k.key;
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppConstants.defaultPadding),
                           _buildCustomAesKeyField(
                             context: context,
                             primaryColor: primaryColor,
@@ -1168,6 +1181,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ],
 
                         if (useCustomAesKey) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.defaultPadding,
+                            ),
+                            child: AESDecryptKeySelector(
+                              primaryColor: primaryColor,
+                              onKeyChanged: (k) {
+                                _customDecryptAesKeyController.text = k.key;
+                              },
+                            ),
+                          ),
                           const SizedBox(height: AppConstants.defaultPadding),
                           _buildCustomAesKeyField(
                             context: context,

@@ -71,7 +71,7 @@ class KeyManagementPage extends ConsumerWidget {
                 primaryColor,
               ),
               const SizedBox(height: 12),
-              AESEncryptKeySelector(primaryColor: primaryColor),
+              AESKeySelector(primaryColor: primaryColor),
 
               const SizedBox(height: 32),
 

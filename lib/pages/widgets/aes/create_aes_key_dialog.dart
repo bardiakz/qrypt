@@ -55,134 +55,160 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Save AES Key'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Key Name',
-                hintText: 'e.g. Personal, Work, Project',
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Switch(
-                  value: _useManualInput,
-                  onChanged: (value) {
-                    setState(() {
-                      _useManualInput = value;
-                      if (!value && _generatedPreview.isEmpty) {
-                        _regenerateKey();
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                const Text('Manual Input / Paste'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_useManualInput) ...[
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               TextField(
-                controller: _keyController,
-                decoration: InputDecoration(
-                  labelText: 'AES Secret Key',
-                  hintText: '16, 24, or 32 characters',
-                  errorText: _keyController.text.isEmpty
-                      ? null
-                      : validateAesKey(_keyController.text),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.paste),
-                        tooltip: 'Paste from clipboard',
-                        onPressed: () async {
-                          final text = await pasteFromClipboard(context);
-                          if (text != null) {
-                            setState(() {
-                              _keyController.text = text;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-            ] else ...[
-              const Text(
-                'Key Length',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
-                value: _selectedLength,
+                controller: _nameController,
                 decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  labelText: 'Key Name',
+                  hintText: 'e.g. Personal, Work, Project',
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 16,
-                    child: Text('128-bit (16 chars)'),
-                  ),
-                  DropdownMenuItem(
-                    value: 24,
-                    child: Text('192-bit (24 chars)'),
-                  ),
-                  DropdownMenuItem(
-                    value: 32,
-                    child: Text('256-bit (32 chars) - Recommended'),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedLength = val;
-                      _regenerateKey();
-                    });
-                  }
-                },
               ),
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: getTextFieldBackgroundColor(context),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: getBorderColor(context)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _generatedPreview,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Switch(
+                    value: _useManualInput,
+                    onChanged: (value) {
+                      setState(() {
+                        _useManualInput = value;
+                        if (!value && _generatedPreview.isEmpty) {
+                          _regenerateKey();
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Manual Input / Paste'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 140),
+                child: _useManualInput
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _keyController,
+                            decoration: InputDecoration(
+                              labelText: 'AES Secret Key',
+                              hintText: '16, 24, or 32 characters',
+                              errorText: _keyController.text.isEmpty
+                                  ? null
+                                  : validateAesKey(_keyController.text),
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.paste),
+                                    tooltip: 'Paste from clipboard',
+                                    onPressed: () async {
+                                      final text = await pasteFromClipboard(
+                                        context,
+                                      );
+                                      if (text != null) {
+                                        setState(() {
+                                          _keyController.text = text;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Enter exactly 16 (128-bit), 24 (192-bit), or 32 (256-bit) characters.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Key Length',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<int>(
+                            value: _selectedLength,
+                            decoration: const InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 16,
+                                child: Text('128-bit (16 chars)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 24,
+                                child: Text('192-bit (24 chars)'),
+                              ),
+                              DropdownMenuItem(
+                                value: 32,
+                                child: Text('256-bit (32 chars) - Recommended'),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedLength = val;
+                                  _regenerateKey();
+                                });
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: getTextFieldBackgroundColor(context),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: getBorderColor(context),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _generatedPreview,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: 'Re-generate',
+                                  onPressed: _regenerateKey,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      tooltip: 'Re-generate',
-                      onPressed: _regenerateKey,
-                    ),
-                  ],
-                ),
               ),
             ],
-          ],
+          ),
         ),
       ),
       actions: [

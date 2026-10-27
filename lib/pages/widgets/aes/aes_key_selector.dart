@@ -8,7 +8,7 @@ import '../../../resources/global_resources.dart';
 import 'aes_key_management_dialog.dart';
 import 'create_aes_key_dialog.dart';
 
-enum AESKeyType { encrypt, decrypt }
+enum AESKeyType { both, encrypt, decrypt }
 
 class AESKeySelector extends ConsumerWidget {
   final Color primaryColor;
@@ -19,8 +19,8 @@ class AESKeySelector extends ConsumerWidget {
   const AESKeySelector({
     super.key,
     required this.primaryColor,
-    required this.keyType,
-    this.title = 'AES Symmetric Key',
+    this.keyType = AESKeyType.both,
+    this.title = 'Saved AES Keys',
     this.onKeyChanged,
   });
 
@@ -136,6 +136,7 @@ class AESKeySelector extends ConsumerWidget {
 
   _getSelectedProvider() {
     switch (keyType) {
+      case AESKeyType.both:
       case AESKeyType.encrypt:
         return selectedAESEncryptKeyProvider;
       case AESKeyType.decrypt:
@@ -145,6 +146,14 @@ class AESKeySelector extends ConsumerWidget {
 
   void _updateSelectedProvider(WidgetRef ref, AESKey key) {
     switch (keyType) {
+      case AESKeyType.both:
+        ref.read(selectedAESEncryptKeyProvider.notifier).state = key;
+        ref.read(selectedAESDecryptKeyProvider.notifier).state = key;
+        ref.read(customEncryptAesKeyProvider.notifier).state = key.key;
+        ref.read(customDecryptAesKeyProvider.notifier).state = key.key;
+        ref.read(useCustomEncryptAesKeyProvider.notifier).state = true;
+        ref.read(useCustomDecryptAesKeyProvider.notifier).state = true;
+        break;
       case AESKeyType.encrypt:
         ref.read(selectedAESEncryptKeyProvider.notifier).state = key;
         ref.read(customEncryptAesKeyProvider.notifier).state = key.key;
