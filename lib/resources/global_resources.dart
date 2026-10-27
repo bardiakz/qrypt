@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'constants.dart';
@@ -53,15 +54,14 @@ String? validateAesKey(String key) {
   return null;
 }
 
-String generateRandomAesKey() {
+String generateRandomAesKey({int length = 32}) {
   const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
-  final random = DateTime.now().millisecondsSinceEpoch;
-  var result = '';
-  for (var i = 0; i < 32; i++) {
-    result += chars[(random + i) % chars.length];
-  }
-  return result;
+  final random = Random.secure();
+  return List.generate(
+    length,
+    (_) => chars[random.nextInt(chars.length)],
+  ).join();
 }
 
 void copyToClipboard(String text, BuildContext context) async {

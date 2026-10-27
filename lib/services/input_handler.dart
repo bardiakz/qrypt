@@ -432,22 +432,11 @@ class InputHandler {
 
         try {
           // CHECK: Ensure public key is available before verification
-          if (qrypt.dsaVerifyPublicKEy == null) {
-            if (kDebugMode) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '⚠️ WARNING: No DSA public key provided for verification - skipping signature verification.',
-                  ),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-              print(
-                '⚠️ WARNING: No DSA public key provided for verification - skipping signature verification',
-              );
-            }
-            // Extract and return the original message without verification
-            return _extractOriginalMessageFromSigned(qrypt);
+          if (qrypt.dsaVerifyPublicKEy == null ||
+              qrypt.dsaVerifyPublicKEy!.isEmpty) {
+            throw const FormatException(
+              'ML-DSA public key is required for signature verification.',
+            );
           }
 
           // Determine format and decode accordingly
@@ -561,26 +550,20 @@ class InputHandler {
             qrypt.dsaVerifyPublicKEy!, // The public key for verification
           );
 
-          if (isValid) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('DSA signature verification successful ✓'),
-                backgroundColor: Colors.green,
-              ),
+          if (!isValid) {
+            throw const FormatException(
+              'ML-DSA signature verification failed. Message may have been altered or forged.',
             );
-            if (kDebugMode) {
-              print('DSA signature verification successful ✓');
-            }
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('⚠️ WARNING: DSA signature verification failed!'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-            if (kDebugMode) {
-              print('⚠️ WARNING: DSA signature verification failed!');
-            }
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('DSA signature verification successful ✓'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (kDebugMode) {
+            print('DSA signature verification successful ✓');
           }
 
           // Return the original message - this should be the encrypted data (like "ciphertext:iv")
@@ -633,89 +616,6 @@ class InputHandler {
         }
 
         return qrypt;
-    }
-  }
-
-  // Helper method to extract original message when skipping verification
-  Qrypt _extractOriginalMessageFromSigned(Qrypt qrypt) {
-    bool usesMappedObfuscation = [
-      ObfuscationMethod.en1,
-      ObfuscationMethod.en2,
-      ObfuscationMethod.fa1,
-      ObfuscationMethod.fa2,
-    ].contains(qrypt.getObfuscationMethod());
-
-    bool usesBase64Obfuscation =
-        qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
-
-    try {
-      String packageJson;
-
-      if (usesMappedObfuscation) {
-        String hexString = qrypt.text;
-
-        // Ensure hex string has even length
-        if (hexString.length % 2 != 0) {
-          throw FormatException(
-            'Invalid hex string length: ${hexString.length}. Hex strings must have even length.',
-          );
-        }
-
-        List<int> bytes = [];
-        for (int i = 0; i < hexString.length; i += 2) {
-          String hexByte = hexString.substring(i, i + 2);
-          bytes.add(int.parse(hexByte, radix: 16));
-        }
-        packageJson = utf8.decode(bytes);
-      } else if (usesBase64Obfuscation) {
-        packageJson = utf8.decode(qrypt.text.codeUnits);
-      } else {
-        packageJson = utf8.decode(base64Decode(qrypt.text));
-      }
-
-      Map<String, dynamic> signedPackage = jsonDecode(packageJson);
-      Uint8List originalMessage = base64Decode(signedPackage['message']);
-
-      // The original message should be the encrypted data (like "ciphertext:iv")
-      // or compressed binary data for encryption.none
-      if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
-        // For no encryption, set binary data for decompression
-        qrypt.deCompressedText = originalMessage;
-        qrypt.text = "BINARY_DATA_PLACEHOLDER";
-
-        if (kDebugMode) {
-          print(
-            'DSA Verify (no key) - Set binary data for decompression, length: ${originalMessage.length}',
-          );
-        }
-      } else {
-        // For encrypted data, convert to string format
-        try {
-          String originalDataString = utf8.decode(originalMessage);
-          qrypt.text = originalDataString;
-
-          if (kDebugMode) {
-            print('DSA Verify (no key) - Set encrypted data string');
-          }
-        } catch (e) {
-          // If it fails to decode as UTF-8, treat as binary
-          qrypt.deCompressedText = originalMessage;
-          qrypt.text = "BINARY_DATA_PLACEHOLDER";
-
-          if (kDebugMode) {
-            print(
-              'DSA Verify (no key) - Treating as binary data due to UTF-8 decode error',
-            );
-          }
-        }
-      }
-
-      return qrypt;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error extracting original message: $e');
-      }
-      rethrow;
     }
   }
 
