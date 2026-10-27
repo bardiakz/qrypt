@@ -47,6 +47,7 @@ function(APPLY_STANDARD_SETTINGS TARGET)
 endfunction()
 
 # Flutter library and tool build rules.
+add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wno-error=incompatible-pointer-types>")
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
