@@ -27,13 +27,23 @@ name: Release
         type: string
         default: ''
 
+# Least privilege by default; only the release job gets write access.
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Must match the NDK Flutter/Gradle asks for (see "NDK ... not installed" errors).
+  NDK_VERSION: '29.0.13599879'
 
 jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -52,6 +62,16 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # FIX: accept SDK licenses and pre-install the NDK so sdkmanager
+      # never prompts (and silently skips) during the Gradle build.
+      - name: Accept Android licenses and install NDK
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          # `yes` gets SIGPIPE when sdkmanager exits; ignore that exit code.
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "ndk;${NDK_VERSION}"
+
       - name: Configure environment file
         run: |
           if [ ! -f .env ]; then
@@ -64,20 +84,25 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
           # Adjust Gradle memory limits to fit GitHub-hosted runner memory (7GB)
           sed -i 's/-Xmx8G -XX:MaxMetaspaceSize=4G/-Xmx3G -XX:MaxMetaspaceSize=1G/g' android/gradle.properties
 
-          # Setup keystore (use secret if provided, else fallback to generated keystore)
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
             printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
               "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+          elif [ "$IS_TAG" = "true" ]; then
+            # A random throwaway key means users can't update over a previous install.
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing; refusing to publish a tag build signed with a throwaway key."
+            exit 1
           elif [ ! -f android/key.properties ]; then
+            echo "::warning::No keystore secret; using a throwaway key (test build only)."
             keytool -genkey -v -keystore android/app/upload-keystore.jks \
               -storepass android -alias androiddebugkey -keypass android \
               -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=qrypt, OU=Release, O=Release, L=Unknown, S=Unknown, C=US"
+              -dname "CN=qrypt, OU=Release, O=Release, L=Unknown, ST=Unknown, C=US"
             printf "storePassword=android\nkeyPassword=android\nkeyAlias=androiddebugkey\nstoreFile=upload-keystore.jks\n" > android/key.properties
           fi
 
@@ -107,6 +132,7 @@ jobs:
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -116,7 +142,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev pkg-config libsecret-1-dev
+          sudo apt-get install -y ninja-build libgtk-3-dev pkg-config libsecret-1-dev libjsoncpp-dev
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -154,6 +180,7 @@ jobs:
   build-macos:
     name: Build macOS
     runs-on: macos-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -198,6 +225,7 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -240,6 +268,7 @@ jobs:
     needs: [build-android, build-linux, build-macos, build-windows]
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.create_release == 'true'))
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -252,20 +281,32 @@ jobs:
           path: release-artifacts
           merge-multiple: true
 
-      - name: Inspect downloaded artifacts
-        run: ls -lh release-artifacts
+      - name: Generate checksums
+        run: |
+          cd release-artifacts
+          sha256sum * > SHA256SUMS.txt
+          ls -lh
 
+      # FIX: user input passed via env, not interpolated into the script (injection).
       - name: Determine Release Tag
         id: release_tag
+        env:
+          INPUT_TAG: ${{ inputs.tag_name }}
+          REF: ${{ github.ref }}
         run: |
-          if [ -n "${{ inputs.tag_name }}" ]; then
-            echo "tag=${{ inputs.tag_name }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [[ "$REF" == refs/tags/* ]]; then
+            TAG="${REF#refs/tags/}"
           else
             APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
-            echo "tag=v${APP_VERSION}" >> "$GITHUB_OUTPUT"
+            TAG="v${APP_VERSION}"
           fi
+          if ! [[ "$TAG" =~ ^v[0-9A-Za-z._-]+$ ]]; then
+            echo "::error::Invalid tag name: $TAG"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
