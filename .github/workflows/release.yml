@@ -27,7 +27,6 @@ name: Release
         type: string
         default: ''
 
-# Least privilege by default; only the release job gets write access.
 permissions:
   contents: read
 
@@ -36,12 +35,56 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Must match the NDK Flutter/Gradle asks for (see "NDK ... not installed" errors).
   NDK_VERSION: '29.0.13599879'
+  # Optional: set a repository *variable* FLUTTER_VERSION (e.g. 3.35.0) to pin Flutter.
+  # Empty = latest on the stable channel.
+  FLUTTER_VERSION: ${{ vars.FLUTTER_VERSION }}
 
 jobs:
+  verify:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: |
+          if [ -d test ]; then
+            flutter test
+          else
+            echo "No test directory; skipping."
+          fi
+
   build-android:
     name: Build Android
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -60,10 +103,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      # FIX: accept SDK licenses and pre-install the NDK so sdkmanager
-      # never prompts (and silently skips) during the Gradle build.
       - name: Accept Android licenses and install NDK
         run: |
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
@@ -73,8 +115,12 @@ jobs:
           "$SDKMANAGER" --sdk_root="$SDK_ROOT" "ndk;${NDK_VERSION}"
 
       - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
         run: |
-          if [ ! -f .env ]; then
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
             cp .env.example .env
           fi
 
@@ -94,7 +140,6 @@ jobs:
             printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
               "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
           elif [ "$IS_TAG" = "true" ]; then
-            # A random throwaway key means users can't update over a previous install.
             echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing; refusing to publish a tag build signed with a throwaway key."
             exit 1
           elif [ ! -f android/key.properties ]; then
@@ -109,28 +154,35 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Android APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
+      # Removed --android-skip-build-dependency-validation so real problems surface.
+      - name: Build Android APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
 
-      - name: Package Android artifact
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
+
+      - name: Package Android artifacts
         run: |
-          if [ -f build/app/outputs/flutter-apk/app-release.apk ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk app-release.apk
-          elif [ -f build/app/outputs/apk/release/app-release.apk ]; then
-            cp build/app/outputs/apk/release/app-release.apk app-release.apk
-          else
-            find build/app/outputs -name "*release*.apk" -exec cp {} app-release.apk \;
-          fi
+          mkdir -p android-out
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            SRC="build/app/outputs/flutter-apk/app-${abi}-release.apk"
+            if [ -f "$SRC" ]; then
+              cp "$SRC" "android-out/qrypt-android-${abi}.apk"
+            fi
+          done
+          cp build/app/outputs/bundle/release/app-release.aab android-out/qrypt-android.aab
+          ls -lh android-out
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: qrypt-android
-          path: app-release.apk
+          path: android-out/*
           if-no-files-found: error
 
   build-linux:
     name: Build Linux
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -148,11 +200,16 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
         run: |
-          if [ ! -f .env ]; then
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
             cp .env.example .env
           fi
 
@@ -160,7 +217,6 @@ jobs:
         run: flutter pub get
 
       - name: Build Linux app
-        # Set CFLAGS/CXXFLAGS if needed for GCC 14+ strict pointer checks
         env:
           CFLAGS: "-Wno-error=incompatible-pointer-types"
           CXXFLAGS: "-Wno-error=incompatible-pointer-types"
@@ -179,6 +235,7 @@ jobs:
 
   build-macos:
     name: Build macOS
+    needs: verify
     runs-on: macos-latest
     timeout-minutes: 45
     permissions:
@@ -191,11 +248,16 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
         run: |
-          if [ ! -f .env ]; then
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
             cp .env.example .env
           fi
 
@@ -224,6 +286,7 @@ jobs:
 
   build-windows:
     name: Build Windows
+    needs: verify
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
@@ -236,12 +299,17 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Configure environment file
         shell: pwsh
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
         run: |
-          if (-not (Test-Path .env)) {
+          if ($env:DOTENV) {
+            Set-Content -Path .env -Value $env:DOTENV
+          } elseif (-not (Test-Path .env)) {
             Copy-Item .env.example .env
           }
 
@@ -287,7 +355,6 @@ jobs:
           sha256sum * > SHA256SUMS.txt
           ls -lh
 
-      # FIX: user input passed via env, not interpolated into the script (injection).
       - name: Determine Release Tag
         id: release_tag
         env:
@@ -305,6 +372,11 @@ jobs:
           if ! [[ "$TAG" =~ ^v[0-9A-Za-z._-]+$ ]]; then
             echo "::error::Invalid tag name: $TAG"
             exit 1
+          fi
+          # Tag must match pubspec.yaml version so builds and release names agree.
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          if [ "$TAG" != "v${APP_VERSION}" ]; then
+            echo "::warning::Tag $TAG does not match pubspec.yaml version v${APP_VERSION}."
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 

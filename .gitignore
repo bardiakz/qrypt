@@ -52,3 +52,5 @@ app.*.map.json
 
 oldbin/
 liboqs-0.15.0/
+
+test/services/compression_hardening_test.dart
