@@ -1040,6 +1040,7 @@ class InputHandler {
           }
           qrypt.dsaVerifyPublicKEy = base64Decode(dsaSenderPublicKey);
         }
+        if (!context.mounted) return qrypt;
         qrypt = handleVerify(qrypt, context);
         if (qrypt.encryption == EncryptionMethod.rsa ||
             qrypt.encryption == EncryptionMethod.rsaSign) {
@@ -1056,9 +1057,8 @@ class InputHandler {
           }
           qrypt.rsaKeyPair = selectedKeyPair;
         }
-        if (context.mounted) {
-          qrypt = await handleDecrypt(qrypt, context);
-        }
+        if (!context.mounted) return qrypt;
+        qrypt = await handleDecrypt(qrypt, context);
         qrypt = handleDeCompression(qrypt);
       }
     }
@@ -1118,12 +1118,6 @@ class InputHandler {
       switch (method) {
         case EncryptionMethod.aesCbc:
           final result = Aes.decryptAesCbc(ciphertext, iv, key);
-          if (result == null) {
-            if (kDebugMode) {
-              print('AES-CBC decryption returned null');
-            }
-            return null;
-          }
           // Convert List<int> to Uint8List if needed
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
@@ -1132,12 +1126,6 @@ class InputHandler {
 
         case EncryptionMethod.aesCtr:
           final result = Aes.decryptAesCtr(ciphertext, iv, key);
-          if (result == null) {
-            if (kDebugMode) {
-              print('AES-CTR decryption returned null');
-            }
-            return null;
-          }
           // Convert List<int> to Uint8List if needed
           if (result is! Uint8List) {
             return Uint8List.fromList(result);
@@ -1179,6 +1167,7 @@ class InputHandler {
     final TextEditingController keyController = TextEditingController();
     String? errorText;
     final List<AESKey> savedKeys = await const AesKeyStorageService().getKeys();
+    if (!context.mounted) return null;
     AESKey? selectedSavedKey;
 
     return showDialog<String>(

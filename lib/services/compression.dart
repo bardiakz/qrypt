@@ -15,6 +15,7 @@ class Compression {
 
   ///Decompresses data using GZip
   static List<int> gZipDeCompress(List<int> compressedData) {
+    if (compressedData.isEmpty) return <int>[];
     final decoder = GZipDecoder();
     return decoder.decodeBytes(compressedData);
   }
@@ -25,6 +26,7 @@ class Compression {
   }
 
   static List<int> lz4DeCompress(List<int> compressedData) {
+    if (compressedData.isEmpty) return <int>[];
     final decoder = Lz4Codec();
     return decoder.decode(compressedData);
   }
@@ -35,6 +37,7 @@ class Compression {
   }
 
   static List<int> brotliDeCompress(List<int> compressedData) {
+    if (compressedData.isEmpty) return <int>[];
     final decoder = BrotliCodec();
     return decoder.decode(compressedData);
   }
@@ -45,6 +48,7 @@ class Compression {
   }
 
   static List<int> zstdDeCompress(List<int> compressedData) {
+    if (compressedData.isEmpty) return <int>[];
     final decoder = ZstdCodec();
     return decoder.decode(compressedData);
   }
@@ -55,26 +59,22 @@ class Compression {
   }
 
   static void setNativeLibPaths() {
-    final String basePath;
-    // if (kDebugMode) {
-    //   basePath = path.join(Directory.current.path, 'native_libs');
-    // } else {
-    //   basePath = path.join(getExecutableDir());
-    // }
-    if (kDebugMode) {
-      basePath = path.join(Directory.current.path, 'native_libs');
-    } else {
-      if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
-        basePath = path.join(
-          getExecutableDir(),
-          'data',
-          'flutter_assets',
-          'native_libs',
-        );
-      } else {
-        basePath = path.join(getExecutableDir());
-      }
-    }
+    final List<String> candidatePaths = [
+      path.join(Directory.current.path, 'native_libs'),
+      path.join(
+        getExecutableDir(),
+        'data',
+        'flutter_assets',
+        'native_libs',
+      ),
+      path.join(getExecutableDir(), 'native_libs'),
+      getExecutableDir(),
+    ];
+
+    final String basePath = candidatePaths.firstWhere(
+      (candidate) => Directory(candidate).existsSync(),
+      orElse: () => candidatePaths.first,
+    );
 
     String lz4LibPath;
     if (Platform.isWindows) {

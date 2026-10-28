@@ -1,7 +1,7 @@
 import 'package:qrypt/models/obfuscation_method.dart';
 
 // Built-in obfuscation maps shipped with the app.
-// These replace environment-based map loading for predictable behavior.
+// Converted from .env for standalone, environment-free execution.
 
 const Map<String, String> builtInEn1Map = {
   'A': 'z',
@@ -107,7 +107,7 @@ const Map<String, String> builtInEn2Map = {
   'j': 'jungle',
   'k': 'kitchen',
   'l': 'library',
-  'm': 'machine',
+  'm': 'machine12345678912345678912345678912345',
   'n': 'nature',
   'o': 'office',
   'p': 'phone',
