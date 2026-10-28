@@ -1,77 +1,392 @@
 name: Release
 
-on:
+'on':
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish GitHub Release'
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: 'Create draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        type: boolean
+        default: false
+      tag_name:
+        description: 'Release tag name (e.g. v4.5.0; defaults to tag or pubspec.yaml version)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NDK_VERSION: '29.0.13599879'
+  # Optional: set a repository *variable* FLUTTER_VERSION (e.g. 3.35.0) to pin Flutter.
+  # Empty = latest on the stable channel.
+  FLUTTER_VERSION: ${{ vars.FLUTTER_VERSION }}
 
 jobs:
-  build-android:
+  verify:
+    name: Analyze & Test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: |
+          if [ -d test ]; then
+            flutter test
+          else
+            echo "No test directory; skipping."
+          fi
+
+  build-android:
+    name: Build Android
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "21"
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Get dependencies
-        run: flutter pub get
+      - name: Accept Android licenses and install NDK
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          # `yes` gets SIGPIPE when sdkmanager exits; ignore that exit code.
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "ndk;${NDK_VERSION}"
 
-      - name: Set up release signing
+      - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
+      - name: Configure Keystore and Gradle
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
-          cat > android/key.properties <<EOF
-          storePassword=$KEYSTORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=$KEY_ALIAS
-          storeFile=$RUNNER_TEMP/upload-keystore.jks
-          EOF
+          # Adjust Gradle memory limits to fit GitHub-hosted runner memory (7GB)
+          sed -i 's/-Xmx8G -XX:MaxMetaspaceSize=4G/-Xmx3G -XX:MaxMetaspaceSize=1G/g' android/gradle.properties
 
-      - name: Build APK
-        run: flutter build apk --release
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+            printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
+              "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+          elif [ "$IS_TAG" = "true" ]; then
+            echo "::error::KEYSTORE_BASE64 secret is missing; refusing to publish a tag build signed with a throwaway key."
+            exit 1
+          elif [ ! -f android/key.properties ]; then
+            echo "::warning::No keystore secret; using a throwaway key (test build only)."
+            keytool -genkey -v -keystore android/app/upload-keystore.jks \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=qrypt, OU=Release, O=Release, L=Unknown, ST=Unknown, C=US"
+            printf "storePassword=android\nkeyPassword=android\nkeyAlias=androiddebugkey\nstoreFile=upload-keystore.jks\n" > android/key.properties
+          fi
 
-      - name: Build App Bundle
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Removed --android-skip-build-dependency-validation so real problems surface.
+      - name: Build Android APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build Android App Bundle
         run: flutter build appbundle --release
 
-      - name: Clean up signing files
-        if: always()
+      - name: Package Android artifacts
         run: |
-          rm -f "$RUNNER_TEMP/upload-keystore.jks" android/key.properties
+          mkdir -p android-out
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            SRC="build/app/outputs/flutter-apk/app-${abi}-release.apk"
+            if [ -f "$SRC" ]; then
+              cp "$SRC" "android-out/qrypt-android-${abi}.apk"
+            fi
+          done
+          cp build/app/outputs/bundle/release/app-release.aab android-out/qrypt-android.aab
+          ls -lh android-out
 
-      - name: Upload build artifacts
+      - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+          name: qrypt-android
+          path: android-out/*
+          if-no-files-found: error
 
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+  build-linux:
+    name: Build Linux
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev pkg-config libsecret-1-dev libjsoncpp-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux app
+        env:
+          CFLAGS: "-Wno-error=incompatible-pointer-types"
+          CXXFLAGS: "-Wno-error=incompatible-pointer-types"
+        run: flutter build linux --release
+
+      - name: Package Linux bundle
+        run: |
+          tar -czf qrypt-linux-x64.tar.gz -C build/linux/x64/release bundle
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qrypt-linux
+          path: qrypt-linux-x64.tar.gz
+          if-no-files-found: error
+
+  build-macos:
+    name: Build macOS
+    needs: verify
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Configure environment file
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if [ -n "$DOTENV" ]; then
+            printf '%s\n' "$DOTENV" > .env
+          elif [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      - name: Package macOS app
+        run: |
+          cd build/macos/Build/Products/Release
+          if [ -d "qrypt.app" ]; then
+            zip -r -y "${GITHUB_WORKSPACE}/qrypt-macos.zip" qrypt.app
+          else
+            APP_NAME=$(ls -d *.app | head -n 1)
+            zip -r -y "${GITHUB_WORKSPACE}/qrypt-macos.zip" "$APP_NAME"
+          fi
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qrypt-macos
+          path: qrypt-macos.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Configure environment file
+        shell: pwsh
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+        run: |
+          if ($env:DOTENV) {
+            Set-Content -Path .env -Value $env:DOTENV
+          } elseif (-not (Test-Path .env)) {
+            Copy-Item .env.example .env
+          }
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows app
+        run: flutter build windows --release
+
+      - name: Package Windows app
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-windows-x64.zip" -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qrypt-windows
+          path: qrypt-windows-x64.zip
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: [build-android, build-linux, build-macos, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.create_release == 'true'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd release-artifacts
+          sha256sum * > SHA256SUMS.txt
+          ls -lh
+
+      - name: Determine Release Tag
+        id: release_tag
+        env:
+          INPUT_TAG: ${{ inputs.tag_name }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [[ "$REF" == refs/tags/* ]]; then
+            TAG="${REF#refs/tags/}"
+          else
+            APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+            TAG="v${APP_VERSION}"
+          fi
+          if ! [[ "$TAG" =~ ^v[0-9A-Za-z._-]+$ ]]; then
+            echo "::error::Invalid tag name: $TAG"
+            exit 1
+          fi
+          # Tag must match pubspec.yaml version so builds and release names agree.
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          if [ "$TAG" != "v${APP_VERSION}" ]; then
+            echo "::warning::Tag $TAG does not match pubspec.yaml version v${APP_VERSION}."
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          files: release-artifacts/*
+          draft: ${{ inputs.draft || false }}
+          prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true
-          files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
