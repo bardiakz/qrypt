@@ -72,7 +72,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze --no-fatal-infos
 
       - name: Test
         run: |
@@ -126,7 +126,7 @@ jobs:
 
       - name: Configure Keystore and Gradle
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -135,12 +135,12 @@ jobs:
           # Adjust Gradle memory limits to fit GitHub-hosted runner memory (7GB)
           sed -i 's/-Xmx8G -XX:MaxMetaspaceSize=4G/-Xmx3G -XX:MaxMetaspaceSize=1G/g' android/gradle.properties
 
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
             printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
               "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
           elif [ "$IS_TAG" = "true" ]; then
-            echo "::error::KEYSTORE_BASE64 secret is missing; refusing to publish a tag build signed with a throwaway key."
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing; refusing to publish a tag build signed with a throwaway key."
             exit 1
           elif [ ! -f android/key.properties ]; then
             echo "::warning::No keystore secret; using a throwaway key (test build only)."
@@ -334,7 +334,7 @@ jobs:
   release:
     name: Create Release
     needs: [build-android, build-linux, build-macos, build-windows]
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.create_release == 'true'))
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && (inputs.create_release == true || inputs.draft == true || inputs.prerelease == true))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
