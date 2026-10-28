@@ -107,6 +107,14 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
+# Install liboqs if present
+set(LIBOQS_LINUX_X64 "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/linux/x86_64/liboqs.so")
+if(EXISTS "${LIBOQS_LINUX_X64}")
+  install(FILES "${LIBOQS_LINUX_X64}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+endif()
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"

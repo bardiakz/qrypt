@@ -220,7 +220,12 @@ jobs:
         env:
           CFLAGS: "-Wno-error=incompatible-pointer-types"
           CXXFLAGS: "-Wno-error=incompatible-pointer-types"
-        run: flutter build linux --release
+        run: |
+          flutter build linux --release
+          if [ -f "liboqs-0.16.0/linux/x86_64/liboqs.so" ]; then
+            mkdir -p build/linux/x64/release/bundle/lib
+            cp "liboqs-0.16.0/linux/x86_64/liboqs.so" build/linux/x64/release/bundle/lib/
+          fi
 
       - name: Package Linux bundle
         run: |
@@ -265,7 +270,17 @@ jobs:
         run: flutter pub get
 
       - name: Build macOS app
-        run: flutter build macos --release
+        run: |
+          flutter build macos --release
+          APP_NAME=$(ls -d build/macos/Build/Products/Release/*.app 2>/dev/null | head -n 1)
+          if [ -d "$APP_NAME" ]; then
+            mkdir -p "$APP_NAME/Contents/Frameworks"
+            if [ -f "liboqs-0.16.0/macos/arm64/liboqs.dylib" ]; then
+              cp "liboqs-0.16.0/macos/arm64/liboqs.dylib" "$APP_NAME/Contents/Frameworks/"
+            elif [ -f "liboqs-0.16.0/macos/x86_64/liboqs.dylib" ]; then
+              cp "liboqs-0.16.0/macos/x86_64/liboqs.dylib" "$APP_NAME/Contents/Frameworks/"
+            fi
+          fi
 
       - name: Package macOS app
         run: |
@@ -322,6 +337,9 @@ jobs:
       - name: Package Windows app
         shell: pwsh
         run: |
+          if (Test-Path "liboqs-0.16.0\windows\x86_64\oqs.dll") {
+            Copy-Item "liboqs-0.16.0\windows\x86_64\oqs.dll" -Destination "build\windows\x64\runner\Release\" -Force
+          }
           Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-windows-x64.zip" -Force
 
       - name: Upload Windows artifact

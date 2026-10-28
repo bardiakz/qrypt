@@ -112,3 +112,11 @@ file(GLOB NATIVE_DLLS "${CMAKE_CURRENT_SOURCE_DIR}/../native_libs/*.dll")
 install(FILES ${NATIVE_DLLS}
         DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
         COMPONENT Runtime)
+
+# Install liboqs if present
+set(LIBOQS_WIN_X64 "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/windows/x86_64/oqs.dll")
+if(EXISTS "${LIBOQS_WIN_X64}")
+  install(FILES "${LIBOQS_WIN_X64}"
+          DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+          COMPONENT Runtime)
+endif()
