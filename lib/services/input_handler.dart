@@ -621,7 +621,7 @@ class InputHandler {
     }
   }
 
-  Future<Qrypt> handleDecrypt(Qrypt qrypt, BuildContext buildContext) async {
+  Future<Qrypt> handleDecrypt(Qrypt qrypt, [BuildContext? buildContext]) async {
     if (qrypt.text == "BINARY_DATA_PLACEHOLDER") {
       if (kDebugMode) {
         print(
@@ -677,10 +677,8 @@ class InputHandler {
           );
         }
         encrypt.Key useKey = _defaultKey;
-        if (qrypt.useTag == false) {
-          if (qrypt.useCustomKey) {
-            useKey = encrypt.Key.fromUtf8(qrypt.customKey);
-          }
+        if (qrypt.useCustomKey && qrypt.customKey.isNotEmpty) {
+          useKey = encrypt.Key.fromUtf8(qrypt.customKey);
         }
         // STEP 1: Always try with default key first
         try {
@@ -705,7 +703,7 @@ class InputHandler {
         }
 
         // STEP 2: If default key failed and context is available, prompt for custom key
-        if (buildContext.mounted && qrypt.useTag) {
+        if (buildContext != null && buildContext.mounted && qrypt.useTag) {
           final customKey = await _showCustomKeyDialog(buildContext);
           if (customKey != null && customKey.isNotEmpty) {
             try {
@@ -899,7 +897,7 @@ class InputHandler {
             if (kDebugMode) {
               print('Signature verification successful ✓');
             }
-            if (buildContext.mounted) {
+            if (buildContext != null && buildContext.mounted) {
               ScaffoldMessenger.of(buildContext).showSnackBar(
                 const SnackBar(
                   content: Text('Signature verification successful ✓'),
@@ -913,7 +911,7 @@ class InputHandler {
                 '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
               );
             }
-            if (buildContext.mounted) {
+            if (buildContext != null && buildContext.mounted) {
               ScaffoldMessenger.of(buildContext).showSnackBar(
                 const SnackBar(
                   content: Text(
@@ -995,14 +993,14 @@ class InputHandler {
   }
 
   Future<Qrypt> handleDeProcess(
-    BuildContext context,
+    BuildContext? context,
     Qrypt qrypt,
     bool useTag,
   ) async {
     Color primaryColor = Colors.blue;
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
-      if (qrypt.getSignMethod() != SignMethod.none) {
+      if (qrypt.getSignMethod() != SignMethod.none && context != null) {
         qrypt = handleVerify(qrypt, context);
       }
       qrypt = await handleDecrypt(qrypt, context);
@@ -1028,6 +1026,11 @@ class InputHandler {
         qrypt.sign = methods.sign;
         qrypt = handleDeObfs(qrypt);
         if (qrypt.sign == SignMethod.mlDsa) {
+          if (context == null) {
+            throw Exception(
+              'Decryption cancelled: No context to select ML-DSA key',
+            );
+          }
           String? dsaSenderPublicKey = await showMlDsaPublicKeyInputDialog(
             context: context,
             primaryColor: primaryColor,
@@ -1040,10 +1043,17 @@ class InputHandler {
           }
           qrypt.dsaVerifyPublicKEy = base64Decode(dsaSenderPublicKey);
         }
-        if (!context.mounted) return qrypt;
-        qrypt = handleVerify(qrypt, context);
+        if (context != null && !context.mounted) return qrypt;
+        if (context != null) {
+          qrypt = handleVerify(qrypt, context);
+        }
         if (qrypt.encryption == EncryptionMethod.rsa ||
             qrypt.encryption == EncryptionMethod.rsaSign) {
+          if (context == null) {
+            throw Exception(
+              'Decryption cancelled: No context to select RSA key',
+            );
+          }
           final selectedKeyPair = await showRSAKeySelectionDialog(
             context: context,
             primaryColor: primaryColor,
@@ -1057,7 +1067,7 @@ class InputHandler {
           }
           qrypt.rsaKeyPair = selectedKeyPair;
         }
-        if (!context.mounted) return qrypt;
+        if (context != null && !context.mounted) return qrypt;
         qrypt = await handleDecrypt(qrypt, context);
         qrypt = handleDeCompression(qrypt);
       }

@@ -82,7 +82,6 @@ class TagManager {
   ///Returns the tag if matched
   static String? matchedTag(String text) {
     for (final tag in knownTags) {
-      print('checking tag $tag');
       if (text.startsWith(tag)) return tag;
     }
     return null;
