@@ -205,10 +205,10 @@ packages:
     dependency: "direct main"
     description:
       name: es_compression
-      sha256: c1ff7af54802631cf5c3942cb67bb99daadcc087f573ca99a9de91002d1a7ece
+      sha256: "86925c57b61f42bf500f42e1a4186b47a36fcb3fed9cbf697aa86a403c779b4c"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.15"
+    version: "2.0.16"
   fake_async:
     dependency: transitive
     description:
@@ -684,10 +684,10 @@ packages:
     dependency: transitive
     description:
       name: posix
-      sha256: "6312deb534ce3812a1b454143740ffe721a17dc3a33bfc978f3a6d7bc5833edf"
+      sha256: "613646d076944f3acc125830af935b48d4b8a57a388691547bbfd25b434f4d63"
       url: "https://pub.dev"
     source: hosted
-    version: "6.5.3"
+    version: "6.5.4"
   pub_semver:
     dependency: transitive
     description:

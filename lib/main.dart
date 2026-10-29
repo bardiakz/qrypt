@@ -7,10 +7,11 @@ import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/providers/resource_providers.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
+import 'package:qrypt/services/oqs_loader.dart';
 import 'package:qrypt/services/tag_manager.dart';
-import 'package:oqs/oqs.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
   await Obfuscate.setAllMaps();
   if (!(Platform.isAndroid || Platform.isIOS)) {
@@ -21,8 +22,7 @@ void main() async {
   //   final storage = FlutterSecureStorage();
   //   await storage.deleteAll();
   // }
-  LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive('liboqs-0.16.0');
-  LibOQS.init();
+  OqsLoader.initialize();
   runApp(ProviderScope(child: const MyApp()));
 }
 

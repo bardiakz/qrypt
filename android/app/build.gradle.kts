@@ -1,10 +1,9 @@
-
 import java.io.FileInputStream
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -24,6 +23,12 @@ val hasReleaseSigning = listOf(
     "storePassword"
 ).all { !keystoreProperties.getProperty(it).isNullOrBlank() }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
+}
+
 android {
     namespace = "com.bardiakz.qrypt"
     compileSdk = flutter.compileSdkVersion
@@ -32,10 +37,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_21.toString()
     }
 
     defaultConfig {
@@ -67,7 +68,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            jniLibs.srcDirs("src/main/jniLibs")
+            jniLibs.directories.add("src/main/jniLibs")
         }
     }
 }
