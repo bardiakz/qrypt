@@ -46,7 +46,8 @@ class OqsLoader {
       final candidateFiles = [
         path.join(execDir, 'lib', 'liboqs.so'),
         path.join(execDir, 'liboqs.so'),
-        if (foundRoot != null) path.join(foundRoot, 'linux', 'x86_64', 'liboqs.so'),
+        if (foundRoot != null)
+          path.join(foundRoot, 'linux', 'x86_64', 'liboqs.so'),
       ];
       for (final f in candidateFiles) {
         if (File(f).existsSync()) {
@@ -58,7 +59,8 @@ class OqsLoader {
       final candidateArmFiles = [
         path.join(execDir, 'lib', 'liboqs.so'),
         path.join(execDir, 'liboqs.so'),
-        if (foundRoot != null) path.join(foundRoot, 'linux', 'aarch64', 'liboqs.so'),
+        if (foundRoot != null)
+          path.join(foundRoot, 'linux', 'aarch64', 'liboqs.so'),
       ];
       for (final f in candidateArmFiles) {
         if (File(f).existsSync()) {
@@ -70,7 +72,8 @@ class OqsLoader {
       final candidateFiles = [
         path.join(execDir, 'oqs.dll'),
         path.join(execDir, 'lib', 'oqs.dll'),
-        if (foundRoot != null) path.join(foundRoot, 'windows', 'x86_64', 'oqs.dll'),
+        if (foundRoot != null)
+          path.join(foundRoot, 'windows', 'x86_64', 'oqs.dll'),
       ];
       for (final f in candidateFiles) {
         if (File(f).existsSync()) {
@@ -83,7 +86,8 @@ class OqsLoader {
       final candidateFiles = [
         path.join(execDir, '..', 'Frameworks', 'liboqs.dylib'),
         path.join(execDir, 'liboqs.dylib'),
-        if (foundRoot != null) path.join(foundRoot, 'macos', macArch, 'liboqs.dylib'),
+        if (foundRoot != null)
+          path.join(foundRoot, 'macos', macArch, 'liboqs.dylib'),
       ];
       for (final f in candidateFiles) {
         if (File(f).existsSync()) {
@@ -93,7 +97,10 @@ class OqsLoader {
       }
     }
 
-    if (linuxX64 != null || linuxArm64 != null || windows != null || macOS != null) {
+    if (linuxX64 != null ||
+        linuxArm64 != null ||
+        windows != null ||
+        macOS != null) {
       LibOQSLoader.customPaths = LibraryPaths(
         linuxX64: linuxX64,
         linuxArm64: linuxArm64,
@@ -103,7 +110,9 @@ class OqsLoader {
     } else if (foundRoot != null) {
       LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive(foundRoot);
     } else {
-      LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive('liboqs-0.16.0');
+      LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive(
+        'liboqs-0.16.0',
+      );
     }
 
     try {

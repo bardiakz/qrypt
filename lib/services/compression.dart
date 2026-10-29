@@ -61,12 +61,7 @@ class Compression {
   static void setNativeLibPaths() {
     final List<String> candidatePaths = [
       path.join(Directory.current.path, 'native_libs'),
-      path.join(
-        getExecutableDir(),
-        'data',
-        'flutter_assets',
-        'native_libs',
-      ),
+      path.join(getExecutableDir(), 'data', 'flutter_assets', 'native_libs'),
       path.join(getExecutableDir(), 'native_libs'),
       getExecutableDir(),
     ];
