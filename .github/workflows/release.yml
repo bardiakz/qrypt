@@ -174,7 +174,7 @@ jobs:
           ls -lh android-out
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qrypt-android
           path: android-out/*
@@ -232,7 +232,7 @@ jobs:
           tar -czf qrypt-linux-x64.tar.gz -C build/linux/x64/release bundle
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qrypt-linux
           path: qrypt-linux-x64.tar.gz
@@ -293,7 +293,7 @@ jobs:
           fi
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qrypt-macos
           path: qrypt-macos.zip
@@ -343,7 +343,7 @@ jobs:
           Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-windows-x64.zip" -Force
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qrypt-windows
           path: qrypt-windows-x64.zip
