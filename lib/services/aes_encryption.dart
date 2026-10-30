@@ -6,14 +6,12 @@ class Aes extends Encryption {
   @override
   String get tag => 'aes';
 
-  // static final _key = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
-
   ///Encrypt AES-CBC
   static Map<String, String> encryptAesCbc(
     Uint8List compressed,
     encrypt.Key key,
   ) {
-    final iv = encrypt.IV.fromLength(16);
+    final iv = encrypt.IV.fromSecureRandom(16);
 
     final encrypter = encrypt.Encrypter(
       encrypt.AES(key, mode: encrypt.AESMode.cbc),
@@ -107,7 +105,7 @@ class Aes extends Encryption {
 
   /// AES-CTR - Encrypt
   static Map<String, String> encryptAesCtr(Uint8List data, encrypt.Key key) {
-    final iv = encrypt.IV.fromLength(16);
+    final iv = encrypt.IV.fromSecureRandom(16);
     final encrypter = encrypt.Encrypter(
       encrypt.AES(key, mode: encrypt.AESMode.ctr),
     );
