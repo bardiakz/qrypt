@@ -143,7 +143,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
-                            value: _selectedLength,
+                            initialValue: _selectedLength,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -197,7 +197,15 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.refresh),
+                                  icon: const Icon(Icons.copy, size: 20),
+                                  tooltip: 'Copy key to share with recipient',
+                                  onPressed: () => copyToClipboard(
+                                    _generatedPreview,
+                                    context,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.refresh, size: 20),
                                   tooltip: 'Re-generate',
                                   onPressed: _regenerateKey,
                                 ),
@@ -259,6 +267,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
     try {
       final storage = ref.read(aesKeyStorageServiceProvider);
       await storage.saveKey(newKey);
+      await storage.setLastUsedKeyId(newKey.id);
       ref.invalidate(aesKeysProvider);
 
       if (mounted) {

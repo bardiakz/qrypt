@@ -13,6 +13,17 @@ class AESKey {
     required this.createdAt,
   });
 
+  /// Sentinel representing explicit selection of manual/custom key entry
+  static final custom = AESKey(
+    id: 'custom-manual-input',
+    name: 'Custom / Manual Input',
+    key: '',
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
+
+  /// Whether this key represents manual custom input rather than a stored key
+  bool get isCustom => id == 'custom-manual-input';
+
   /// Key length in bytes according to UTF-8 encoding
   int get byteLength => utf8.encode(key).length;
 

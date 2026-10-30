@@ -222,6 +222,50 @@ void main() {
       expect(key.key.length, equals(32));
       expect(validateAesKey(key.key), isNull);
     });
+
+    test('records and retrieves last used key ID', () async {
+      const service = AesKeyStorageService();
+      expect(await service.getLastUsedKeyId(), isNull);
+
+      await service.setLastUsedKeyId('key-123');
+      expect(await service.getLastUsedKeyId(), equals('key-123'));
+    });
+
+    test(
+      'deleting the last used key also deletes lastUsedKeyId reference',
+      () async {
+        const service = AesKeyStorageService();
+        final key = AESKey(
+          id: 'uuid-last-used',
+          name: 'Last Used',
+          key: '11111111111111111111111111111111',
+          createdAt: DateTime.now(),
+        );
+        await service.saveKey(key);
+        await service.setLastUsedKeyId('uuid-last-used');
+        expect(await service.getLastUsedKeyId(), equals('uuid-last-used'));
+
+        await service.deleteKey('uuid-last-used');
+        expect(await service.getLastUsedKeyId(), isNull);
+      },
+    );
+
+    test(
+      'write-then-read verification invariant guarantees saved key is present',
+      () async {
+        const service = AesKeyStorageService();
+        final key = AESKey(
+          id: 'uuid-verified',
+          name: 'Verified Key',
+          key: '12345678901234567890123456789012',
+          createdAt: DateTime.now(),
+        );
+
+        await service.saveKey(key);
+        final keys = await service.getKeys();
+        expect(keys.any((k) => k.id == key.id && k.key == key.key), isTrue);
+      },
+    );
   });
 
   group('AES Key Validation', () {

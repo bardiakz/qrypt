@@ -42,14 +42,13 @@ PRs should include:
 - notes about platform-specific impact (Android/iOS/Desktop/Web)
 
 ## Security & Configuration Tips
-Never commit secrets. Keep `.env` local; use `.env.example` as the template for required keys.
+Never commit secrets. AES keys are user-managed and stored in platform-native secure storage (`FlutterSecureStorage`). No static default key or `.env` file is used.
 
 Obfuscation maps are now code-defined and user-overridable:
 - built-in maps live in `lib/resources/obfuscation/built_in_obfuscation_maps.dart`
 - runtime resolution/custom overrides go through `lib/services/obfuscation/obfuscation_map_repository.dart`
 
-When editing encryption UX, preserve user-facing warnings for insecure defaults:
-- warn when AES uses the app default key instead of a custom key
+When editing encryption UX, preserve security guards:
 - warn when both encryption and obfuscation are `NONE` (output falls back to Base64)
 
 Also keep default-mode behavior and visible advanced selections aligned. If default mode uses `AES-GCM + GZip + EN2 + tag`, switching to manual mode should prefill the same values.

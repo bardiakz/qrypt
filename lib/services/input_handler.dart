@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:oqs/oqs.dart';
 import 'package:qrypt/models/encryption_method.dart';
+import 'package:qrypt/models/exceptions.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/kem/kem_service.dart';
@@ -24,8 +24,6 @@ import 'ml_dsa/ml_dsa_key_service.dart';
 import 'obfuscate.dart';
 
 class InputHandler {
-  final _defaultKey = encrypt.Key.fromUtf8(dotenv.env['ENCRYPTION_KEY']!);
-
   Qrypt handleCompression(Qrypt qrypt) {
     Uint8List compText;
     switch (qrypt.getCompressionMethod()) {
@@ -53,9 +51,23 @@ class InputHandler {
   }
 
   Future<Qrypt> handleEncrypt(Qrypt qrypt) async {
-    encrypt.Key useKey = qrypt.useCustomKey
-        ? encrypt.Key.fromUtf8(qrypt.customKey)
-        : _defaultKey;
+    final encMethod = qrypt.getEncryptionMethod();
+    final isAes =
+        encMethod == EncryptionMethod.aesCbc ||
+        encMethod == EncryptionMethod.aesCtr ||
+        encMethod == EncryptionMethod.aesGcm;
+
+    encrypt.Key? useKey;
+    if (isAes) {
+      if (!qrypt.useCustomKey ||
+          qrypt.customKey.isEmpty ||
+          qrypt.customKey == 'noCustomKey') {
+        throw const MissingKeyException(
+          'An AES key is required for encryption. Please select or generate an AES key.',
+        );
+      }
+      useKey = encrypt.Key.fromUtf8(qrypt.customKey);
+    }
 
     String? encryptedText = qrypt.text;
     bool usesMappedObfuscation = [
@@ -89,7 +101,7 @@ class InputHandler {
       case EncryptionMethod.aesCbc:
         Map<String, String> encMap = Aes.encryptAesCbc(
           qrypt.compressedText,
-          useKey,
+          useKey!,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
@@ -98,7 +110,7 @@ class InputHandler {
       case EncryptionMethod.aesCtr:
         Map<String, String> encMap = Aes.encryptAesCtr(
           qrypt.compressedText,
-          useKey,
+          useKey!,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
@@ -106,7 +118,7 @@ class InputHandler {
       case EncryptionMethod.aesGcm:
         Map<String, String> encMap = Aes.encryptAesGcm(
           qrypt.compressedText,
-          useKey,
+          useKey!,
         );
         encryptedText = '${encMap['ciphertext']}:${encMap['iv']!}';
         qrypt.text = encryptedText;
@@ -676,84 +688,111 @@ class InputHandler {
             'Invalid AES format - expected format: ciphertext:iv',
           );
         }
-        encrypt.Key useKey = _defaultKey;
-        if (qrypt.useCustomKey && qrypt.customKey.isNotEmpty) {
-          useKey = encrypt.Key.fromUtf8(qrypt.customKey);
-        }
-        // STEP 1: Always try with default key first
-        try {
+
+        // STEP 1: Direct decryption if a key was already supplied
+        if (qrypt.useCustomKey &&
+            qrypt.customKey.isNotEmpty &&
+            qrypt.customKey != 'noCustomKey') {
+          final decryptKey = encrypt.Key.fromUtf8(qrypt.customKey);
           final decryptedData = _decryptWithAESKey(
             qrypt.getEncryptionMethod(),
             parts[0],
             parts[1],
-            useKey,
+            decryptKey,
           );
 
           if (decryptedData != null) {
             qrypt.deCompressedText = decryptedData;
-            if (kDebugMode) {
-              print('✓ Decryption successful with default key');
-            }
             return qrypt;
           }
-        } catch (defaultKeyError) {
-          if (kDebugMode) {
-            print('Default key decryption failed: $defaultKeyError');
+
+          // For CBC/CTR (which cannot verify authentication tags), throw immediately.
+          // For AES-GCM, fall through to trial-decryption against saved keys (Step 2)
+          // or user prompt dialog (Step 3) in case the pre-selected key was wrong.
+          if (qrypt.getEncryptionMethod() != EncryptionMethod.aesGcm) {
+            throw Exception('AES decryption failed: invalid key');
           }
         }
 
-        // STEP 2: If default key failed and context is available, prompt for custom key
-        if (buildContext != null && buildContext.mounted && qrypt.useTag) {
-          final customKey = await _showCustomKeyDialog(buildContext);
-          if (customKey != null && customKey.isNotEmpty) {
-            try {
-              final customEncryptKey = encrypt.Key.fromUtf8(customKey);
-              final decryptedData = _decryptWithAESKey(
-                qrypt.getEncryptionMethod(),
-                parts[0],
-                parts[1],
-                customEncryptKey,
+        // STEP 2: Key was not provided.
+        // For AES-GCM (AEAD), trial-decrypt against saved keys (last-used first)
+        if (qrypt.getEncryptionMethod() == EncryptionMethod.aesGcm) {
+          try {
+            final storage = const AesKeyStorageService();
+            final savedKeys = await storage.getKeys();
+            final lastUsedId = await storage.getLastUsedKeyId();
+
+            if (lastUsedId != null) {
+              final lastIdx = savedKeys.indexWhere((k) => k.id == lastUsedId);
+              if (lastIdx > 0) {
+                final lastKey = savedKeys.removeAt(lastIdx);
+                savedKeys.insert(0, lastKey);
+              }
+            }
+
+            for (final savedKey in savedKeys) {
+              try {
+                final decryptedData = _decryptWithAESKey(
+                  EncryptionMethod.aesGcm,
+                  parts[0],
+                  parts[1],
+                  encrypt.Key.fromUtf8(savedKey.key),
+                );
+                if (decryptedData != null) {
+                  qrypt.deCompressedText = decryptedData;
+                  qrypt.customKey = savedKey.key;
+                  qrypt.useCustomKey = true;
+                  if (kDebugMode) {
+                    print(
+                      '✓ Decryption successful with saved key: ${savedKey.name}',
+                    );
+                  }
+                  return qrypt;
+                }
+              } catch (_) {
+                // Ignore trial decryption error on GCM
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print(
+                'Trial decryption against saved keys encountered error: $e',
               );
+            }
+          }
+        }
 
-              if (decryptedData != null) {
-                qrypt.deCompressedText = decryptedData;
+        // STEP 3: Prompt user for key if context is available
+        if (buildContext != null && buildContext.mounted) {
+          final enteredKey = await _showCustomKeyDialog(buildContext);
+          if (enteredKey != null && enteredKey.isNotEmpty) {
+            final customEncryptKey = encrypt.Key.fromUtf8(enteredKey);
+            final decryptedData = _decryptWithAESKey(
+              qrypt.getEncryptionMethod(),
+              parts[0],
+              parts[1],
+              customEncryptKey,
+            );
 
-                // Show success feedback
-                if (buildContext.mounted) {
-                  ScaffoldMessenger.of(buildContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('✓ Successfully decrypted with custom key'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-
-                if (kDebugMode) {
-                  print('✓ Decryption successful with custom key');
-                }
-                return qrypt;
-              } else {
-                throw Exception('Decryption with custom key returned null');
-              }
-            } catch (customKeyError) {
-              if (kDebugMode) {
-                print('Custom key decryption failed: $customKeyError');
-              }
+            if (decryptedData != null) {
+              qrypt.deCompressedText = decryptedData;
+              qrypt.customKey = enteredKey;
+              qrypt.useCustomKey = true;
+              return qrypt;
+            } else {
               throw Exception(
-                'Decryption failed with both default and custom keys: $customKeyError',
+                'Decryption failed: invalid key or authentication mismatch. '
+                '(If this ciphertext was encrypted with Qrypt v4\'s default key, please use a v4.x release).',
               );
             }
           } else {
-            // User cancelled or didn't provide custom key
-            throw Exception(
-              'Decryption failed with default key and no custom key provided',
+            throw const MissingKeyException(
+              'Decryption cancelled: no AES key was provided.',
             );
           }
         } else {
-          // Context not available for dialog
-          throw Exception(
-            'Decryption failed with default key and cannot prompt for custom key',
+          throw const MissingKeyException(
+            'An AES key is required for decryption. Please select or supply a key.',
           );
         }
 
@@ -1191,7 +1230,7 @@ class InputHandler {
                 children: [
                   Icon(Icons.key, color: Colors.orange, size: 24),
                   SizedBox(width: 8),
-                  Text('Custom Key Required'),
+                  Text('AES Key Required'),
                 ],
               ),
               content: SizedBox(
@@ -1202,7 +1241,7 @@ class InputHandler {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Decryption failed with the default key. This content appears to be encrypted with a custom AES key.',
+                        'An AES key is required to decrypt this content. Select a saved key or enter one manually.\n\nNote: Messages encrypted with Qrypt v4\'s built-in default key cannot be decrypted in v5+. Please use a v4.x release for those messages.',
                         style: TextStyle(fontSize: 14),
                       ),
                       const SizedBox(height: 16),
@@ -1298,7 +1337,7 @@ class InputHandler {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(null),
-                  child: Text('Skip'),
+                  child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: errorText != null || keyController.text.isEmpty
@@ -1312,7 +1351,7 @@ class InputHandler {
                             Navigator.of(context).pop(key);
                           }
                         },
-                  child: Text('Try Key'),
+                  child: const Text('Decrypt'),
                 ),
               ],
             );

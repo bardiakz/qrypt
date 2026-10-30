@@ -7,6 +7,11 @@ class SimpleNotifier<T> extends Notifier<T> {
 
   @override
   T build() => _initialState;
+
+  @override
+  set state(T value) => super.state = value;
+  @override
+  T get state => super.state;
 }
 
 NotifierProvider<SimpleNotifier<T>, T> simpleStateProvider<T>(T initialState) {

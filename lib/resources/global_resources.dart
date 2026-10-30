@@ -25,11 +25,13 @@ InputDecoration buildInputDecoration({
   String? hintText,
   String? labelText,
   String? errorText,
+  String? helperText,
 }) {
   return InputDecoration(
     hintText: hintText,
     labelText: labelText,
     errorText: errorText,
+    helperText: helperText,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppConstants.borderRadius),
     ),
@@ -57,12 +59,15 @@ String? validateAesKey(String key) {
 
 String generateRandomAesKey({int length = 32}) {
   const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   final random = Random.secure();
-  return List.generate(
-    length,
-    (_) => chars[random.nextInt(chars.length)],
-  ).join();
+  final bytes = Uint8List(length);
+  for (int i = 0; i < length; i++) {
+    bytes[i] = random.nextInt(256);
+  }
+  // 64-character alphabet: taking the bottom 6 bits (byte & 0x3F) guarantees
+  // an exact uniform distribution (256 / 64 = 4 hits per slot) with zero modulo bias.
+  return List.generate(length, (i) => chars[bytes[i] & 0x3F]).join();
 }
 
 void copyToClipboard(String text, BuildContext context) async {

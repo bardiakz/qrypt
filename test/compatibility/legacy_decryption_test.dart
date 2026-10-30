@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qrypt/models/Qrypt.dart';
 import 'package:qrypt/models/compression_method.dart';
@@ -24,8 +23,8 @@ void main() {
   late final InputHandler inputHandler;
 
   setUpAll(() async {
+    FlutterSecureStorage.setMockInitialValues({});
     // Initialize required subsystems
-    await dotenv.load();
     await Obfuscate.setAllMaps();
     Compression.setNativeLibPaths();
     TagManager.loadAllTags();

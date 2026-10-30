@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:qrypt/models/Qrypt.dart';
 import 'package:qrypt/models/compression_method.dart';
@@ -12,6 +13,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    FlutterSecureStorage.setMockInitialValues({});
     await Obfuscate.setAllMaps();
     TagManager.loadAllTags();
   });

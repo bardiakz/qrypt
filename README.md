@@ -139,7 +139,7 @@ OBF_FA1_ا=persian_word
 4. **Signature Verification**: Automatic verification with clear success/failure indicators
 
 ### Implementation Security
-1. **Environment Variables**: Keep `.env` file secure and never commit to version control
+1. **Secure Storage**: Cryptographic keys are stored securely using platform-native secure storage
 2. **Obfuscation Limits**: Character mapping provides obfuscation, not cryptographic security
 3. **Tag Security**: Tags may reveal processing methods but not keys or content
 4. **Memory Security**: Sensitive data cleared from memory after use

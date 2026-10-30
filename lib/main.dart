@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/providers/resource_providers.dart';
@@ -12,7 +11,6 @@ import 'package:qrypt/services/tag_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
   await Obfuscate.setAllMaps();
   if (!(Platform.isAndroid || Platform.isIOS)) {
     Compression.setNativeLibPaths();

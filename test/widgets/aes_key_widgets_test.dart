@@ -6,7 +6,6 @@ import 'package:qrypt/models/aes_key.dart';
 import 'package:qrypt/pages/widgets/aes/aes_key_management_dialog.dart';
 import 'package:qrypt/pages/widgets/aes/aes_key_selector.dart';
 import 'package:qrypt/pages/widgets/aes/create_aes_key_dialog.dart';
-import 'package:qrypt/providers/aes_providers.dart';
 import 'package:qrypt/services/aes/aes_key_storage_service.dart';
 
 void main() {
@@ -94,6 +93,41 @@ void main() {
         expect(selectedKey?.id, equals('decrypt-1'));
       },
     );
+
+    testWidgets('allows selecting Custom / Manual Input from dropdown', (
+      WidgetTester tester,
+    ) async {
+      const storageService = AesKeyStorageService();
+      await storageService.saveKey(
+        AESKey(
+          id: 'test-custom',
+          name: 'Saved Key',
+          key: '12345678901234567890123456789012',
+          createdAt: DateTime.now(),
+        ),
+      );
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: AESEncryptKeySelector(primaryColor: Colors.blue),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Saved Key (256-bit)'), findsOneWidget);
+
+      await tester.tap(find.text('Saved Key (256-bit)'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Custom / Manual Input').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom / Manual Input'), findsOneWidget);
+    });
   });
 
   group('CreateAESKeyDialog Widget', () {
@@ -200,6 +234,42 @@ void main() {
       // Verify deletion in storage
       final keys = await storageService.getKeys();
       expect(keys, isEmpty);
+    });
+
+    testWidgets('selecting a key calls onKeySelected and closes dialog', (
+      WidgetTester tester,
+    ) async {
+      const storageService = AesKeyStorageService();
+      final testKey = AESKey(
+        id: 'select-me',
+        name: 'Selected Test Key',
+        key: '12345678901234567890123456789012',
+        createdAt: DateTime.now(),
+      );
+      await storageService.saveKey(testKey);
+
+      AESKey? chosen;
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: AESKeyManagementDialog(
+                primaryColor: Colors.blue,
+                onKeySelected: (k) {
+                  chosen = k;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Selected Test Key'), findsOneWidget);
+      await tester.tap(find.text('Selected Test Key'));
+      await tester.pumpAndSettle();
+
+      expect(chosen?.id, equals('select-me'));
     });
   });
 }

@@ -50,6 +50,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _mlKemDecryptController = TextEditingController();
   final _dsaPublicKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
+  bool _isKeyPromptActive = false;
+  bool _obscureEncryptAesKey = true;
+  bool _obscureDecryptAesKey = true;
 
   // ML-KEM specific state
   MLKemKeySize _selectedMLKemKeySize = MLKemKeySize.kem768;
@@ -127,6 +130,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final keyProvider = isEncryptMode
         ? customEncryptAesKeyProvider
         : customDecryptAesKeyProvider;
+    final selectedKey = isEncryptMode
+        ? ref.watch(selectedAESEncryptKeyProvider)
+        : ref.watch(selectedAESDecryptKeyProvider);
+    final hasSelectedKey = selectedKey != null && !selectedKey.isCustom;
+    final isObscured = isEncryptMode
+        ? _obscureEncryptAesKey
+        : _obscureDecryptAesKey;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -136,14 +146,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         children: [
           TextField(
             controller: controller,
+            readOnly: hasSelectedKey,
+            obscureText: isObscured,
             onChanged: (value) {
               ref.read(keyProvider.notifier).state = value;
             },
             decoration: buildInputDecoration(
               context: context,
               primaryColor: primaryColor,
-              labelText: 'Custom AES Key',
+              labelText: hasSelectedKey
+                  ? 'Using Saved Key: ${selectedKey.name}'
+                  : 'Custom AES Key',
               hintText: 'Enter your custom AES key (16, 24, or 32 bytes)',
+              helperText: hasSelectedKey
+                  ? 'Key managed via saved keys selector above'
+                  : null,
               errorText: controller.text.isEmpty
                   ? null
                   : validateAesKey(controller.text),
@@ -157,32 +174,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
-                  onTap: () async {
-                    final pastedText = await pasteFromClipboard(context);
-                    if (pastedText != null) {
-                      controller.text = pastedText;
-                      ref.read(keyProvider.notifier).state = pastedText;
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(
-                    AppConstants.switchBorderRadius,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.smallPadding),
-                    child: Icon(
-                      Icons.content_paste_go,
-                      color: Colors.blueGrey,
-                      size: AppConstants.iconSize + 2,
-                      semanticLabel: 'Paste from clipboard',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppConstants.smallPadding),
-                InkWell(
                   onTap: () {
-                    final randomKey = generateRandomAesKey();
-                    controller.text = randomKey;
-                    ref.read(keyProvider.notifier).state = randomKey;
+                    setState(() {
+                      if (isEncryptMode) {
+                        _obscureEncryptAesKey = !_obscureEncryptAesKey;
+                      } else {
+                        _obscureDecryptAesKey = !_obscureDecryptAesKey;
+                      }
+                    });
                   },
                   borderRadius: BorderRadius.circular(
                     AppConstants.switchBorderRadius,
@@ -190,111 +189,186 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(AppConstants.smallPadding),
                     child: Icon(
-                      Icons.casino,
+                      isObscured ? Icons.visibility : Icons.visibility_off,
                       color: Colors.blueGrey,
                       size: AppConstants.iconSize + 2,
-                      semanticLabel: 'Generate random key',
+                      semanticLabel: isObscured ? 'Reveal key' : 'Hide key',
                     ),
                   ),
                 ),
-                const SizedBox(width: AppConstants.smallPadding),
-                InkWell(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AESKeyManagementDialog(
-                        primaryColor: primaryColor,
-                        onKeySelected: (key) {
-                          controller.text = key.key;
-                          ref.read(keyProvider.notifier).state = key.key;
-                          if (isEncryptMode) {
-                            ref
-                                    .read(
-                                      selectedAESEncryptKeyProvider.notifier,
-                                    )
-                                    .state =
-                                key;
-                            ref
-                                    .read(
-                                      useCustomEncryptAesKeyProvider.notifier,
-                                    )
-                                    .state =
-                                true;
-                          } else {
-                            ref
-                                    .read(
-                                      selectedAESDecryptKeyProvider.notifier,
-                                    )
-                                    .state =
-                                key;
-                            ref
-                                    .read(
-                                      useCustomDecryptAesKeyProvider.notifier,
-                                    )
-                                    .state =
-                                true;
-                          }
-                        },
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(
-                    AppConstants.switchBorderRadius,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.smallPadding),
-                    child: Icon(
-                      Icons.vpn_key_outlined,
-                      color: Colors.blueGrey,
-                      size: AppConstants.iconSize + 2,
-                      semanticLabel: 'Saved keys',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppConstants.smallPadding),
-                InkWell(
-                  onTap: () async {
-                    final currentKey = controller.text.trim();
-                    final savedKey = await showDialog<AESKey>(
-                      context: context,
-                      builder: (context) => CreateAESKeyDialog(
-                        primaryColor: primaryColor,
-                        initialKey: currentKey,
-                      ),
-                    );
-                    if (savedKey != null) {
-                      controller.text = savedKey.key;
-                      ref.read(keyProvider.notifier).state = savedKey.key;
+                if (hasSelectedKey) ...[
+                  const SizedBox(width: AppConstants.smallPadding),
+                  InkWell(
+                    onTap: () {
+                      controller.clear();
+                      ref.read(keyProvider.notifier).state = '';
                       if (isEncryptMode) {
                         ref.read(selectedAESEncryptKeyProvider.notifier).state =
-                            savedKey;
-                        ref
-                                .read(useCustomEncryptAesKeyProvider.notifier)
-                                .state =
-                            true;
+                            AESKey.custom;
                       } else {
                         ref.read(selectedAESDecryptKeyProvider.notifier).state =
-                            savedKey;
-                        ref
-                                .read(useCustomDecryptAesKeyProvider.notifier)
-                                .state =
-                            true;
+                            AESKey.custom;
                       }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(
-                    AppConstants.switchBorderRadius,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.smallPadding),
-                    child: Icon(
-                      Icons.bookmark_add_outlined,
-                      color: Colors.blueGrey,
-                      size: AppConstants.iconSize + 2,
-                      semanticLabel: 'Save key',
+                    },
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.switchBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.smallPadding),
+                      child: Icon(
+                        Icons.edit_note,
+                        color: Colors.blueGrey,
+                        size: AppConstants.iconSize + 2,
+                        semanticLabel: 'Switch to manual key entry',
+                      ),
                     ),
                   ),
-                ),
+                ] else ...[
+                  const SizedBox(width: AppConstants.smallPadding),
+                  InkWell(
+                    onTap: () async {
+                      final pastedText = await pasteFromClipboard(context);
+                      if (pastedText != null) {
+                        controller.text = pastedText;
+                        ref.read(keyProvider.notifier).state = pastedText;
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.switchBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.smallPadding),
+                      child: Icon(
+                        Icons.content_paste_go,
+                        color: Colors.blueGrey,
+                        size: AppConstants.iconSize + 2,
+                        semanticLabel: 'Paste from clipboard',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.smallPadding),
+                  InkWell(
+                    onTap: () {
+                      final randomKey = generateRandomAesKey();
+                      controller.text = randomKey;
+                      ref.read(keyProvider.notifier).state = randomKey;
+                    },
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.switchBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.smallPadding),
+                      child: Icon(
+                        Icons.casino,
+                        color: Colors.blueGrey,
+                        size: AppConstants.iconSize + 2,
+                        semanticLabel: 'Generate random key',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.smallPadding),
+                  InkWell(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AESKeyManagementDialog(
+                          primaryColor: primaryColor,
+                          onKeySelected: (key) {
+                            controller.text = key.key;
+                            ref.read(keyProvider.notifier).state = key.key;
+                            if (isEncryptMode) {
+                              ref
+                                      .read(
+                                        selectedAESEncryptKeyProvider.notifier,
+                                      )
+                                      .state =
+                                  key;
+                              ref
+                                      .read(
+                                        useCustomEncryptAesKeyProvider.notifier,
+                                      )
+                                      .state =
+                                  true;
+                            } else {
+                              ref
+                                      .read(
+                                        selectedAESDecryptKeyProvider.notifier,
+                                      )
+                                      .state =
+                                  key;
+                              ref
+                                      .read(
+                                        useCustomDecryptAesKeyProvider.notifier,
+                                      )
+                                      .state =
+                                  true;
+                            }
+                          },
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.switchBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.smallPadding),
+                      child: Icon(
+                        Icons.vpn_key_outlined,
+                        color: Colors.blueGrey,
+                        size: AppConstants.iconSize + 2,
+                        semanticLabel: 'Saved keys',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.smallPadding),
+                  InkWell(
+                    onTap: () async {
+                      final currentKey = controller.text.trim();
+                      final savedKey = await showDialog<AESKey>(
+                        context: context,
+                        builder: (context) => CreateAESKeyDialog(
+                          primaryColor: primaryColor,
+                          initialKey: currentKey,
+                        ),
+                      );
+                      if (savedKey != null) {
+                        controller.text = savedKey.key;
+                        ref.read(keyProvider.notifier).state = savedKey.key;
+                        if (isEncryptMode) {
+                          ref
+                                  .read(selectedAESEncryptKeyProvider.notifier)
+                                  .state =
+                              savedKey;
+                          ref
+                                  .read(useCustomEncryptAesKeyProvider.notifier)
+                                  .state =
+                              true;
+                        } else {
+                          ref
+                                  .read(selectedAESDecryptKeyProvider.notifier)
+                                  .state =
+                              savedKey;
+                          ref
+                                  .read(useCustomDecryptAesKeyProvider.notifier)
+                                  .state =
+                              true;
+                        }
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.switchBorderRadius,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.smallPadding),
+                      child: Icon(
+                        Icons.bookmark_add_outlined,
+                        color: Colors.blueGrey,
+                        size: AppConstants.iconSize + 2,
+                        semanticLabel: 'Save key',
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -359,6 +433,39 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initAutoSelectAesKey();
+    });
+  }
+
+  Future<void> _initAutoSelectAesKey() async {
+    final storage = ref.read(aesKeyStorageServiceProvider);
+    final keys = await storage.getKeys();
+    if (keys.isEmpty || !mounted) return;
+
+    final currentSelected = ref.read(selectedAESEncryptKeyProvider);
+    if (currentSelected != null) return;
+
+    final lastUsedId = await storage.getLastUsedKeyId();
+    AESKey? keyToSelect;
+    if (lastUsedId != null) {
+      for (final k in keys) {
+        if (k.id == lastUsedId) {
+          keyToSelect = k;
+          break;
+        }
+      }
+    }
+    // If no last-used key matched but exactly one key exists, select it
+    if (keyToSelect == null && keys.length == 1) {
+      keyToSelect = keys.first;
+    }
+
+    if (keyToSelect != null && mounted) {
+      ref.read(selectedAESEncryptKeyProvider.notifier).state = keyToSelect;
+      _customAesKeyController.text = keyToSelect.key;
+      ref.read(customEncryptAesKeyProvider.notifier).state = keyToSelect.key;
+    }
   }
 
   void _onSwipeLeft() {
@@ -517,10 +624,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
     final isMLKemMode = ref.read(isMLKemModeProvider);
-
-    final useCustomAesKey = isEncryptMode
-        ? ref.watch(useCustomEncryptAesKeyProvider)
-        : ref.watch(useCustomDecryptAesKeyProvider);
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
@@ -727,11 +830,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       primaryColor: primaryColor,
                     ),
                     if (defaultEncryption) ...[
-                      const SizedBox(height: AppConstants.smallPadding),
-                      _buildDefaultAesKeyWarning(
-                        context: context,
-                        message:
-                            'Warning: You are using the app\'s default AES key. Not recommended for sensitive data. Turn on "Use Custom AES Key" to use your own key.',
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: AESEncryptKeySelector(
+                          primaryColor: primaryColor,
+                          onKeyChanged: (k) {
+                            _customAesKeyController.text = k.key;
+                          },
+                        ),
                       ),
                     ],
                     const SizedBox(height: AppConstants.defaultPadding),
@@ -834,64 +943,28 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
 
-                      // Custom AES Key Section - Show only for AES encryption methods
+                      // AES Key Section - Show only for AES encryption methods
                       if (selectedEncryption == EncryptionMethod.aesGcm ||
                           selectedEncryption == EncryptionMethod.aesCbc ||
                           selectedEncryption == EncryptionMethod.aesCtr) ...[
                         const SizedBox(height: AppConstants.defaultPadding),
-                        buildSwitchContainer(
-                          context: context,
-                          title: "Use Custom AES Key",
-                          value: useCustomAesKey,
-                          onChanged: (val) {
-                            ref
-                                    .read(
-                                      useCustomEncryptAesKeyProvider.notifier,
-                                    )
-                                    .state =
-                                val;
-                            if (!val) {
-                              _customAesKeyController.clear();
-                              ref
-                                      .read(
-                                        customEncryptAesKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  '';
-                            }
-                          },
-                          primaryColor: primaryColor,
-                        ),
-
-                        if (!useCustomAesKey) ...[
-                          const SizedBox(height: AppConstants.smallPadding),
-                          _buildDefaultAesKeyWarning(
-                            context: context,
-                            message:
-                                'Warning: AES is using the app\'s default key because no custom key is set. Not recommended for sensitive data.',
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
                           ),
-                        ],
-
-                        if (useCustomAesKey) ...[
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppConstants.defaultPadding,
-                            ),
-                            child: AESEncryptKeySelector(
-                              primaryColor: primaryColor,
-                              onKeyChanged: (k) {
-                                _customAesKeyController.text = k.key;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          _buildCustomAesKeyField(
-                            context: context,
+                          child: AESEncryptKeySelector(
                             primaryColor: primaryColor,
-                            isEncryptMode: true,
+                            onKeyChanged: (k) {
+                              _customAesKeyController.text = k.key;
+                            },
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildCustomAesKeyField(
+                          context: context,
+                          primaryColor: primaryColor,
+                          isEncryptMode: true,
+                        ),
                       ],
 
                       // RSA specific fields
@@ -1142,64 +1215,28 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
 
-                      // Custom AES Key Section for Decrypt
+                      // AES Key Section for Decrypt
                       if (selectedEncryption == EncryptionMethod.aesGcm ||
                           selectedEncryption == EncryptionMethod.aesCbc ||
                           selectedEncryption == EncryptionMethod.aesCtr) ...[
                         const SizedBox(height: AppConstants.defaultPadding),
-                        buildSwitchContainer(
-                          context: context,
-                          title: "Use Custom AES Key",
-                          value: useCustomAesKey,
-                          onChanged: (val) {
-                            ref
-                                    .read(
-                                      useCustomDecryptAesKeyProvider.notifier,
-                                    )
-                                    .state =
-                                val;
-                            if (!val) {
-                              _customDecryptAesKeyController.clear();
-                              ref
-                                      .read(
-                                        customDecryptAesKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  '';
-                            }
-                          },
-                          primaryColor: primaryColor,
-                        ),
-
-                        if (!useCustomAesKey) ...[
-                          const SizedBox(height: AppConstants.smallPadding),
-                          _buildDefaultAesKeyWarning(
-                            context: context,
-                            message:
-                                'Warning: AES decryption will try the app\'s default key first because no custom key is set.',
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
                           ),
-                        ],
-
-                        if (useCustomAesKey) ...[
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppConstants.defaultPadding,
-                            ),
-                            child: AESDecryptKeySelector(
-                              primaryColor: primaryColor,
-                              onKeyChanged: (k) {
-                                _customDecryptAesKeyController.text = k.key;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          _buildCustomAesKeyField(
-                            context: context,
+                          child: AESDecryptKeySelector(
                             primaryColor: primaryColor,
-                            isEncryptMode: false,
+                            onKeyChanged: (k) {
+                              _customDecryptAesKeyController.text = k.key;
+                            },
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildCustomAesKeyField(
+                          context: context,
+                          primaryColor: primaryColor,
+                          isEncryptMode: false,
+                        ),
                       ],
 
                       // RSA decrypt configurations
@@ -1459,6 +1496,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     CompressionMethod selectedCompression,
     bool useTagManually,
   ) async {
+    // Prevent concurrent runs or dialog double-taps
+    if (_isKeyPromptActive || ref.read(isProcessingProvider)) return;
+
     // Input validation
     if (_encryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1467,27 +1507,95 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       return;
     }
 
-    // Validate custom AES key if being used
-    final useCustomAesKey = ref.read(useCustomEncryptAesKeyProvider);
-    final customAesKey = ref.read(customEncryptAesKeyProvider);
+    final effectiveEncryption = defaultEncryption
+        ? EncryptionMethod.aesGcm
+        : selectedEncryption;
 
-    if (useCustomAesKey &&
-        (selectedEncryption == EncryptionMethod.aesGcm ||
-            selectedEncryption == EncryptionMethod.aesCbc ||
-            selectedEncryption == EncryptionMethod.aesCtr)) {
-      if (customAesKey.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a custom AES key')),
-        );
-        return;
-      }
+    final isAes =
+        effectiveEncryption == EncryptionMethod.aesGcm ||
+        effectiveEncryption == EncryptionMethod.aesCbc ||
+        effectiveEncryption == EncryptionMethod.aesCtr;
 
-      final validationError = validateAesKey(customAesKey);
-      if (validationError != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(validationError)));
-        return;
+    String aesKeyToUse = '';
+    AESKey? activeAesKey = ref.read(selectedAESEncryptKeyProvider);
+
+    if (isAes) {
+      _isKeyPromptActive = true;
+      try {
+        final storage = ref.read(aesKeyStorageServiceProvider);
+        final typedKey = _customAesKeyController.text.trim();
+
+        // Re-validate active key from storage in case it was deleted
+        if (activeAesKey != null && !activeAesKey.isCustom) {
+          final storedKey = await storage.getKeyById(activeAesKey.id);
+          if (storedKey != null) {
+            activeAesKey = storedKey;
+            aesKeyToUse = storedKey.key;
+          } else {
+            ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
+            activeAesKey = null;
+          }
+        } else if (activeAesKey?.isCustom == true) {
+          activeAesKey = null;
+        }
+
+        if (aesKeyToUse.isEmpty && typedKey.isNotEmpty) {
+          aesKeyToUse = typedKey;
+        }
+
+        if (aesKeyToUse.isEmpty) {
+          // Intercept: prompt user to create or select an AES key before running pipeline
+          final savedKeys = await storage.getKeys();
+          if (!mounted) return;
+
+          AESKey? chosenKey;
+          if (savedKeys.isNotEmpty) {
+            await showDialog(
+              context: context,
+              builder: (ctx) => AESKeyManagementDialog(
+                primaryColor: ref.read(primaryColorProvider),
+                onKeySelected: (k) {
+                  chosenKey = k;
+                },
+              ),
+            );
+          } else {
+            chosenKey = await showDialog<AESKey>(
+              context: context,
+              builder: (ctx) => CreateAESKeyDialog(
+                primaryColor: ref.read(primaryColorProvider),
+              ),
+            );
+          }
+
+          if (!mounted) return;
+          if (chosenKey == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Encryption cancelled: AES key required.'),
+              ),
+            );
+            return;
+          }
+
+          activeAesKey = chosenKey;
+          ref.read(selectedAESEncryptKeyProvider.notifier).state = chosenKey;
+          _customAesKeyController.text = chosenKey!.key;
+          ref.read(customEncryptAesKeyProvider.notifier).state = chosenKey!.key;
+          aesKeyToUse = chosenKey!.key;
+        }
+
+        final validationError = validateAesKey(aesKeyToUse);
+        if (validationError != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(validationError)));
+          }
+          return;
+        }
+      } finally {
+        _isKeyPromptActive = false;
       }
     }
 
@@ -1517,7 +1625,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             );
           }
 
-          // Create Qrypt object with RSA parameters
           ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
             text: _encryptTextController.text,
             encryption: selectedEncryption,
@@ -1537,33 +1644,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             rsaReceiverPublicKey: rsaReceiversPublicKey,
           );
         } else {
-          // Non-RSA encryption - create Qrypt object with custom AES key if provided
-          if (useCustomAesKey && customAesKey.isNotEmpty) {
-            // Create Qrypt object with custom AES key
-            ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-              text: _encryptTextController.text,
-              encryption: selectedEncryption,
-              obfuscation: selectedObfuscation,
-              compression: selectedCompression,
-              sign: ref.read(selectedSignProvider),
-              useTag: useTagManually,
-            );
-            ref.read(inputQryptProvider.notifier).state.customKey =
-                customAesKey;
-            ref.read(inputQryptProvider.notifier).state.useCustomKey =
-                useCustomAesKey;
-          } else {
-            // Standard non-RSA encryption
-            ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-              text: _encryptTextController.text,
-              encryption: selectedEncryption,
-              obfuscation: selectedObfuscation,
-              compression: selectedCompression,
-              sign: ref.read(selectedSignProvider),
-              useTag: useTagManually,
-            );
+          final q = Qrypt.withTag(
+            text: _encryptTextController.text,
+            encryption: selectedEncryption,
+            obfuscation: selectedObfuscation,
+            compression: selectedCompression,
+            sign: ref.read(selectedSignProvider),
+            useTag: useTagManually,
+          );
+          if (isAes) {
+            q.customKey = aesKeyToUse;
+            q.useCustomKey = true;
           }
+          ref.read(inputQryptProvider.notifier).state = q;
         }
+
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
           ref.read(inputQryptProvider.notifier).state.dsaKeyPair = ref.read(
             selectedMlDsaSignKeyPairProvider,
@@ -1573,53 +1668,27 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         ref.read(processedEncryptProvider.notifier).state = await ih
             .handleProcess(ref.read(inputQryptProvider));
       } else {
-        // Default encryption logic
-        if (selectedEncryption == EncryptionMethod.rsa) {
-          final selectedKeyPair = ref.read(selectedRSAEncryptKeyPairProvider);
-          final rsaReceiversPublicKey = ref.read(publicKeyProvider).trim();
-
-          if (selectedKeyPair == null) {
-            throw Exception('Please select an RSA key pair');
-          }
-
-          if (rsaReceiversPublicKey.isEmpty) {
-            throw Exception('Please enter the receiver\'s public key');
-          }
-
-          ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
-            text: _encryptTextController.text,
-            encryption: selectedEncryption,
-            // Use selected encryption instead of default
-            obfuscation: ObfuscationMethod.en2,
-            compression: CompressionMethod.brotli,
-            sign: ref.read(selectedSignProvider),
-            useTag: true,
-            rsaKeyPair: selectedKeyPair,
-            rsaReceiverPublicKey: rsaReceiversPublicKey,
-          );
-        } else {
-          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-            text: _encryptTextController.text,
-            encryption: EncryptionMethod.aesGcm,
-            obfuscation: ObfuscationMethod.en2,
-            compression: CompressionMethod.gZip,
-            sign: ref.read(selectedSignProvider),
-            useTag: true,
-          );
-        }
-
-        if (kDebugMode) {
-          print('created input qrypt');
-          print(
-            'RSA Key Pair: ${ref.read(inputQryptProvider).rsaKeyPair.name}',
-          );
-          print(
-            'RSA Public Key length: ${ref.read(inputQryptProvider).rsaReceiverPublicKey.length}',
-          );
-        }
+        // Default encryption logic (AES-GCM + GZip + EN2 + Tag)
+        final q = Qrypt.withTag(
+          text: _encryptTextController.text,
+          encryption: EncryptionMethod.aesGcm,
+          obfuscation: ObfuscationMethod.en2,
+          compression: CompressionMethod.gZip,
+          sign: ref.read(selectedSignProvider),
+          useTag: true,
+        );
+        q.customKey = aesKeyToUse;
+        q.useCustomKey = true;
+        ref.read(inputQryptProvider.notifier).state = q;
 
         ref.read(processedEncryptProvider.notifier).state = await ih
             .handleProcess(ref.read(inputQryptProvider));
+      }
+
+      // Record last used key ID on success
+      if (isAes && activeAesKey != null) {
+        final storage = ref.read(aesKeyStorageServiceProvider);
+        await storage.setLastUsedKeyId(activeAesKey.id);
       }
     } catch (e) {
       if (mounted) {
@@ -1638,6 +1707,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     ObfuscationMethod selectedObfuscation,
     CompressionMethod selectedCompression,
   ) async {
+    if (ref.read(isProcessingProvider)) return;
+
     // Input validation
     if (_decryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1646,61 +1717,47 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       return;
     }
 
-    // Validate custom AES key if being used
-    final useCustomAesKey = ref.read(useCustomDecryptAesKeyProvider);
-    final customAesKey = ref.read(customDecryptAesKeyProvider);
-
-    if (!autoDetectTag &&
-        useCustomAesKey &&
-        (selectedEncryption == EncryptionMethod.aesGcm ||
-            selectedEncryption == EncryptionMethod.aesCbc ||
-            selectedEncryption == EncryptionMethod.aesCtr)) {
-      if (customAesKey.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a custom AES key')),
-        );
-        return;
-      }
-
-      final validationError = validateAesKey(customAesKey);
-      if (validationError != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(validationError)));
-        return;
-      }
-    }
-
     ref.read(isProcessingProvider.notifier).state = true;
 
     try {
-      if (!autoDetectTag) {
-        if (useCustomAesKey &&
-            customAesKey.isNotEmpty &&
-            (selectedEncryption == EncryptionMethod.aesGcm ||
-                selectedEncryption == EncryptionMethod.aesCbc ||
-                selectedEncryption == EncryptionMethod.aesCtr)) {
-          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-            text: _decryptTextController.text,
-            encryption: selectedEncryption,
-            obfuscation: selectedObfuscation,
-            compression: selectedCompression,
-            sign: ref.read(selectedSignProvider),
-            useTag: false,
-          );
-          ref.read(inputQryptProvider.notifier).state.customKey = customAesKey;
-          ref.read(inputQryptProvider.notifier).state.useCustomKey =
-              useCustomAesKey;
-          ref.read(inputQryptProvider.notifier).state.useTag = false;
+      AESKey? selectedDecryptKey = ref.read(selectedAESDecryptKeyProvider);
+      if (selectedDecryptKey != null && !selectedDecryptKey.isCustom) {
+        final storage = ref.read(aesKeyStorageServiceProvider);
+        final stored = await storage.getKeyById(selectedDecryptKey.id);
+        if (stored != null) {
+          selectedDecryptKey = stored;
         } else {
-          ref.read(inputQryptProvider.notifier).state = Qrypt.withTag(
-            text: _decryptTextController.text,
-            encryption: selectedEncryption,
-            obfuscation: selectedObfuscation,
-            compression: selectedCompression,
-            sign: ref.read(selectedSignProvider),
-            useTag: false,
-          );
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+          selectedDecryptKey = null;
+        }
+      } else if (selectedDecryptKey?.isCustom == true) {
+        selectedDecryptKey = null;
+      }
+
+      final typedDecryptKey = _customDecryptAesKeyController.text.trim();
+      final String decryptKeyToUse =
+          (selectedDecryptKey != null && selectedDecryptKey.key.isNotEmpty)
+          ? selectedDecryptKey.key
+          : typedDecryptKey;
+
+      if (!autoDetectTag) {
+        final manualQrypt = Qrypt.withTag(
+          text: _decryptTextController.text,
+          encryption: selectedEncryption,
+          obfuscation: selectedObfuscation,
+          compression: selectedCompression,
+          sign: ref.read(selectedSignProvider),
+          useTag: false,
+        );
+
+        final isAes =
+            selectedEncryption == EncryptionMethod.aesGcm ||
+            selectedEncryption == EncryptionMethod.aesCbc ||
+            selectedEncryption == EncryptionMethod.aesCtr;
+
+        if (isAes && decryptKeyToUse.isNotEmpty) {
+          manualQrypt.customKey = decryptKeyToUse;
+          manualQrypt.useCustomKey = true;
         }
 
         if (selectedEncryption == EncryptionMethod.rsa ||
@@ -1711,17 +1768,24 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         }
 
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
-          ref.read(inputQryptProvider.notifier).state.dsaVerifyPublicKEy =
-              base64Decode(ref.read(verifyMlDsaPublicKeyProvider));
+          manualQrypt.dsaVerifyPublicKEy = base64Decode(
+            ref.read(verifyMlDsaPublicKeyProvider),
+          );
         }
 
+        ref.read(inputQryptProvider.notifier).state = manualQrypt;
+        if (!mounted) return;
         ref.read(processedDecryptProvider.notifier).state = await ih
             .handleDeProcess(context, ref.read(inputQryptProvider), false);
       } else {
-        ref.read(inputQryptProvider.notifier).state = Qrypt.autoDecrypt(
-          text: _decryptTextController.text,
-        );
+        final autoQrypt = Qrypt.autoDecrypt(text: _decryptTextController.text);
+        if (decryptKeyToUse.isNotEmpty) {
+          autoQrypt.customKey = decryptKeyToUse;
+          autoQrypt.useCustomKey = true;
+        }
 
+        ref.read(inputQryptProvider.notifier).state = autoQrypt;
+        if (!mounted) return;
         ref.read(processedDecryptProvider.notifier).state = await ih
             .handleDeProcess(context, ref.read(inputQryptProvider), true);
       }

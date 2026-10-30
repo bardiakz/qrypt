@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oqs/oqs.dart';
 import 'package:qrypt/models/Qrypt.dart';
@@ -15,9 +14,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    dotenv.loadFromString(
-      envString: 'ENCRYPTION_KEY=dummy_test_key_for_testing_32b\n',
-    );
     LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive('liboqs-0.16.0');
     LibOQS.init();
   });

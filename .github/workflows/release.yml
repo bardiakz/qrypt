@@ -58,16 +58,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Configure environment file
-        env:
-          DOTENV: ${{ secrets.DOTENV }}
-        run: |
-          if [ -n "$DOTENV" ]; then
-            printf '%s\n' "$DOTENV" > .env
-          elif [ ! -f .env ]; then
-            cp .env.example .env
-          fi
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -113,16 +103,6 @@ jobs:
           # `yes` gets SIGPIPE when sdkmanager exits; ignore that exit code.
           yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null || true
           "$SDKMANAGER" --sdk_root="$SDK_ROOT" "ndk;${NDK_VERSION}"
-
-      - name: Configure environment file
-        env:
-          DOTENV: ${{ secrets.DOTENV }}
-        run: |
-          if [ -n "$DOTENV" ]; then
-            printf '%s\n' "$DOTENV" > .env
-          elif [ ! -f .env ]; then
-            cp .env.example .env
-          fi
 
       - name: Configure Keystore and Gradle
         env:
@@ -203,16 +183,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Configure environment file
-        env:
-          DOTENV: ${{ secrets.DOTENV }}
-        run: |
-          if [ -n "$DOTENV" ]; then
-            printf '%s\n' "$DOTENV" > .env
-          elif [ ! -f .env ]; then
-            cp .env.example .env
-          fi
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -255,16 +225,6 @@ jobs:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      - name: Configure environment file
-        env:
-          DOTENV: ${{ secrets.DOTENV }}
-        run: |
-          if [ -n "$DOTENV" ]; then
-            printf '%s\n' "$DOTENV" > .env
-          elif [ ! -f .env ]; then
-            cp .env.example .env
-          fi
 
       - name: Install dependencies
         run: flutter pub get
@@ -316,17 +276,6 @@ jobs:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      - name: Configure environment file
-        shell: pwsh
-        env:
-          DOTENV: ${{ secrets.DOTENV }}
-        run: |
-          if ($env:DOTENV) {
-            Set-Content -Path .env -Value $env:DOTENV
-          } elseif (-not (Test-Path .env)) {
-            Copy-Item .env.example .env
-          }
 
       - name: Install dependencies
         run: flutter pub get

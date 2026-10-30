@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/aes_key.dart';
 import '../../../providers/aes_providers.dart';
 import '../../../providers/encryption_providers.dart';
+import '../../../providers/simple_state_provider.dart';
 import '../../../resources/global_resources.dart';
 import 'aes_key_management_dialog.dart';
 import 'create_aes_key_dialog.dart';
@@ -85,26 +86,24 @@ class AESKeySelector extends ConsumerWidget {
 
               AESKey? currentSelectedKey;
               if (selectedKey != null) {
-                try {
-                  currentSelectedKey = deduplicatedKeys.firstWhere(
-                    (k) => k.id == selectedKey.id,
-                  );
-                } catch (_) {
-                  currentSelectedKey = null;
+                if (selectedKey.isCustom) {
+                  currentSelectedKey = AESKey.custom;
+                } else {
+                  try {
+                    currentSelectedKey = deduplicatedKeys.firstWhere(
+                      (k) => k.id == selectedKey.id,
+                    );
+                  } catch (_) {
+                    currentSelectedKey = null;
+                  }
                 }
               }
 
-              if (currentSelectedKey == null) {
-                if (deduplicatedKeys.isNotEmpty) {
-                  currentSelectedKey = deduplicatedKeys.first;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _updateSelectedProvider(ref, deduplicatedKeys.first);
-                  });
-                } else if (selectedKey != null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _updateSelectedProvider(ref, null);
-                  });
-                }
+              if (currentSelectedKey == null && deduplicatedKeys.isNotEmpty) {
+                currentSelectedKey = deduplicatedKeys.first;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _updateSelectedProvider(ref, deduplicatedKeys.first);
+                });
               }
 
               return DropdownButtonFormField<AESKey>(
@@ -119,12 +118,18 @@ class AESKeySelector extends ConsumerWidget {
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
                 ),
-                items: deduplicatedKeys.map((k) {
-                  return DropdownMenuItem<AESKey>(
-                    value: k,
-                    child: Text('${k.name} (${k.bitLength}-bit)'),
-                  );
-                }).toList(),
+                items: [
+                  ...deduplicatedKeys.map((k) {
+                    return DropdownMenuItem<AESKey>(
+                      value: k,
+                      child: Text('${k.name} (${k.bitLength}-bit)'),
+                    );
+                  }),
+                  DropdownMenuItem<AESKey>(
+                    value: AESKey.custom,
+                    child: const Text('Custom / Manual Input'),
+                  ),
+                ],
                 onChanged: (k) {
                   if (k != null) {
                     _updateSelectedProvider(ref, k);
@@ -140,7 +145,7 @@ class AESKeySelector extends ConsumerWidget {
     );
   }
 
-  _getSelectedProvider() {
+  NotifierProvider<SimpleNotifier<AESKey?>, AESKey?> _getSelectedProvider() {
     switch (keyType) {
       case AESKeyType.both:
       case AESKeyType.encrypt:
@@ -151,20 +156,21 @@ class AESKeySelector extends ConsumerWidget {
   }
 
   void _updateSelectedProvider(WidgetRef ref, AESKey? key) {
-    if (key == null) {
+    if (key == null || key.isCustom) {
+      final sentinel = key?.isCustom == true ? AESKey.custom : null;
       switch (keyType) {
         case AESKeyType.both:
-          ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
-          ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+          ref.read(selectedAESEncryptKeyProvider.notifier).state = sentinel;
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = sentinel;
           ref.read(customEncryptAesKeyProvider.notifier).state = '';
           ref.read(customDecryptAesKeyProvider.notifier).state = '';
           break;
         case AESKeyType.encrypt:
-          ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
+          ref.read(selectedAESEncryptKeyProvider.notifier).state = sentinel;
           ref.read(customEncryptAesKeyProvider.notifier).state = '';
           break;
         case AESKeyType.decrypt:
-          ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = sentinel;
           ref.read(customDecryptAesKeyProvider.notifier).state = '';
           break;
       }

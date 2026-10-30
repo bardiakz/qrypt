@@ -21,7 +21,7 @@ void main() {
 
     test('all characters are drawn from the defined alphabet', () {
       const allowedChars =
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
       final allowedSet = allowedChars.runes.toSet();
 
       for (var i = 0; i < 50; i++) {
@@ -32,29 +32,32 @@ void main() {
       }
     });
 
-    test('generates distinct keys without keyspace collapse (not sliding window)', () {
-      const chars =
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*()';
-      final doubleAlphabet = chars + chars;
+    test(
+      'generates distinct keys without keyspace collapse (not sliding window)',
+      () {
+        const chars =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        final doubleAlphabet = chars + chars;
 
-      final generatedKeys = <String>{};
-      const samples = 500;
+        final generatedKeys = <String>{};
+        const samples = 500;
 
-      for (var i = 0; i < samples; i++) {
-        final key = generateRandomAesKey();
-        generatedKeys.add(key);
+        for (var i = 0; i < samples; i++) {
+          final key = generateRandomAesKey();
+          generatedKeys.add(key);
 
-        // Verify key is not merely a 32-character consecutive substring of the alphabet
-        expect(
-          doubleAlphabet.contains(key),
-          isFalse,
-          reason:
-              'Key should not be a trivial consecutive sliding-window substring',
-        );
-      }
+          // Verify key is not merely a 32-character consecutive substring of the alphabet
+          expect(
+            doubleAlphabet.contains(key),
+            isFalse,
+            reason:
+                'Key should not be a trivial consecutive sliding-window substring',
+          );
+        }
 
-      // With secure RNG over a 72-char alphabet and length 32, 500 keys must all be unique
-      expect(generatedKeys.length, equals(samples));
-    });
+        // With secure RNG over a 72-char alphabet and length 32, 500 keys must all be unique
+        expect(generatedKeys.length, equals(samples));
+      },
+    );
   });
 }

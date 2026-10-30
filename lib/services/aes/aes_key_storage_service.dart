@@ -9,6 +9,7 @@ import '../../resources/global_resources.dart';
 class AesKeyStorageService {
   final FlutterSecureStorage _storage;
   static const String _keysKey = 'aes_keys';
+  static const String _lastUsedKeyIdKey = 'aes_last_used_key_id';
 
   const AesKeyStorageService({
     FlutterSecureStorage storage = const FlutterSecureStorage(),
@@ -30,7 +31,7 @@ class AesKeyStorageService {
     }
   }
 
-  /// Saves a single AES key to storage
+  /// Saves a single AES key to storage with write-then-read verification
   Future<void> saveKey(AESKey key) async {
     try {
       final keys = await getKeys();
@@ -42,6 +43,14 @@ class AesKeyStorageService {
         keys.add(key);
       }
       await _saveKeysList(keys);
+
+      // Write-then-read verification invariant
+      final verifiedKeys = await getKeys();
+      if (!verifiedKeys.any((k) => k.id == key.id && k.key == key.key)) {
+        throw StateError(
+          'Secure storage write verification failed for AES key "${key.name}"',
+        );
+      }
     } catch (e) {
       debugPrint('Error saving AES key: $e');
       rethrow;
@@ -54,6 +63,11 @@ class AesKeyStorageService {
       final keys = await getKeys();
       keys.removeWhere((k) => k.id == id);
       await _saveKeysList(keys);
+
+      final lastUsed = await getLastUsedKeyId();
+      if (lastUsed == id) {
+        await _storage.delete(key: _lastUsedKeyIdKey);
+      }
     } catch (e) {
       debugPrint('Error deleting AES key: $e');
       rethrow;
@@ -88,6 +102,25 @@ class AesKeyStorageService {
     }
   }
 
+  /// Gets the ID of the last successfully used AES key
+  Future<String?> getLastUsedKeyId() async {
+    try {
+      return await _storage.read(key: _lastUsedKeyIdKey);
+    } catch (e) {
+      debugPrint('Error reading last used AES key ID: $e');
+      return null;
+    }
+  }
+
+  /// Records the ID of the last successfully used AES key
+  Future<void> setLastUsedKeyId(String id) async {
+    try {
+      await _storage.write(key: _lastUsedKeyIdKey, value: id);
+    } catch (e) {
+      debugPrint('Error recording last used AES key ID: $e');
+    }
+  }
+
   /// Generates and creates a new AESKey instance
   AESKey createRandomKey({required String name, int length = 32}) {
     return AESKey(
@@ -102,6 +135,7 @@ class AesKeyStorageService {
   Future<void> clearAllKeys() async {
     try {
       await _storage.delete(key: _keysKey);
+      await _storage.delete(key: _lastUsedKeyIdKey);
     } catch (e) {
       debugPrint('Error clearing AES keys: $e');
       rethrow;
