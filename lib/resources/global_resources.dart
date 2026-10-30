@@ -26,12 +26,16 @@ InputDecoration buildInputDecoration({
   String? labelText,
   String? errorText,
   String? helperText,
+  Widget? suffixIcon,
+  Widget? prefixIcon,
 }) {
   return InputDecoration(
     hintText: hintText,
     labelText: labelText,
     errorText: errorText,
     helperText: helperText,
+    suffixIcon: suffixIcon,
+    prefixIcon: prefixIcon,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppConstants.borderRadius),
     ),
@@ -161,6 +165,7 @@ Widget buildSectionHeader({
 Widget buildSwitchContainer({
   required BuildContext context,
   required String title,
+  String? subtitle,
   required bool value,
   required ValueChanged<bool> onChanged,
   required Color primaryColor,
@@ -179,7 +184,25 @@ Widget buildSwitchContainer({
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ],
+            ),
+          ),
           Switch(
             thumbColor: WidgetStateProperty.all(Colors.white),
             trackColor: WidgetStateProperty.resolveWith((states) {

@@ -130,10 +130,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final keyProvider = isEncryptMode
         ? customEncryptAesKeyProvider
         : customDecryptAesKeyProvider;
-    final selectedKey = isEncryptMode
-        ? ref.watch(selectedAESEncryptKeyProvider)
-        : ref.watch(selectedAESDecryptKeyProvider);
-    final hasSelectedKey = selectedKey != null && !selectedKey.isCustom;
     final isObscured = isEncryptMode
         ? _obscureEncryptAesKey
         : _obscureDecryptAesKey;
@@ -142,237 +138,124 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.defaultPadding,
       ),
-      child: Stack(
-        children: [
-          TextField(
-            controller: controller,
-            readOnly: hasSelectedKey,
-            obscureText: isObscured,
-            onChanged: (value) {
-              ref.read(keyProvider.notifier).state = value;
-            },
-            decoration: buildInputDecoration(
-              context: context,
-              primaryColor: primaryColor,
-              labelText: hasSelectedKey
-                  ? 'Using Saved Key: ${selectedKey.name}'
-                  : 'Custom AES Key',
-              hintText: 'Enter your custom AES key (16, 24, or 32 bytes)',
-              helperText: hasSelectedKey
-                  ? 'Key managed via saved keys selector above'
-                  : null,
-              errorText: controller.text.isEmpty
-                  ? null
-                  : validateAesKey(controller.text),
-            ),
-            maxLines: 1,
-          ),
-          Positioned(
-            top: AppConstants.smallPadding,
-            right: AppConstants.smallPadding,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      if (isEncryptMode) {
-                        _obscureEncryptAesKey = !_obscureEncryptAesKey;
-                      } else {
-                        _obscureDecryptAesKey = !_obscureDecryptAesKey;
-                      }
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(
-                    AppConstants.switchBorderRadius,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.smallPadding),
-                    child: Icon(
-                      isObscured ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.blueGrey,
-                      size: AppConstants.iconSize + 2,
-                      semanticLabel: isObscured ? 'Reveal key' : 'Hide key',
-                    ),
-                  ),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscured,
+        onChanged: (value) {
+          ref.read(keyProvider.notifier).state = value;
+        },
+        decoration: buildInputDecoration(
+          context: context,
+          primaryColor: primaryColor,
+          labelText: 'Custom AES Key',
+          hintText: '16, 24, or 32 characters',
+          errorText: controller.text.isEmpty
+              ? null
+              : validateAesKey(controller.text),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isObscured
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20,
+                  color: Colors.blueGrey,
                 ),
-                if (hasSelectedKey) ...[
-                  const SizedBox(width: AppConstants.smallPadding),
-                  InkWell(
-                    onTap: () {
-                      controller.clear();
-                      ref.read(keyProvider.notifier).state = '';
-                      if (isEncryptMode) {
-                        ref.read(selectedAESEncryptKeyProvider.notifier).state =
-                            AESKey.custom;
-                      } else {
-                        ref.read(selectedAESDecryptKeyProvider.notifier).state =
-                            AESKey.custom;
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.switchBorderRadius,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.smallPadding),
-                      child: Icon(
-                        Icons.edit_note,
-                        color: Colors.blueGrey,
-                        size: AppConstants.iconSize + 2,
-                        semanticLabel: 'Switch to manual key entry',
-                      ),
-                    ),
+                tooltip: isObscured ? 'Show key' : 'Hide key',
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  setState(() {
+                    if (isEncryptMode) {
+                      _obscureEncryptAesKey = !_obscureEncryptAesKey;
+                    } else {
+                      _obscureDecryptAesKey = !_obscureDecryptAesKey;
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.content_paste_go,
+                  size: 20,
+                  color: Colors.blueGrey,
+                ),
+                tooltip: 'Paste from clipboard',
+                visualDensity: VisualDensity.compact,
+                onPressed: () async {
+                  final pastedText = await pasteFromClipboard(context);
+                  if (pastedText != null) {
+                    controller.text = pastedText;
+                    ref.read(keyProvider.notifier).state = pastedText;
+                    setState(() {});
+                  }
+                },
+              ),
+              if (isEncryptMode) ...[
+                IconButton(
+                  icon: const Icon(
+                    Icons.casino_outlined,
+                    size: 20,
+                    color: Colors.blueGrey,
                   ),
-                ] else ...[
-                  const SizedBox(width: AppConstants.smallPadding),
-                  InkWell(
-                    onTap: () async {
-                      final pastedText = await pasteFromClipboard(context);
-                      if (pastedText != null) {
-                        controller.text = pastedText;
-                        ref.read(keyProvider.notifier).state = pastedText;
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.switchBorderRadius,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.smallPadding),
-                      child: Icon(
-                        Icons.content_paste_go,
-                        color: Colors.blueGrey,
-                        size: AppConstants.iconSize + 2,
-                        semanticLabel: 'Paste from clipboard',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.smallPadding),
-                  InkWell(
-                    onTap: () {
-                      final randomKey = generateRandomAesKey();
-                      controller.text = randomKey;
-                      ref.read(keyProvider.notifier).state = randomKey;
-                    },
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.switchBorderRadius,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.smallPadding),
-                      child: Icon(
-                        Icons.casino,
-                        color: Colors.blueGrey,
-                        size: AppConstants.iconSize + 2,
-                        semanticLabel: 'Generate random key',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.smallPadding),
-                  InkWell(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AESKeyManagementDialog(
-                          primaryColor: primaryColor,
-                          onKeySelected: (key) {
-                            controller.text = key.key;
-                            ref.read(keyProvider.notifier).state = key.key;
-                            if (isEncryptMode) {
-                              ref
-                                      .read(
-                                        selectedAESEncryptKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  key;
-                              ref
-                                      .read(
-                                        useCustomEncryptAesKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  true;
-                            } else {
-                              ref
-                                      .read(
-                                        selectedAESDecryptKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  key;
-                              ref
-                                      .read(
-                                        useCustomDecryptAesKeyProvider.notifier,
-                                      )
-                                      .state =
-                                  true;
-                            }
-                          },
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.switchBorderRadius,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.smallPadding),
-                      child: Icon(
-                        Icons.vpn_key_outlined,
-                        color: Colors.blueGrey,
-                        size: AppConstants.iconSize + 2,
-                        semanticLabel: 'Saved keys',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.smallPadding),
-                  InkWell(
-                    onTap: () async {
-                      final currentKey = controller.text.trim();
-                      final savedKey = await showDialog<AESKey>(
-                        context: context,
-                        builder: (context) => CreateAESKeyDialog(
-                          primaryColor: primaryColor,
-                          initialKey: currentKey,
-                        ),
-                      );
-                      if (savedKey != null) {
-                        controller.text = savedKey.key;
-                        ref.read(keyProvider.notifier).state = savedKey.key;
-                        if (isEncryptMode) {
-                          ref
-                                  .read(selectedAESEncryptKeyProvider.notifier)
-                                  .state =
-                              savedKey;
-                          ref
-                                  .read(useCustomEncryptAesKeyProvider.notifier)
-                                  .state =
-                              true;
-                        } else {
-                          ref
-                                  .read(selectedAESDecryptKeyProvider.notifier)
-                                  .state =
-                              savedKey;
-                          ref
-                                  .read(useCustomDecryptAesKeyProvider.notifier)
-                                  .state =
-                              true;
-                        }
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.switchBorderRadius,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.smallPadding),
-                      child: Icon(
-                        Icons.bookmark_add_outlined,
-                        color: Colors.blueGrey,
-                        size: AppConstants.iconSize + 2,
-                        semanticLabel: 'Save key',
-                      ),
-                    ),
-                  ),
-                ],
+                  tooltip: 'Generate random key',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    final randomKey = generateRandomAesKey();
+                    controller.text = randomKey;
+                    ref.read(keyProvider.notifier).state = randomKey;
+                    setState(() {});
+                  },
+                ),
               ],
-            ),
+              IconButton(
+                icon: const Icon(
+                  Icons.bookmark_add_outlined,
+                  size: 20,
+                  color: Colors.blueGrey,
+                ),
+                tooltip: 'Save key',
+                visualDensity: VisualDensity.compact,
+                onPressed: () async {
+                  final keyText = controller.text.trim();
+                  if (keyText.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Enter a key before saving'),
+                      ),
+                    );
+                    return;
+                  }
+                  final error = validateAesKey(keyText);
+                  if (error != null) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(error)));
+                    return;
+                  }
+                  final savedKey = await showDialog<AESKey>(
+                    context: context,
+                    builder: (ctx) => CreateAESKeyDialog(
+                      primaryColor: primaryColor,
+                      initialKey: keyText,
+                    ),
+                  );
+                  if (savedKey != null) {
+                    controller.text = savedKey.key;
+                    ref.read(keyProvider.notifier).state = savedKey.key;
+                    final selProvider = isEncryptMode
+                        ? selectedAESEncryptKeyProvider
+                        : selectedAESDecryptKeyProvider;
+                    ref.read(selProvider.notifier).state = savedKey;
+                    setState(() {});
+                  }
+                },
+              ),
+            ],
           ),
-        ],
+        ),
+        maxLines: 1,
       ),
     );
   }
@@ -628,6 +511,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final selectedCompression = ref.watch(selectedCompressionProvider);
+    final selectedEncryptKey = ref.watch(selectedAESEncryptKeyProvider);
+    final isCustomEncryptKey =
+        selectedEncryptKey == null || selectedEncryptKey.isCustom;
+    final selectedDecryptKey = ref.watch(selectedAESDecryptKeyProvider);
+    final isCustomDecryptKey =
+        selectedDecryptKey == null || selectedDecryptKey.isCustom;
 
     ref.listen(selectedAESEncryptKeyProvider, (previous, next) {
       if (next != null && _customAesKeyController.text != next.key) {
@@ -809,7 +698,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   if (!isMLKemMode) ...[
                     buildSwitchContainer(
                       context: context,
-                      title: "Use Default Encryption",
+                      title: "Default Preset",
+                      subtitle: "AES-GCM • GZip • EN2 • Tag",
                       value: defaultEncryption,
                       onChanged: (val) {
                         ref.read(defaultEncryptionProvider.notifier).state =
@@ -842,6 +732,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           },
                         ),
                       ),
+                      if (isCustomEncryptKey) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildCustomAesKeyField(
+                          context: context,
+                          primaryColor: primaryColor,
+                          isEncryptMode: true,
+                        ),
+                      ],
                     ],
                     const SizedBox(height: AppConstants.defaultPadding),
                   ],
@@ -884,14 +782,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ),
                           decoration: BoxDecoration(
                             color: useTagManually
-                                ? primaryColor.withOpacity(0.1)
+                                ? primaryColor.withValues(alpha: 0.1)
                                 : getContainerBackgroundColor(context),
                             borderRadius: BorderRadius.circular(
                               AppConstants.borderRadius,
                             ),
                             border: Border.all(
                               color: useTagManually
-                                  ? primaryColor.withOpacity(0.3)
+                                  ? primaryColor.withValues(alpha: 0.3)
                                   : getBorderColor(context),
                             ),
                           ),
@@ -959,12 +857,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             },
                           ),
                         ),
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        _buildCustomAesKeyField(
-                          context: context,
-                          primaryColor: primaryColor,
-                          isEncryptMode: true,
-                        ),
+                        if (isCustomEncryptKey) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          _buildCustomAesKeyField(
+                            context: context,
+                            primaryColor: primaryColor,
+                            isEncryptMode: true,
+                          ),
+                        ],
                       ],
 
                       // RSA specific fields
@@ -1231,12 +1131,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             },
                           ),
                         ),
-                        const SizedBox(height: AppConstants.defaultPadding),
-                        _buildCustomAesKeyField(
-                          context: context,
-                          primaryColor: primaryColor,
-                          isEncryptMode: false,
-                        ),
+                        if (isCustomDecryptKey) ...[
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          _buildCustomAesKeyField(
+                            context: context,
+                            primaryColor: primaryColor,
+                            isEncryptMode: false,
+                          ),
+                        ],
                       ],
 
                       // RSA decrypt configurations
