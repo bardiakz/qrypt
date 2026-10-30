@@ -108,6 +108,7 @@ class AESKeySelector extends ConsumerWidget {
 
               return DropdownButtonFormField<AESKey>(
                 initialValue: currentSelectedKey,
+                isExpanded: true,
                 decoration: InputDecoration(
                   hintText: 'Select AES key',
                   border: OutlineInputBorder(
@@ -122,12 +123,18 @@ class AESKeySelector extends ConsumerWidget {
                   ...deduplicatedKeys.map((k) {
                     return DropdownMenuItem<AESKey>(
                       value: k,
-                      child: Text('${k.name} (${k.bitLength}-bit)'),
+                      child: Text(
+                        '${k.name} (${k.bitLength}-bit)',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }),
                   DropdownMenuItem<AESKey>(
                     value: AESKey.custom,
-                    child: const Text('Custom / Manual Input'),
+                    child: const Text(
+                      'Custom / Manual Input',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
                 onChanged: (k) {

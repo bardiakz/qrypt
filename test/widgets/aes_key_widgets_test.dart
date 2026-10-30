@@ -193,6 +193,46 @@ void main() {
       expect(savedKeys.first.name, equals('My Custom AES Key'));
       expect(savedKeys.first.key.length, equals(32));
     });
+
+    testWidgets(
+      'renders key length dropdown without overflow on narrow screens',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: CreateAESKeyDialog(primaryColor: Colors.blue),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('256-bit (32 chars)'), findsOneWidget);
+
+        // Open the dropdown menu
+        await tester.tap(find.text('256-bit (32 chars)'));
+        await tester.pumpAndSettle();
+
+        // Recommended label is shown in the open menu item
+        expect(find.text('256-bit (32 chars) - Recommended'), findsOneWidget);
+        expect(find.text('128-bit (16 chars)'), findsOneWidget);
+        expect(find.text('192-bit (24 chars)'), findsOneWidget);
+
+        // Select 128-bit
+        await tester.tap(find.text('128-bit (16 chars)').last);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('128-bit (16 chars)'), findsOneWidget);
+      },
+    );
   });
 
   group('AESKeyManagementDialog Widget', () {

@@ -84,7 +84,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                     },
                   ),
                   const SizedBox(width: 8),
-                  const Text('Manual Input / Paste'),
+                  const Expanded(child: Text('Manual Input / Paste')),
                 ],
               ),
               const SizedBox(height: 12),
@@ -144,24 +144,49 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
                             initialValue: _selectedLength,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 8,
                               ),
                             ),
+                            selectedItemBuilder: (BuildContext context) =>
+                                const [
+                                  Text(
+                                    '128-bit (16 chars)',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    '192-bit (24 chars)',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    '256-bit (32 chars)',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                             items: const [
                               DropdownMenuItem(
                                 value: 16,
-                                child: Text('128-bit (16 chars)'),
+                                child: Text(
+                                  '128-bit (16 chars)',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                               DropdownMenuItem(
                                 value: 24,
-                                child: Text('192-bit (24 chars)'),
+                                child: Text(
+                                  '192-bit (24 chars)',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                               DropdownMenuItem(
                                 value: 32,
-                                child: Text('256-bit (32 chars) - Recommended'),
+                                child: Text(
+                                  '256-bit (32 chars) - Recommended',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                             onChanged: (val) {
