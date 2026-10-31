@@ -1088,23 +1088,26 @@ class InputHandler {
         }
         if (qrypt.encryption == EncryptionMethod.rsa ||
             qrypt.encryption == EncryptionMethod.rsaSign) {
-          if (context == null) {
-            throw Exception(
-              'Decryption cancelled: No context to select RSA key',
+          if (qrypt.rsaKeyPair.privateKey.isEmpty ||
+              qrypt.rsaKeyPair.privateKey == 'noPrivateKey') {
+            if (context == null) {
+              throw Exception(
+                'Decryption cancelled: No context to select RSA key',
+              );
+            }
+            final selectedKeyPair = await showRSAKeySelectionDialog(
+              context: context,
+              primaryColor: primaryColor,
+              title: 'Select Decryption Key',
+              message:
+                  'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
+              publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
             );
+            if (selectedKeyPair == null) {
+              throw Exception('Decryption cancelled: No key pair selected');
+            }
+            qrypt.rsaKeyPair = selectedKeyPair;
           }
-          final selectedKeyPair = await showRSAKeySelectionDialog(
-            context: context,
-            primaryColor: primaryColor,
-            title: 'Select Decryption Key',
-            message:
-                'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
-            publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
-          );
-          if (selectedKeyPair == null) {
-            throw Exception('Decryption cancelled: No key pair selected');
-          }
-          qrypt.rsaKeyPair = selectedKeyPair;
         }
         if (context != null && !context.mounted) return qrypt;
         qrypt = await handleDecrypt(qrypt, context);
