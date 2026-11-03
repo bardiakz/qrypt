@@ -26,8 +26,12 @@ class ObfsDropdownButtonForm extends ConsumerWidget {
         ? ObfuscationService.selectableForDecrypt
         : ObfuscationService.selectableForEncrypt;
 
-    final effectiveValue = available.contains(selectedObfuscation)
+    final targetValue = isDecryptMode
         ? selectedObfuscation
+        : selectedObfuscation.v2Equivalent;
+
+    final effectiveValue = available.contains(targetValue)
+        ? targetValue
         : (available.contains(ObfuscationService.defaultMethod)
             ? ObfuscationService.defaultMethod
             : available.first);

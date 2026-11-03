@@ -36,6 +36,17 @@ extension ObfuscationMethodX on ObfuscationMethod {
   /// Replaces the four copy-pasted `usesMappedObfuscation` lists:
   /// the payload handed to obfuscation is hex (plus ':' for AES).
   bool get isHexMapped => isLegacyMapped || isV2Mapped;
+
+  /// Returns the modern v2 equivalent for legacy mapped methods (en1->en1v2,
+  /// en2->en2v2, fa1->fa1v2, fa2->fa2v2). Non-legacy methods are returned
+  /// unchanged.
+  ObfuscationMethod get v2Equivalent => switch (this) {
+    ObfuscationMethod.en1 => ObfuscationMethod.en1v2,
+    ObfuscationMethod.en2 => ObfuscationMethod.en2v2,
+    ObfuscationMethod.fa1 => ObfuscationMethod.fa1v2,
+    ObfuscationMethod.fa2 => ObfuscationMethod.fa2v2,
+    _ => this,
+  };
 }
 
 typedef _Fn = String Function(String);

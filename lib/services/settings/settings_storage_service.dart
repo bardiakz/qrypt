@@ -38,10 +38,11 @@ class SettingsStorageService {
     try {
       final value = await _storage.read(key: _defaultObfuscationKey);
       if (value != null) {
-        return ObfuscationMethod.values.firstWhere(
+        final parsed = ObfuscationMethod.values.firstWhere(
           (e) => e.name == value,
           orElse: () => ObfuscationService.defaultMethod,
         );
+        return parsed.v2Equivalent;
       }
     } catch (e) {}
     return ObfuscationService.defaultMethod;

@@ -511,6 +511,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
+    final encryptObfuscation = selectedObfuscation.v2Equivalent;
     final selectedCompression = ref.watch(selectedCompressionProvider);
     final selectedEncryptKey = ref.watch(selectedAESEncryptKeyProvider);
     final isCustomEncryptKey =
@@ -948,13 +949,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         horizontal: AppConstants.defaultPadding,
                       ),
                       child: ObfsDropdownButtonForm(
-                        selectedObfuscation: selectedObfuscation,
+                        selectedObfuscation: encryptObfuscation,
                         primaryColor: primaryColor,
                       ),
                     ),
 
                     if (selectedEncryption == EncryptionMethod.none &&
-                        selectedObfuscation == ObfuscationMethod.none) ...[
+                        encryptObfuscation == ObfuscationMethod.none) ...[
                       const SizedBox(height: AppConstants.smallPadding),
                       _buildDefaultAesKeyWarning(
                         context: context,
@@ -982,7 +983,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                 _encrypt(
                                   defaultEncryption,
                                   selectedEncryption,
-                                  selectedObfuscation,
+                                  encryptObfuscation,
                                   selectedCompression,
                                   useTagManually,
                                 );
@@ -1403,6 +1404,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     // Prevent concurrent runs or dialog double-taps
     if (_isKeyPromptActive || ref.read(isProcessingProvider)) return;
 
+    final effectiveObfuscation = selectedObfuscation.v2Equivalent;
+
     // Input validation
     if (_encryptTextController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1532,7 +1535,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
             text: _encryptTextController.text,
             encryption: selectedEncryption,
-            obfuscation: selectedObfuscation,
+            obfuscation: effectiveObfuscation,
             compression: selectedCompression,
             sign: ref.read(selectedSignProvider),
             useTag: useTagManually,
@@ -1551,7 +1554,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           final q = Qrypt.withTag(
             text: _encryptTextController.text,
             encryption: selectedEncryption,
-            obfuscation: selectedObfuscation,
+            obfuscation: effectiveObfuscation,
             compression: selectedCompression,
             sign: ref.read(selectedSignProvider),
             useTag: useTagManually,
