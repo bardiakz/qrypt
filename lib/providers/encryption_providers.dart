@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/providers/simple_state_provider.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
@@ -31,7 +32,7 @@ final inputQryptProvider = simpleStateProvider<Qrypt>(
   Qrypt(
     text: '',
     encryption: EncryptionMethod.aesGcm,
-    obfuscation: ObfuscationMethod.en2,
+    obfuscation: ObfuscationService.defaultMethod,
     compression: CompressionMethod.gZip,
     sign: SignMethod.none,
   ),
@@ -40,7 +41,7 @@ final processedEncryptProvider = simpleStateProvider<Qrypt>(
   Qrypt(
     text: '',
     encryption: EncryptionMethod.aesGcm,
-    obfuscation: ObfuscationMethod.en2,
+    obfuscation: ObfuscationService.defaultMethod,
     compression: CompressionMethod.gZip,
     sign: SignMethod.none,
   ),
@@ -49,7 +50,7 @@ final processedDecryptProvider = simpleStateProvider<Qrypt>(
   Qrypt(
     text: '',
     encryption: EncryptionMethod.aesGcm,
-    obfuscation: ObfuscationMethod.en2,
+    obfuscation: ObfuscationService.defaultMethod,
     compression: CompressionMethod.gZip,
     sign: SignMethod.none,
   ),

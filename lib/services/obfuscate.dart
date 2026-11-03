@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/resources/obfuscation/built_in_obfuscation_maps.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_map_repository.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
+import 'package:qrypt/services/tag_manager.dart';
 
 Map<String, String> obfuscationFA2Map = Map<String, String>.from(builtInFa2Map);
 Map<String, String> obfuscationFA1Map = Map<String, String>.from(builtInFa1Map);
@@ -48,6 +50,8 @@ class Obfuscate {
     _setObfuscationFA2Map();
     _setObfuscationEN1Map();
     _setObfuscationEN2Map();
+    ObfuscationService.rebuild();
+    TagManager.initializeTags();
   }
 
   static Future<void> setCustomMap(

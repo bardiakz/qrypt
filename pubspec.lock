@@ -540,10 +540,10 @@ packages:
     dependency: "direct main"
     description:
       name: obfuscate
-      sha256: "9688ae04fee9006a986f068e2ebf3ed2054f1beee5a1d7e9f0b62674964ce5c0"
+      sha256: "06b23c076b337ff9f8ce59199dd9f590b160ff114a8fe32763a782a824b5b391"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.1"
+    version: "1.0.1"
   objective_c:
     dependency: transitive
     description:

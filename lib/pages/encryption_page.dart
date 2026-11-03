@@ -18,6 +18,7 @@ import 'package:qrypt/providers/aes_providers.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:qrypt/providers/rsa_providers.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 import '../models/aes_key.dart';
 import '../models/encryption_method.dart';
 import '../models/kyber_models.dart';
@@ -713,7 +714,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ref.read(selectedEncryptionProvider.notifier).state =
                               EncryptionMethod.aesGcm;
                           ref.read(selectedObfuscationProvider.notifier).state =
-                              ObfuscationMethod.en2;
+                              ObfuscationService.defaultMethod;
                           ref.read(useTagProvider.notifier).state = true;
                         }
                       },
@@ -1225,6 +1226,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         child: ObfsDropdownButtonForm(
                           selectedObfuscation: selectedObfuscation,
                           primaryColor: primaryColor,
+                          isDecryptMode: true,
                         ),
                       ),
                     ],
@@ -1574,7 +1576,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         final q = Qrypt.withTag(
           text: _encryptTextController.text,
           encryption: EncryptionMethod.aesGcm,
-          obfuscation: ObfuscationMethod.en2,
+          obfuscation: ObfuscationService.defaultMethod,
           compression: CompressionMethod.gZip,
           sign: ref.read(selectedSignProvider),
           useTag: true,
@@ -1664,7 +1666,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
         if (selectedEncryption == EncryptionMethod.rsa ||
             selectedEncryption == EncryptionMethod.rsaSign) {
-          ref.read(inputQryptProvider.notifier).state.rsaKeyPair = ref.read(
+          manualQrypt.rsaKeyPair = ref.read(
             selectedRSADecryptKeyPairProvider,
           )!;
         }

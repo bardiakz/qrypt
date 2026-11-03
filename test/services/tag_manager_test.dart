@@ -7,6 +7,7 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
 import 'package:qrypt/services/crypto.dart';
 import 'package:qrypt/services/obfuscate.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 void main() {
@@ -20,7 +21,7 @@ void main() {
 
   group('TagManager Collision & Bijection Invariants', () {
     test(
-      'knownTags contains exactly 560 unique routing tags (zero collision)',
+      'knownTags contains exactly 840 unique routing tags (zero collision)',
       () {
         final totalCombinations =
             CompressionMethod.values.length *
@@ -28,10 +29,10 @@ void main() {
             SignMethod.values.length *
             ObfuscationMethod.values.length;
 
-        expect(totalCombinations, equals(560));
+        expect(totalCombinations, equals(840));
         expect(
           TagManager.knownTags.length,
-          equals(560),
+          equals(840),
           reason:
               'Collision detected in 6-character tag hashes! Multiple algorithm combinations mapped to the same tag.',
         );
@@ -47,32 +48,8 @@ void main() {
           for (final enc in EncryptionMethod.values) {
             for (final sign in SignMethod.values) {
               for (final obf in ObfuscationMethod.values) {
-                final signPart = sign == SignMethod.none ? '' : sign.name;
-                final rawTag = '${comp.name}${enc.name}$signPart${obf.name}';
-                final tagHash = Crypto.generateTagHash(rawTag);
-
-                final obfsTag = switch (obf) {
-                  ObfuscationMethod.none => tagHash,
-                  ObfuscationMethod.fa1 => Obfuscate.obfuscateText(
-                    tagHash,
-                    obfuscationFA1Map,
-                  ),
-                  ObfuscationMethod.fa2 => Obfuscate.obfuscateText(
-                    tagHash,
-                    obfuscationFA2Map,
-                  ),
-                  ObfuscationMethod.b64 => Obfuscate.obfuscateBase64(tagHash),
-                  ObfuscationMethod.rot13 => Obfuscate.obfuscateROT13(tagHash),
-                  ObfuscationMethod.xor => Obfuscate.obfuscateXOR(tagHash, 42),
-                  ObfuscationMethod.en1 => Obfuscate.obfuscateText(
-                    tagHash,
-                    obfuscationEN1Map,
-                  ),
-                  ObfuscationMethod.en2 => Obfuscate.obfuscateText(
-                    tagHash,
-                    obfuscationEN2Map,
-                  ),
-                };
+                final tagHash = TagManager.tagHashFor(comp, enc, sign, obf);
+                final obfsTag = ObfuscationService.obfuscate(obf, tagHash);
 
                 // Assert uniqueness across combinations
                 final comboKey =

@@ -12,6 +12,10 @@ enum ObfuscationMethod {
   rot13,
   xor,
   // reverse,
+  en1v2,
+  en2v2,
+  fa1v2,
+  fa2v2,
 }
 
 extension ObfuscationMethodName on ObfuscationMethod {
@@ -20,19 +24,27 @@ extension ObfuscationMethodName on ObfuscationMethod {
       case ObfuscationMethod.none:
         return 'NONE';
       case ObfuscationMethod.en1:
-        return 'EN1 (Character-based)';
+        return 'EN1 (Character-based) (legacy)';
       case ObfuscationMethod.en2:
-        return 'EN2 (Word-based)';
+        return 'EN2 (Word-based) (legacy)';
       case ObfuscationMethod.fa1:
-        return 'FA1 (Character-based)';
+        return 'FA1 (Character-based) (legacy)';
       case ObfuscationMethod.fa2:
-        return 'FA2 (Word-based)';
+        return 'FA2 (Word-based) (legacy)';
       case ObfuscationMethod.b64:
         return 'Base64';
       case ObfuscationMethod.rot13:
         return 'ROT13';
       case ObfuscationMethod.xor:
         return 'XOR';
+      case ObfuscationMethod.en1v2:
+        return 'EN1 (Character-based)';
+      case ObfuscationMethod.en2v2:
+        return 'EN2 (Word-based)';
+      case ObfuscationMethod.fa1v2:
+        return 'FA1 (Character-based)';
+      case ObfuscationMethod.fa2v2:
+        return 'FA2 (Word-based)';
       // case ObfuscationMethod.reverse:
       //   return 'Reverse';
     }
@@ -44,9 +56,13 @@ extension ObfuscationMethodName on ObfuscationMethod {
         return 'None';
       case ObfuscationMethod.en1:
       case ObfuscationMethod.fa1:
+      case ObfuscationMethod.en1v2:
+      case ObfuscationMethod.fa1v2:
         return 'Character-based';
       case ObfuscationMethod.en2:
       case ObfuscationMethod.fa2:
+      case ObfuscationMethod.en2v2:
+      case ObfuscationMethod.fa2v2:
         return 'Word-based';
       case ObfuscationMethod.b64:
         return 'Encoding';
@@ -63,9 +79,13 @@ extension ObfuscationMethodName on ObfuscationMethod {
     switch (this) {
       case ObfuscationMethod.en1:
       case ObfuscationMethod.en2:
+      case ObfuscationMethod.en1v2:
+      case ObfuscationMethod.en2v2:
         return 'English';
       case ObfuscationMethod.fa1:
       case ObfuscationMethod.fa2:
+      case ObfuscationMethod.fa1v2:
+      case ObfuscationMethod.fa2v2:
         return 'Farsi/Persian';
       case ObfuscationMethod.none:
       case ObfuscationMethod.b64:
@@ -99,6 +119,14 @@ extension ObfuscationMethodDetails on ObfuscationMethod {
         return 'ROT13 Caesar cipher (13-position alphabet shift)';
       case ObfuscationMethod.xor:
         return 'XOR bitwise obfuscation with fixed key';
+      case ObfuscationMethod.en1v2:
+        return 'English character-based substitution cipher (v2)';
+      case ObfuscationMethod.en2v2:
+        return 'English word-based substitution cipher (v2)';
+      case ObfuscationMethod.fa1v2:
+        return 'Farsi/Persian character-based substitution cipher (v2)';
+      case ObfuscationMethod.fa2v2:
+        return 'Farsi/Persian word-based substitution cipher (v2)';
       // case ObfuscationMethod.reverse:
       //   return 'String reversal obfuscation';
     }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 import '../../models/compression_method.dart';
 import '../../models/sign_method.dart';
 
@@ -39,11 +40,11 @@ class SettingsStorageService {
       if (value != null) {
         return ObfuscationMethod.values.firstWhere(
           (e) => e.name == value,
-          orElse: () => ObfuscationMethod.en2,
+          orElse: () => ObfuscationService.defaultMethod,
         );
       }
     } catch (e) {}
-    return ObfuscationMethod.en2;
+    return ObfuscationService.defaultMethod;
   }
 
   static Future<void> setDefaultObfuscationMethod(

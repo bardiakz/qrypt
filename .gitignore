@@ -56,3 +56,4 @@ liboqs-0.16.0_old/
 ENV_REMOVAL_EVALUATION.md
 
 test/services/compression_hardening_test.dart
+tasks/

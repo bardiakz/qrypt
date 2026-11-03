@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/compression_method.dart';
+import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 
 import '../../models/encryption_method.dart';
 import '../../models/obfuscation_method.dart';
@@ -12,20 +13,35 @@ class ObfsDropdownButtonForm extends ConsumerWidget {
     super.key,
     required this.selectedObfuscation,
     required this.primaryColor,
+    this.isDecryptMode = false,
   });
 
   final ObfuscationMethod selectedObfuscation;
   final Color primaryColor;
+  final bool isDecryptMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final available = isDecryptMode
+        ? ObfuscationService.selectableForDecrypt
+        : ObfuscationService.selectableForEncrypt;
+
+    final effectiveValue = available.contains(selectedObfuscation)
+        ? selectedObfuscation
+        : (available.contains(ObfuscationService.defaultMethod)
+            ? ObfuscationService.defaultMethod
+            : available.first);
+
     return DropdownButtonFormField<ObfuscationMethod>(
-      initialValue: selectedObfuscation,
-      items: ObfuscationMethod.values.map((obf) {
+      value: effectiveValue,
+      items: available.map((obf) {
         return DropdownMenuItem(value: obf, child: Text(obf.displayName));
       }).toList(),
-      onChanged: (val) =>
-          ref.read(selectedObfuscationProvider.notifier).state = val!,
+      onChanged: (val) {
+        if (val != null) {
+          ref.read(selectedObfuscationProvider.notifier).state = val;
+        }
+      },
       decoration: InputDecoration(
         labelText: 'Obfuscation Method',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

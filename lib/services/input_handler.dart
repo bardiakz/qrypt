@@ -21,7 +21,7 @@ import '../providers/rsa_providers.dart';
 import 'aes/aes_key_storage_service.dart';
 import 'aes_encryption.dart';
 import 'ml_dsa/ml_dsa_key_service.dart';
-import 'obfuscate.dart';
+import 'obfuscation/obfuscation_service.dart';
 
 class InputHandler {
   Qrypt handleCompression(Qrypt qrypt) {
@@ -70,12 +70,7 @@ class InputHandler {
     }
 
     String? encryptedText = qrypt.text;
-    bool usesMappedObfuscation = [
-      ObfuscationMethod.en1,
-      ObfuscationMethod.en2,
-      ObfuscationMethod.fa1,
-      ObfuscationMethod.fa2,
-    ].contains(qrypt.getObfuscationMethod());
+    bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
 
     bool usesBase64Obfuscation =
         qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
@@ -245,12 +240,7 @@ class InputHandler {
         MlDsaKeyService dsa = MlDsaKeyService();
 
         // Determine the format based on obfuscation method
-        bool usesMappedObfuscation = [
-          ObfuscationMethod.en1,
-          ObfuscationMethod.en2,
-          ObfuscationMethod.fa1,
-          ObfuscationMethod.fa2,
-        ].contains(qrypt.getObfuscationMethod());
+        bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
 
         bool usesBase64Obfuscation =
             qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
@@ -358,83 +348,19 @@ class InputHandler {
   }
 
   Qrypt handleObfs(Qrypt qrypt) {
-    String? obfsText = qrypt.text;
-    switch (qrypt.getObfuscationMethod()) {
-      case ObfuscationMethod.none:
-        return qrypt;
-      case ObfuscationMethod.en1:
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationEN1Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.en2:
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationEN2Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.fa1:
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA1Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.fa2:
-        obfsText = Obfuscate.obfuscateText(qrypt.text, obfuscationFA2Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.b64:
-        obfsText = Obfuscate.obfuscateBase64(qrypt.text);
-        qrypt.text = obfsText;
-        return qrypt;
-
-      case ObfuscationMethod.rot13:
-        obfsText = Obfuscate.obfuscateROT13(qrypt.text);
-        qrypt.text = obfsText;
-        return qrypt;
-
-      case ObfuscationMethod.xor:
-        obfsText = Obfuscate.obfuscateXOR(
-          qrypt.text,
-          42,
-        ); // TODO: Consider random key for better security
-        qrypt.text = obfsText;
-        return qrypt;
-    }
+    qrypt.text = ObfuscationService.obfuscate(
+      qrypt.getObfuscationMethod(),
+      qrypt.text,
+    );
+    return qrypt;
   }
 
   Qrypt handleDeObfs(Qrypt qrypt) {
-    String? obfsText = qrypt.text;
-    switch (qrypt.getObfuscationMethod()) {
-      case ObfuscationMethod.none:
-        return qrypt;
-      case ObfuscationMethod.en1:
-        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationEN1Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.en2:
-        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationEN2Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.fa1:
-        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA1Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.fa2:
-        obfsText = Obfuscate.deobfuscateText(qrypt.text, obfuscationFA2Map);
-        qrypt.text = obfsText;
-        return qrypt;
-      case ObfuscationMethod.b64:
-        obfsText = Obfuscate.deobfuscateBase64(qrypt.text);
-        qrypt.text = obfsText;
-        return qrypt;
-
-      case ObfuscationMethod.rot13:
-        obfsText = Obfuscate.deobfuscateROT13(qrypt.text);
-        qrypt.text = obfsText;
-        return qrypt;
-
-      case ObfuscationMethod.xor:
-        // Use the same key as obfuscation
-        obfsText = Obfuscate.deobfuscateXOR(qrypt.text, 42); // Same key
-        qrypt.text = obfsText;
-        return qrypt;
-    }
+    qrypt.text = ObfuscationService.deobfuscate(
+      qrypt.getObfuscationMethod(),
+      qrypt.text,
+    );
+    return qrypt;
   }
 
   Qrypt handleVerify(Qrypt qrypt, BuildContext context) {
@@ -454,12 +380,7 @@ class InputHandler {
           }
 
           // Determine format and decode accordingly
-          bool usesMappedObfuscation = [
-            ObfuscationMethod.en1,
-            ObfuscationMethod.en2,
-            ObfuscationMethod.fa1,
-            ObfuscationMethod.fa2,
-          ].contains(qrypt.getObfuscationMethod());
+          bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
 
           bool usesBase64Obfuscation =
               qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
@@ -643,12 +564,7 @@ class InputHandler {
       return qrypt; // Skip decryption as data is already decompressed
     }
 
-    bool usesMappedObfuscation = [
-      ObfuscationMethod.en1,
-      ObfuscationMethod.en2,
-      ObfuscationMethod.fa1,
-      ObfuscationMethod.fa2,
-    ].contains(qrypt.getObfuscationMethod());
+    bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
 
     bool usesBase64Obfuscation =
         qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
@@ -1143,16 +1059,7 @@ class InputHandler {
     return qrypt;
   }
 
-  static List<String> parseByColon(String input) {
-    List<String> parts;
-    parts = input.split(':');
-    if (kDebugMode) {
-      print(
-        'parsed the text with size ${parts.length} : ${parts[0]} and ${parts[1]} ',
-      );
-    }
-    return input.split(':');
-  }
+  static List<String> parseByColon(String input) => input.split(':');
 
   Uint8List? _decryptWithAESKey(
     EncryptionMethod method,
