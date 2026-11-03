@@ -1,0 +1,3560 @@
+{
+ "inputs": [
+  "",
+  "0",
+  "a",
+  "00",
+  "deadbeef",
+  "a1b2c3d4e5f60789",
+  "3b4262e17a7f7b34402d729912500c9a9af54aa829a8d769a300db9343d54a78",
+  "811339db15ce879ff58179b91d6ab313024244c7d1de13caf1cad1b6026a418539038b3fe500bb11fd64cd2577721c2f9a7a628ecf1e00c66ea4fdf17f202c8505ecf38fdb4cb149ab97ccd0a3a63db3ac7bd8dd31a21ea45103f844fdf9c96c65fffb7eef40baa75f7fb0758875637494c7796b76692d2ce4fc78a19872720ad8ae306a10a2ff5c8c3a78f8c03a47e56bb63770931373fa62505c7846bfaf2b2a57d1c74f79b127a67c560afe2f6b5ee0111467d56c2c2014631cdc8da1dd1f4a6b7a1e8736be483",
+  "55b257357516d62dd0851f03869cb51eae99e18f:05f524cb978085a3f33482d8",
+  "1a36eb47d58ea4b4f028fb0e957855e159000faa:a4b8298ae240d08f0d2c8f82c573a398",
+  "SGVsbG8gV29ybGQ+/w==",
+  "AAEC+/8="
+ ],
+ "outputs": {
+  "en1": {
+   "encoded": [
+    "",
+    "9",
+    "Z",
+    "9 9",
+    "W V Z W Y V V U",
+    "Z 8 Y 7 X 6 W 5 V 4 U 3 9 2 1 0",
+    "6 Y 5 7 3 7 V 8 2 Z 2 U 2 Y 6 5 5 9 7 W 2 7 0 0 8 7 4 9 9 X 0 Z 0 Z U 4 5 Z Z 1 7 0 Z 1 W 2 3 0 Z 6 9 9 W Y 0 6 5 6 W 4 5 Z 2 1",
+    "1 8 8 6 6 0 W Y 8 4 X V 1 2 0 U U 4 1 8 2 0 Y 0 8 W 3 Z Y 6 8 6 9 7 5 7 5 5 X 2 W 8 W V 8 6 X Z U 8 X Z W 8 Y 3 9 7 3 Z 5 8 1 4 6 0 9 6 1 Y 6 U V 4 9 9 Y Y 8 8 U W 3 5 X W 7 4 2 2 2 7 8 X 7 U 0 Z 2 Z 3 7 1 V X U 8 V 9 9 X 3 3 V Z 5 U W U 8 2 U 7 9 7 X 1 4 9 4 V X U 6 1 U W Y 5 X Y 8 5 0 Z Y 0 2 X X W 9 Z 6 Z 3 6 W Y 6 Z X 2 Y W 1 W W 6 8 Z 7 8 V Z 5 4 8 9 6 U 1 5 5 U W U 0 X 0 3 X 3 4 U U U Y 2 V V U 5 9 Y Z Z 2 4 U 2 U Y 9 2 4 1 1 2 4 3 6 2 5 0 5 X 2 2 0 3 Y 2 3 3 0 7 W 7 X V 5 U X 2 1 Z 8 0 1 2 7 2 7 9 Z W 1 Z V 6 9 3 Z 8 9 Z 7 U U 4 X 1 X 6 Z 2 1 U 1 X 9 6 Z 5 2 V 4 3 Y Y 3 6 2 2 9 0 6 8 6 2 6 U Z 3 7 4 9 4 X 2 1 5 3 Y U Z U 7 Y 7 Z 4 2 W 8 X 2 5 U 2 0 Y 8 7 2 Z 3 2 X 4 3 9 Z U V 7 U 3 Y 4 V V 9 8 8 8 5 3 2 W 4 3 X 7 X 7 9 8 5 3 6 8 X W X 1 W Z 8 W W 8 U 5 Z 3 Y 2 Z 8 V 1 2 6 3 Y V 5 1 6",
+    "4 4 Y 7 4 2 6 4 2 4 8 3 W 3 7 W W 9 1 4 8 U 9 6 1 3 0 X Y 4 8 V Z V 0 0 V 8 1 U : 9 4 U 4 7 5 X Y 0 2 1 9 1 4 Z 6 U 6 6 5 1 7 W 1",
+    "8 Z 6 3 V Y 5 2 W 4 1 V Z 5 Y 5 U 9 7 1 U Y 9 V 0 4 2 1 4 4 V 8 4 0 9 9 9 U Z Z : Z 5 Y 1 7 0 1 Z V 7 5 9 W 9 1 U 9 W 7 X 1 U 1 7 X 4 2 6 Z 6 0 1",
+    "H T E H Y T 1 T E 7 0 B Y T J + / D = =",
+    "Z Z V X + / 1 ="
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "A",
+    "00",
+    "DEADBEEF",
+    "A1B2C3D4E5F60789",
+    "3B4262E17A7F7B34402D729912500C9A9AF54AA829A8D769A300DB9343D54A78",
+    "811339DB15CE879FF58179B91D6AB313024244C7D1DE13CAF1CAD1B6026A418539038B3FE500BB11FD64CD2577721C2F9A7A628ECF1E00C66EA4FDF17F202C8505ECF38FDB4CB149AB97CCD0A3A63DB3AC7BD8DD31A21EA45103F844FDF9C96C65FFFB7EEF40BAA75F7FB0758875637494C7796B76692D2CE4FC78A19872720AD8AE306A10A2FF5C8C3A78F8C03A47E56BB63770931373FA62505C7846BFAF2B2A57D1C74F79B127A67C560AFE2F6B5EE0111467D56C2C2014631CDC8DA1DD1F4A6B7A1E8736BE483",
+    "55B257357516D62DD0851F03869CB51EAE99E18F:05F524CB978085A3F33482D8",
+    "1A36EB47D58EA4B4F028FB0E957855E159000FAA:A4B8298AE240D08F0D2C8F82C573A398",
+    "SGVSBG8GV29YBGQ+/W==",
+    "AAEC+/8="
+   ]
+  },
+  "en2": {
+   "encoded": [
+    "",
+    "null",
+    "apple",
+    "null null",
+    "device energy apple device bottle energy energy forest",
+    "apple first bottle second camera third device fourth energy fifth forest sixth null seventh eighth ninth",
+    "third bottle fourth second sixth second energy first seventh apple seventh forest seventh bottle third fourth fourth null second device seventh second ninth ninth first second fifth null null camera ninth apple ninth apple forest fifth fourth apple apple eighth second ninth apple eighth device seventh sixth ninth apple third null null device bottle ninth third fourth third device fifth fourth apple seventh eighth",
+    "eighth first first third third ninth device bottle first fifth camera energy eighth seventh ninth forest forest fifth eighth first seventh ninth bottle ninth first device sixth apple bottle third first third null second fourth second fourth fourth camera seventh device first device energy first third camera apple forest first camera apple device first bottle sixth null second sixth apple fourth first eighth fifth third ninth null third eighth bottle third forest energy fifth null null bottle bottle first first forest device sixth fourth camera device second fifth seventh seventh seventh second first camera second forest ninth apple seventh apple sixth second eighth energy camera forest first energy null null camera sixth sixth energy apple fourth forest device forest first seventh forest second null second camera eighth fifth null fifth energy camera forest third eighth forest device bottle fourth camera bottle first fourth ninth apple bottle ninth seventh camera camera device null apple third apple sixth third device bottle third apple camera seventh bottle device eighth device device third first apple second first energy apple fourth fifth first null third forest eighth fourth fourth forest device forest ninth camera ninth sixth camera sixth fifth forest forest forest bottle seventh energy energy forest fourth null bottle apple apple seventh fifth forest seventh forest bottle null seventh fifth eighth eighth seventh fifth sixth third seventh fourth ninth fourth camera seventh seventh ninth sixth bottle seventh sixth sixth ninth second device second camera energy fourth forest camera seventh eighth apple first ninth eighth seventh second seventh second null apple device eighth apple energy third null sixth apple first null apple second forest forest fifth camera eighth camera third apple seventh eighth forest eighth camera null third apple fourth seventh energy fifth sixth bottle bottle sixth third seventh seventh null ninth third first third seventh third forest apple sixth second fifth null fifth camera seventh eighth fourth sixth bottle forest apple forest second bottle second apple fifth seventh device first camera seventh fourth forest seventh ninth bottle first second seventh apple sixth seventh camera fifth sixth null apple forest energy second forest sixth bottle fifth energy energy null first first first fourth sixth seventh device fifth sixth camera second camera second null first fourth sixth third first camera device camera eighth device apple first device device first forest fourth apple sixth bottle seventh apple first energy eighth seventh third sixth bottle energy fourth eighth third",
+    "fifth fifth bottle second fifth seventh third fifth seventh fifth first sixth device sixth second device device null eighth fifth first forest null third eighth sixth ninth camera bottle fifth first energy apple energy ninth ninth energy first eighth forest : null fifth forest fifth second fourth camera bottle ninth seventh eighth null eighth fifth apple third forest third third fourth eighth second device eighth",
+    "first apple third sixth energy bottle fourth seventh device fifth eighth energy apple fourth bottle fourth forest null second eighth forest bottle null energy ninth fifth seventh eighth fifth fifth energy first fifth ninth null null null forest apple apple : apple fourth bottle eighth second ninth eighth apple energy second fourth null device null eighth forest null device second camera eighth forest eighth second camera fifth seventh third apple third ninth eighth",
+    "system garden video system bottle garden eighth garden video second ninth yard bottle garden quality add divided window equal equal",
+    "apple apple energy camera add divided eighth equal"
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "a",
+    "00",
+    "deadbeef",
+    "a1b2c3d4e5f60789",
+    "3b4262e17a7f7b34402d729912500c9a9af54aa829a8d769a300db9343d54a78",
+    "811339db15ce879ff58179b91d6ab313024244c7d1de13caf1cad1b6026a418539038b3fe500bb11fd64cd2577721c2f9a7a628ecf1e00c66ea4fdf17f202c8505ecf38fdb4cb149ab97ccd0a3a63db3ac7bd8dd31a21ea45103f844fdf9c96c65fffb7eef40baa75f7fb0758875637494c7796b76692d2ce4fc78a19872720ad8ae306a10a2ff5c8c3a78f8c03a47e56bb63770931373fa62505c7846bfaf2b2a57d1c74f79b127a67c560afe2f6b5ee0111467d56c2c2014631cdc8da1dd1f4a6b7a1e8736be483",
+    "55b257357516d62dd0851f03869cb51eae99e18f:05f524cb978085a3f33482d8",
+    "1a36eb47d58ea4b4f028fb0e957855e159000faa:a4b8298ae240d08f0d2c8f82c573a398",
+    "sgvsbg8gv29ybgq+/w==",
+    "aaec+/8="
+   ]
+  },
+  "fa1": {
+   "encoded": [
+    "",
+    "ض",
+    "ۥ",
+    "ض ض",
+    "ۨ ۩ ۥ ۨ ۦ ۩ ۩ ۪",
+    "ۥ ا ۦ ص ۧ غ ۨ آ ۩ ٖ ۪ ٗ ض ج ت ز",
+    "غ ۦ آ ص ٗ ص ۩ ا ج ۥ ج ۪ ج ۦ غ آ آ ض ص ۨ ج ص ز ز ا ص ٖ ض ض ۧ ز ۥ ز ۥ ۪ ٖ آ ۥ ۥ ت ص ز ۥ ت ۨ ج ٗ ز ۥ غ ض ض ۨ ۦ ز غ آ غ ۨ ٖ آ ۥ ج ت",
+    "ت ا ا غ غ ز ۨ ۦ ا ٖ ۧ ۩ ت ج ز ۪ ۪ ٖ ت ا ج ز ۦ ز ا ۨ ٗ ۥ ۦ غ ا غ ض ص آ ص آ آ ۧ ج ۨ ا ۨ ۩ ا غ ۧ ۥ ۪ ا ۧ ۥ ۨ ا ۦ ٗ ض ص ٗ ۥ آ ا ت ٖ غ ز ض غ ت ۦ غ ۪ ۩ ٖ ض ض ۦ ۦ ا ا ۪ ۨ ٗ آ ۧ ۨ ص ٖ ج ج ج ص ا ۧ ص ۪ ز ۥ ج ۥ ٗ ص ت ۩ ۧ ۪ ا ۩ ض ض ۧ ٗ ٗ ۩ ۥ آ ۪ ۨ ۪ ا ج ۪ ص ض ص ۧ ت ٖ ض ٖ ۩ ۧ ۪ غ ت ۪ ۨ ۦ آ ۧ ۦ ا آ ز ۥ ۦ ز ج ۧ ۧ ۨ ض ۥ غ ۥ ٗ غ ۨ ۦ غ ۥ ۧ ج ۦ ۨ ت ۨ ۨ غ ا ۥ ص ا ۩ ۥ آ ٖ ا ض غ ۪ ت آ آ ۪ ۨ ۪ ز ۧ ز ٗ ۧ ٗ ٖ ۪ ۪ ۪ ۦ ج ۩ ۩ ۪ آ ض ۦ ۥ ۥ ج ٖ ۪ ج ۪ ۦ ض ج ٖ ت ت ج ٖ ٗ غ ج آ ز آ ۧ ج ج ز ٗ ۦ ج ٗ ٗ ز ص ۨ ص ۧ ۩ آ ۪ ۧ ج ت ۥ ا ز ت ج ص ج ص ض ۥ ۨ ت ۥ ۩ غ ض ٗ ۥ ا ض ۥ ص ۪ ۪ ٖ ۧ ت ۧ غ ۥ ج ت ۪ ت ۧ ض غ ۥ آ ج ۩ ٖ ٗ ۦ ۦ ٗ غ ج ج ض ز غ ا غ ج غ ۪ ۥ ٗ ص ٖ ض ٖ ۧ ج ت آ ٗ ۦ ۪ ۥ ۪ ص ۦ ص ۥ ٖ ج ۨ ا ۧ ج آ ۪ ج ز ۦ ا ص ج ۥ ٗ ج ۧ ٖ ٗ ض ۥ ۪ ۩ ص ۪ ٗ ۦ ٖ ۩ ۩ ض ا ا ا آ ٗ ج ۨ ٖ ٗ ۧ ص ۧ ص ض ا آ ٗ غ ا ۧ ۨ ۧ ت ۨ ۥ ا ۨ ۨ ا ۪ آ ۥ ٗ ۦ ج ۥ ا ۩ ت ج غ ٗ ۦ ۩ آ ت غ",
+    "ٖ ٖ ۦ ص ٖ ج غ ٖ ج ٖ ا ٗ ۨ ٗ ص ۨ ۨ ض ت ٖ ا ۪ ض غ ت ٗ ز ۧ ۦ ٖ ا ۩ ۥ ۩ ز ز ۩ ا ت ۪ : ض ٖ ۪ ٖ ص آ ۧ ۦ ز ج ت ض ت ٖ ۥ غ ۪ غ غ آ ت ص ۨ ت",
+    "ا ۥ غ ٗ ۩ ۦ آ ج ۨ ٖ ت ۩ ۥ آ ۦ آ ۪ ض ص ت ۪ ۦ ض ۩ ز ٖ ج ت ٖ ٖ ۩ ا ٖ ز ض ض ض ۪ ۥ ۥ : ۥ آ ۦ ت ص ز ت ۥ ۩ ص آ ض ۨ ض ت ۪ ض ۨ ص ۧ ت ۪ ت ص ۧ ٖ ج غ ۥ غ ز ت",
+    "۽ ۫ ݐ ۽ ۦ ۫ ت ۫ ݐ ص ز ݓ ۦ ۫ ۻ + / ݑ = =",
+    "ۥ ۥ ۩ ۧ + / ت ="
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "A",
+    "00",
+    "DEADBEEF",
+    "A1B2C3D4E5F60789",
+    "3B4262E17A7F7B34402D729912500C9A9AF54AA829A8D769A300DB9343D54A78",
+    "811339DB15CE879FF58179B91D6AB313024244C7D1DE13CAF1CAD1B6026A418539038B3FE500BB11FD64CD2577721C2F9A7A628ECF1E00C66EA4FDF17F202C8505ECF38FDB4CB149AB97CCD0A3A63DB3AC7BD8DD31A21EA45103F844FDF9C96C65FFFB7EEF40BAA75F7FB0758875637494C7796B76692D2CE4FC78A19872720AD8AE306A10A2FF5C8C3A78F8C03A47E56BB63770931373FA62505C7846BFAF2B2A57D1C74F79B127A67C560AFE2F6B5EE0111467D56C2C2014631CDC8DA1DD1F4A6B7A1E8736BE483",
+    "55B257357516D62DD0851F03869CB51EAE99E18F:05F524CB978085A3F33482D8",
+    "1A36EB47D58EA4B4F028FB0E957855E159000FAA:A4B8298AE240D08F0D2C8F82C573A398",
+    "SGVSBG8GV29YBGQ+/W==",
+    "AAEC+/8="
+   ]
+  },
+  "fa2": {
+   "encoded": [
+    "",
+    "صفر",
+    "بله",
+    "صفر صفر",
+    "چگونه کجا بله چگونه خیر کجا کجا چه",
+    "بله یک خیر دو چرا سه چگونه چهار کجا پنج چه شش صفر هفت هشت نه",
+    "سه خیر چهار دو شش دو کجا یک هفت بله هفت چه هفت خیر سه چهار چهار صفر دو چگونه هفت دو نه نه یک دو پنج صفر صفر چرا نه بله نه بله چه پنج چهار بله بله هشت دو نه بله هشت چگونه هفت شش نه بله سه صفر صفر چگونه خیر نه سه چهار سه چگونه پنج چهار بله هفت هشت",
+    "هشت یک یک سه سه نه چگونه خیر یک پنج چرا کجا هشت هفت نه چه چه پنج هشت یک هفت نه خیر نه یک چگونه شش بله خیر سه یک سه صفر دو چهار دو چهار چهار چرا هفت چگونه یک چگونه کجا یک سه چرا بله چه یک چرا بله چگونه یک خیر شش صفر دو شش بله چهار یک هشت پنج سه نه صفر سه هشت خیر سه چه کجا پنج صفر صفر خیر خیر یک یک چه چگونه شش چهار چرا چگونه دو پنج هفت هفت هفت دو یک چرا دو چه نه بله هفت بله شش دو هشت کجا چرا چه یک کجا صفر صفر چرا شش شش کجا بله چهار چه چگونه چه یک هفت چه دو صفر دو چرا هشت پنج صفر پنج کجا چرا چه سه هشت چه چگونه خیر چهار چرا خیر یک چهار نه بله خیر نه هفت چرا چرا چگونه صفر بله سه بله شش سه چگونه خیر سه بله چرا هفت خیر چگونه هشت چگونه چگونه سه یک بله دو یک کجا بله چهار پنج یک صفر سه چه هشت چهار چهار چه چگونه چه نه چرا نه شش چرا شش پنج چه چه چه خیر هفت کجا کجا چه چهار صفر خیر بله بله هفت پنج چه هفت چه خیر صفر هفت پنج هشت هشت هفت پنج شش سه هفت چهار نه چهار چرا هفت هفت نه شش خیر هفت شش شش نه دو چگونه دو چرا کجا چهار چه چرا هفت هشت بله یک نه هشت هفت دو هفت دو صفر بله چگونه هشت بله کجا سه صفر شش بله یک صفر بله دو چه چه پنج چرا هشت چرا سه بله هفت هشت چه هشت چرا صفر سه بله چهار هفت کجا پنج شش خیر خیر شش سه هفت هفت صفر نه سه یک سه هفت سه چه بله شش دو پنج صفر پنج چرا هفت هشت چهار شش خیر چه بله چه دو خیر دو بله پنج هفت چگونه یک چرا هفت چهار چه هفت نه خیر یک دو هفت بله شش هفت چرا پنج شش صفر بله چه کجا دو چه شش خیر پنج کجا کجا صفر یک یک یک چهار شش هفت چگونه پنج شش چرا دو چرا دو صفر یک چهار شش سه یک چرا چگونه چرا هشت چگونه بله یک چگونه چگونه یک چه چهار بله شش خیر هفت بله یک کجا هشت هفت سه شش خیر کجا چهار هشت سه",
+    "پنج پنج خیر دو پنج هفت سه پنج هفت پنج یک شش چگونه شش دو چگونه چگونه صفر هشت پنج یک چه صفر سه هشت شش نه چرا خیر پنج یک کجا بله کجا نه نه کجا یک هشت چه : صفر پنج چه پنج دو چهار چرا خیر نه هفت هشت صفر هشت پنج بله سه چه سه سه چهار هشت دو چگونه هشت",
+    "یک بله سه شش کجا خیر چهار هفت چگونه پنج هشت کجا بله چهار خیر چهار چه صفر دو هشت چه خیر صفر کجا نه پنج هفت هشت پنج پنج کجا یک پنج نه صفر صفر صفر چه بله بله : بله چهار خیر هشت دو نه هشت بله کجا دو چهار صفر چگونه صفر هشت چه صفر چگونه دو چرا هشت چه هشت دو چرا پنج هفت سه بله سه نه هشت",
+    "نوشید کی زیبا نوشید خیر کی هشت کی زیبا دو نه تازه خیر کی دید بعلاوه تقسیم بزرگ برابر برابر",
+    "بله بله کجا چرا بعلاوه تقسیم هشت برابر"
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "A",
+    "00",
+    "DEADBEEF",
+    "A1B2C3D4E5F60789",
+    "3B4262E17A7F7B34402D729912500C9A9AF54AA829A8D769A300DB9343D54A78",
+    "811339DB15CE879FF58179B91D6AB313024244C7D1DE13CAF1CAD1B6026A418539038B3FE500BB11FD64CD2577721C2F9A7A628ECF1E00C66EA4FDF17F202C8505ECF38FDB4CB149AB97CCD0A3A63DB3AC7BD8DD31A21EA45103F844FDF9C96C65FFFB7EEF40BAA75F7FB0758875637494C7796B76692D2CE4FC78A19872720AD8AE306A10A2FF5C8C3A78F8C03A47E56BB63770931373FA62505C7846BFAF2B2A57D1C74F79B127A67C560AFE2F6B5EE0111467D56C2C2014631CDC8DA1DD1F4A6B7A1E8736BE483",
+    "55B257357516D62DD0851F03869CB51EAE99E18F:05F524CB978085A3F33482D8",
+    "1A36EB47D58EA4B4F028FB0E957855E159000FAA:A4B8298AE240D08F0D2C8F82C573A398",
+    "SGVSBG8GV29YBGQ+/W==",
+    "AAEC+/8="
+   ]
+  },
+  "b64": {
+   "encoded": [
+    "",
+    "MA==",
+    "YQ==",
+    "MDA=",
+    "ZGVhZGJlZWY=",
+    "YTFiMmMzZDRlNWY2MDc4OQ==",
+    "M2I0MjYyZTE3YTdmN2IzNDQwMmQ3Mjk5MTI1MDBjOWE5YWY1NGFhODI5YThkNzY5YTMwMGRiOTM0M2Q1NGE3OA==",
+    "ODExMzM5ZGIxNWNlODc5ZmY1ODE3OWI5MWQ2YWIzMTMwMjQyNDRjN2QxZGUxM2NhZjFjYWQxYjYwMjZhNDE4NTM5MDM4YjNmZTUwMGJiMTFmZDY0Y2QyNTc3NzIxYzJmOWE3YTYyOGVjZjFlMDBjNjZlYTRmZGYxN2YyMDJjODUwNWVjZjM4ZmRiNGNiMTQ5YWI5N2NjZDBhM2E2M2RiM2FjN2JkOGRkMzFhMjFlYTQ1MTAzZjg0NGZkZjljOTZjNjVmZmZiN2VlZjQwYmFhNzVmN2ZiMDc1ODg3NTYzNzQ5NGM3Nzk2Yjc2NjkyZDJjZTRmYzc4YTE5ODcyNzIwYWQ4YWUzMDZhMTBhMmZmNWM4YzNhNzhmOGMwM2E0N2U1NmJiNjM3NzA5MzEzNzNmYTYyNTA1Yzc4NDZiZmFmMmIyYTU3ZDFjNzRmNzliMTI3YTY3YzU2MGFmZTJmNmI1ZWUwMTExNDY3ZDU2YzJjMjAxNDYzMWNkYzhkYTFkZDFmNGE2YjdhMWU4NzM2YmU0ODM=",
+    "NTViMjU3MzU3NTE2ZDYyZGQwODUxZjAzODY5Y2I1MWVhZTk5ZTE4ZjowNWY1MjRjYjk3ODA4NWEzZjMzNDgyZDg=",
+    "MWEzNmViNDdkNThlYTRiNGYwMjhmYjBlOTU3ODU1ZTE1OTAwMGZhYTphNGI4Mjk4YWUyNDBkMDhmMGQyYzhmODJjNTczYTM5OA==",
+    "U0dWc2JHOGdWMjl5YkdRKy93PT0=",
+    "QUFFQysvOD0="
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "a",
+    "00",
+    "deadbeef",
+    "a1b2c3d4e5f60789",
+    "3b4262e17a7f7b34402d729912500c9a9af54aa829a8d769a300db9343d54a78",
+    "811339db15ce879ff58179b91d6ab313024244c7d1de13caf1cad1b6026a418539038b3fe500bb11fd64cd2577721c2f9a7a628ecf1e00c66ea4fdf17f202c8505ecf38fdb4cb149ab97ccd0a3a63db3ac7bd8dd31a21ea45103f844fdf9c96c65fffb7eef40baa75f7fb0758875637494c7796b76692d2ce4fc78a19872720ad8ae306a10a2ff5c8c3a78f8c03a47e56bb63770931373fa62505c7846bfaf2b2a57d1c74f79b127a67c560afe2f6b5ee0111467d56c2c2014631cdc8da1dd1f4a6b7a1e8736be483",
+    "55b257357516d62dd0851f03869cb51eae99e18f:05f524cb978085a3f33482d8",
+    "1a36eb47d58ea4b4f028fb0e957855e159000faa:a4b8298ae240d08f0d2c8f82c573a398",
+    "SGVsbG8gV29ybGQ+/w==",
+    "AAEC+/8="
+   ]
+  },
+  "rot13": {
+   "encoded": [
+    "",
+    "0",
+    "n",
+    "00",
+    "qrnqorrs",
+    "n1o2p3q4r5s60789",
+    "3o4262r17n7s7o34402q729912500p9n9ns54nn829n8q769n300qo9343q54n78",
+    "811339qo15pr879ss58179o91q6no313024244p7q1qr13pns1pnq1o6026n418539038o3sr500oo11sq64pq2577721p2s9n7n628rps1r00p66rn4sqs17s202p8505rps38sqo4po149no97ppq0n3n63qo3np7oq8qq31n21rn45103s844sqs9p96p65ssso7rrs40onn75s7so0758875637494p7796o76692q2pr4sp78n19872720nq8nr306n10n2ss5p8p3n78s8p03n47r56oo63770931373sn62505p7846osns2o2n57q1p74s79o127n67p560nsr2s6o5rr0111467q56p2p2014631pqp8qn1qq1s4n6o7n1r8736or483",
+    "55o257357516q62qq0851s03869po51rnr99r18s:05s524po978085n3s33482q8",
+    "1n36ro47q58rn4o4s028so0r957855r159000snn:n4o8298nr240q08s0q2p8s82p573n398",
+    "FTIfoT8tI29loTD+/j==",
+    "NNRP+/8="
+   ],
+   "roundTrip": [
+    "",
+    "0",
+    "a",
+    "00",
+    "deadbeef",
+    "a1b2c3d4e5f60789",
+    "3b4262e17a7f7b34402d729912500c9a9af54aa829a8d769a300db9343d54a78",
+    "811339db15ce879ff58179b91d6ab313024244c7d1de13caf1cad1b6026a418539038b3fe500bb11fd64cd2577721c2f9a7a628ecf1e00c66ea4fdf17f202c8505ecf38fdb4cb149ab97ccd0a3a63db3ac7bd8dd31a21ea45103f844fdf9c96c65fffb7eef40baa75f7fb0758875637494c7796b76692d2ce4fc78a19872720ad8ae306a10a2ff5c8c3a78f8c03a47e56bb63770931373fa62505c7846bfaf2b2a57d1c74f79b127a67c560afe2f6b5ee0111467d56c2c2014631cdc8da1dd1f4a6b7a1e8736be483",
+    "55b257357516d62dd0851f03869cb51eae99e18f:05f524cb978085a3f33482d8",
+    "1a36eb47d58ea4b4f028fb0e957855e159000faa:a4b8298ae240d08f0d2c8f82c573a398",
+    "SGVsbG8gV29ybGQ+/w==",
+    "AAEC+/8="
+   ]
+  }
+ },
+ "tags": {
+  "9ff8f8": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "Z Y U V 7 1": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "null ninth first fourth fifth null": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ا ٗ آ ا ت ا": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه چگونه نه یک چرا خیر": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NzYzODg3": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "34s615": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0018\u001f\u001b\u001b\u0019\u0013": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "634b34": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "0 Z 2 0 5 W": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "fifth eighth device sixth ninth null": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ض ٗ ۨ ۥ ص ۪": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "دو چرا بله یک هفت یک": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZWU2OGM0": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "81oo5o": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u0018KNI\u001b\u0012": {
+   "compression": "none",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "54d7f1": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "8 V 8 5 Z 5": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "null null first null sixth eighth": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۧ ٖ ت ۧ آ آ": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "پنج چرا دو دو پنج چه": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "Yjc5ZDk4": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "08nqn4": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001eI\u001b\u001d\u001dO": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "f97cbf": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "W U 7 5 6 3": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "fourth device energy bottle null second": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ض ض ٗ ض ا ج": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "کجا پنج نه شش چرا چه": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OGJmY2My": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "61531n": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "N\u001f\u0019\u001fN\u0013": {
+   "compression": "none",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "3c3948": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "0 8 Y X Y 9": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "fourth second eighth eighth apple ninth": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۩ ۨ ۩ ج ۩ ج": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه نه هشت کجا نه پنج": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NTQ2Y2Y1": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "o34035": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "L\u001b\u001aO\u0019\u001b": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "603285": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "Y 5 Z 1 4 V": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "ninth first ninth second fifth eighth": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ص ۧ ۨ ۦ ت ت": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هشت هفت پنج چه خیر شش": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ODFiYmNl": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "s94soo": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u0013\u001d\u0012LN": {
+   "compression": "none",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "8c39b9": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "7 Y X 4 U 1": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "first null sixth eighth seventh sixth": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۪ ۨ ۦ ض ت ص": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چه چرا خیر صفر بله کجا": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YzY1MjEw": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "5pr46p": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001aI\u001e\u001bOL": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "01b6ff": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "2 W Z 0 Y 9": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "null camera fifth seventh fourth third": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "۪ ۦ ت ص ٖ ض": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "دو چه چهار چرا بله هفت": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "YjEzMDcx": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "9o5733": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u001e\u001c\u0018\u001aL": {
+   "compression": "none",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "5545a2": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "Y W Z 7 W 2": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second device energy apple camera apple": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ز غ ت ج ت ض": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه کجا بله چرا هشت بله": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YmFlMDMx": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "9nn8q2": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "HIOLN\u001f": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "ec2f41": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "9 0 X 1 V 1": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "third forest fifth first seventh first": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "غ ج ز ٗ ز ۧ": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "سه چرا پنج هفت سه هفت": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MjJlYjI0": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "05spn6": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001fOIIK\u001b": {
+   "compression": "none",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "888afd": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "V Y 6 2 0 6": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "forest camera eighth apple camera device": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ا ۨ ا ت ٖ ۧ": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه هفت صفر هشت پنج کجا": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YzYxYjUz": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "5n680o": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u001cK\u0012\u0013L": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "92fca5": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "4 W V 5 7 1": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "forest eighth apple fifth camera bottle": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۨ ۧ ت غ ۪ ا": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "شش نه پنج سه بله یک": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZTg3YzU3": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "7n70q0": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001aL\u001c\u001a\u001f\u001c": {
+   "compression": "none",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "b6c5ad": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "Z Y 1 X 8 0": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "camera third third second device forest": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ا ۦ ۨ ص ۪ غ": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه هشت چه خیر بله شش": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZmUzMzIy": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "7r6157": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0012\u001dNH\u0013\u0018": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "36e219": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "3 Y 1 9 7 Z": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "null apple sixth null eighth camera": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۦ ج ۥ ۩ ا ۥ": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "شش چرا صفر خیر پنج بله": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OWVjM2Qw": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "4513s1": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u001fN\u001dI\u001f": {
+   "compression": "none",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "d296a0": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "2 8 Z X 4 6": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "forest camera apple device fourth null": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "غ ۥ غ ص ٗ ۩": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چرا هفت چرا یک چگونه یک": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ODM1MjYz": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "866p02": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "O\u001e\u0019L\u0018\u0013": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "318eff": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "4 Z 0 8 X 6": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "eighth fifth forest seventh apple eighth": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ج غ ٖ ا ۥ ٗ": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چه چگونه نه چه کجا کجا": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZjJlMzQy": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "5o3p52": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u0013\u0018\u001b\u001a\u001c\u0013": {
+   "compression": "gZip",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "4220d4": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "V 0 U 2 U 2": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "first eighth seventh device device eighth": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۥ ا ٖ ۧ ص ۨ": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "یک نه نه نه هشت چرا": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZmU3NGVh": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "p2rr02": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0012\u0019\u0019\u0012\u0012\u001e": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "ae77a2": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "2 V 9 2 4 8": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "energy apple seventh seventh null third": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ت آ ا ۪ ا ۦ": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هشت چه چهار سه چهار سه": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MGViMDk5": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "933530": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "L\u001fNOO\u001a": {
+   "compression": "gZip",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "4cdbe6": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "2 5 W U W 4": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "sixth device energy second forest apple": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ض ز ۧ ج ا ۥ": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "صفر نه خیر سه شش چگونه": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "Yzk5MmVl": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "394155": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "L\u001f\u001e\u0018N\u0018": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "27aeea": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "6 6 3 0 8 Z": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "camera third third bottle apple forest": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۧ ص آ ا ۪ ۨ": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "یک صفر یک صفر بله کجا": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ODE4ZTdk": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "pr7n1o": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u0019\u0019\u001cH\u0019": {
+   "compression": "gZip",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "49f086": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "3 8 U 2 Y 4": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "fourth camera fourth eighth device second": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ض ٗ ز غ ا ص": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "سه یک چرا چگونه نه خیر": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZjUwMDE5": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "1osr00": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u0013\u001d\u001a\u001e\u001e": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "589ddc": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "W 3 V Z 1 3": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "camera fourth second first camera eighth": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ا آ آ ت ۥ ت": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "خیر هشت چهار هشت نه کجا": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "YWY0MTBj": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "rqq1o9": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u001a\u001a\u0019\u001f\u001a": {
+   "compression": "gZip",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "ff1edb": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "V 8 9 X 8 1": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "eighth sixth second energy ninth second": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۧ غ ۥ ت ج غ": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه خیر چرا نه خیر دو": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YTQ3Y2Ez": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "o8q9qr": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u001eKN\u001bO": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "82c30d": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "7 9 1 2 3 9": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "forest bottle fourth fifth forest device": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "۪ ۦ ۨ ۧ ۩ ز": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چهار بله هشت چه چگونه صفر": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OGUwNTM4": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "n688pp": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u001f\u0018I\u0018\u001e": {
+   "compression": "gZip",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "d19da2": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "X 1 V 2 4 8": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "seventh bottle energy seventh apple device": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ا ض ۪ ۦ ۦ ۧ": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "نه چهار سه خیر شش چرا": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZDViNmU1": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "n4n88r": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "O\u001b\u001f\u001eK\u001f": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "058d69": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "8 2 0 V Y W": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "bottle apple bottle forest bottle first": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "۩ ز غ ج آ ۪": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "پنج کجا هفت دو یک هشت": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZTg4OThi": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "rsn4s2": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001f\u0013\u001bI\u0013\u001b": {
+   "compression": "gZip",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "cd8162": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "V 5 9 5 U U": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "seventh first ninth device seventh forest": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "غ ج ۨ ۨ ا ٗ": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چه چرا کجا چگونه خیر سه": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZTUzOTc4": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "0p5q5q": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "K\u001fON\u0012H": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "a6a3e2": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "7 7 8 4 Y 8": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "second ninth eighth camera seventh camera": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "۩ ۨ ض ا ۥ ۥ": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "صفر یک یک کجا چه پنج": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "Y2Q3NTk2": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "q1969p": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001fKIO\u001d\u001a": {
+   "compression": "gZip",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "f9f833": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "9 U W 4 Z 9": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "energy eighth null seventh apple apple": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۧ ٖ ۨ ۧ ج ۩": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "بله چهار چهار خیر هشت دو": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZDAyYzli": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "opr4np": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "KNINO\u001d": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "fd531d": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "3 5 9 0 2 V": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "device sixth fourth seventh forest seventh": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ج ٗ ۧ ض ۥ ض": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "بله خیر صفر نه چگونه هشت": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MDFiZjA4": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "n7q1r6": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "L\u001eHN\u0018\u001f": {
+   "compression": "lZ4",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "c1049d": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "Y 6 9 7 3 X": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "energy first fourth null first eighth": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۩ آ غ ص ۨ ۪": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چرا سه پنج بله یک کجا": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NTBkNTAz": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "p20q4r": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0018KLNIO": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "4e95b8": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "9 V 5 4 7 4": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "forest device energy null fourth fifth": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ز ض ض آ ۪ ت": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چه خیر هشت چه پنج بله": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OTQyYjFi": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "o4149q": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u0019KK\u0019\u001cK": {
+   "compression": "lZ4",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "f58b79": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "8 Z Z U Z Z": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second sixth null fourth fourth eighth": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "غ ت ٗ ٖ ٖ غ": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "بله شش کجا چه هفت شش": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "Y2IxMTlj": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "13656r": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "N\u001d\u0018HI\u001e": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "dd69f6": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "2 8 4 W W W": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "apple sixth third sixth device apple": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ٗ ۥ ج ۩ ۨ ۨ": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "سه یک چگونه چهار چگونه سه": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OTNlYzg4": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "517qsn": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001b\u0018NN\u0019N": {
+   "compression": "lZ4",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "f41b7d": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "9 Z W Y 2 9": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second fourth device bottle fifth device": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ص ض ۩ ا ۩ غ": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "هشت نه دو شش چرا شش": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ODJmNmVk": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "rnn324": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0018\u0019\u001aIH\u0013": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "59768d": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "W 2 7 7 U Y": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "apple fifth seventh energy camera third": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ا ز ت ا غ ۦ": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "دو کجا کجا بله خیر صفر": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "NDNjOTQz": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "880rp8": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001bI\u001dOOH": {
+   "compression": "lZ4",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "ae7f79": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "V 6 2 Y 3 Y": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "camera apple null seventh fourth fifth": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "غ ص ٗ آ ۦ ت": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چهار هشت چرا چگونه خیر شش": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "MGQ0MmU0": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "q1s10s": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u0018N\u001c\u001e\u0019": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "228d0d": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "7 6 U W Y 4": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "sixth fourth seventh forest first first": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ا ۥ ۪ ۪ ۧ ۪": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هشت دو چهار هشت صفر پنج": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "NTIyYmNi": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "7r4201": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u001c\u0012\u0018\u0018\u0018": {
+   "compression": "lZ4",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "1e9ba6": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "9 3 Z X 1 8": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "first second null device energy first": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۦ آ ۧ ص ص ز": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چهار یک هشت چهار یک یک": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZTgyM2Yw": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "1rp132": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0019\u0012\u0012LH\u001c": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "e9bf00": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "4 7 1 4 0 Z": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "device device apple null camera apple": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ج آ ۪ غ ۩ ز": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چه خیر نه هفت خیر دو": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MmMyODg1": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "n8r7oo": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "K\u0013\u001fLIK": {
+   "compression": "lZ4",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "cac7ec": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "8 3 U U U 8": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "sixth second fifth third third first": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ج ۨ ۨ ٖ ا ص": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "بله نه سه سه هشت پنج": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "Y2FjNDkz": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "154s61": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001eK\u001dK\u0012\u001b": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "b7f5f3": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "W 8 6 U 3 0": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "seventh fifth fourth second null fourth": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "۩ ۩ ا غ ٗ ا": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هشت خیر چهار نه چرا هفت": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZmNmMjY0": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "0328q9": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u0012\u0019\u001f\u001cK": {
+   "compression": "lZ4",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "a8edfb": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "W V 3 Z 9 6": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "ninth fifth null second device forest": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۪ آ ت ج غ ز": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "دو بله چهار نه یک سه": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YjUwNTVk": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "1165p1": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "NHN\u0013H\u0019": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "260617": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "1 9 U U Y X": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "null ninth bottle ninth second third": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ض ۨ ض ۩ ۨ ۧ": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "بله یک پنج کجا هفت چرا": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "NTMxMDZi": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "26015n": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001e\u0013\u0018I\u001b\u001d": {
+   "compression": "brotli",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "45d70c": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "2 U 2 V 8 2": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "fourth energy fifth bottle energy forest": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ٖ ۪ ٗ آ ٗ ٖ": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "دو صفر بله دو پنج چگونه": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "YzU0NDlj": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "2n1s1p": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0012K\u001bHNK": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "03f5e2": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "Y Z 2 V X 0": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "sixth ninth bottle fifth fifth camera": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۦ غ ز ت ۨ ۪": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "کجا نه یک چگونه چه پنج": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OTVkM2Rk": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "qnr747": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "KH\u001b\u001f\u0019\u001a": {
+   "compression": "brotli",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "f48c7d": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "9 Z Z 0 U 9": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "seventh ninth fourth fifth forest null": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۩ ۥ ٗ ض غ ۩": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چگونه چرا شش چهار شش پنج": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "MzRjNzY3": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "q98588": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001c\u001c\u001a\u0013\u001d\u001e": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "a5df86": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "2 V 5 4 6 V": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "camera forest fifth energy camera fourth": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۨ ۧ ا ز ۪ ص": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چه خیر دو شش چگونه کجا": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ODRlNjAw": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "5oq7n6": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001e\u001aO\u001e\u0012\u001b": {
+   "compression": "brotli",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "0ebbcb": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "6 4 Y 2 1 0": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "eighth device camera seventh energy ninth": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ٗ ۥ ز ۥ غ ا": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "بله چرا بله خیر چگونه بله": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "ZjUxMTBm": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "p9p821": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "H\u001c\u0018O\u0019L": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "d9abc2": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "6 X 3 X 6 Y": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "forest apple energy fourth first camera": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ج ٖ ٗ ۧ ۪ ض": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چگونه خیر خیر خیر خیر هفت": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "YjNiYmZl": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "657pr0": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001e\u001d\u001fNH\u0018": {
+   "compression": "brotli",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "fb8971": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "W 3 Z 8 2 Z": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second sixth seventh forest fifth first": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۩ ۩ ض ٗ ص ج": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "چگونه چهار سه کجا چگونه نه": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NDEzOWU3": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "5q836p": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "KK\u001c\u001e\u001f\u001f": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "82a2ae": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "9 2 3 X 2 5": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "camera forest ninth seventh energy third": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ت ٗ ٗ ا ۩ ت": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "صفر صفر هفت دو نه هشت": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "ZmZjZWRi": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "991957": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "L\u001d\u001d\u0012\u001f\u001a": {
+   "compression": "brotli",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "fc8f88": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "6 Z U 5 8 3": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "third eighth second bottle eighth null": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۪ ٖ ٖ ض غ غ": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "پنج خیر شش خیر چرا کجا": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "N2U5Y2Fh": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "071oo4": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u001c\u001f\u001aH\u001e": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "e937e4": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "2 5 8 3 V 3": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "apple fifth fourth third energy eighth": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ز ا ۧ ٖ ج ٖ": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چگونه پنج چهار هفت خیر چه": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "OWY1ZGZj": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "5198oo": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001c\u001b\u001dK\u001e\u0012": {
+   "compression": "brotli",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "8404a9": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "0 U 5 Y 4 Z": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "device bottle eighth seventh sixth energy": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ٗ ۪ ٖ آ ص ۥ": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "خیر خیر کجا بله چگونه کجا": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NWVmNzdi": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "5sq5n8": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001fLLHNK": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "434c5c": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "0 9 Z 0 8 U": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "second forest first eighth eighth seventh": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "غ ۪ ٗ ز ٗ ۥ": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "چگونه سه چگونه شش صفر کجا": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MGIzZmNj": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "n155s3": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u0012\u001e\u0013\u0018\u001dN": {
+   "compression": "brotli",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "d77da6": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "3 0 0 Y 7 X": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "apple first eighth energy energy first": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ز ت ۦ آ آ غ": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "صفر خیر هشت کجا پنج سه": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "MjNkOWI0": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "08s16p": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001f\u0013\u0013\u0019\u0012\u001d": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "117285": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "8 3 X 3 9 U": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "bottle third device forest ninth null": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۨ ۩ ض آ ٖ غ": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "یک دو چگونه چرا چگونه چرا": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "YTA4OWI5": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "7348p2": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001a\u0019\u001c\u001a\u001d\u001a": {
+   "compression": "zstd",
+   "encryption": "none",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "a0e442": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "8 Y V 9 2 Y": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "fifth ninth seventh sixth eighth fifth": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۥ ج ز غ ٗ ا": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "شش کجا صفر چرا خیر کجا": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "N2VjOWZl": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "4n71nq": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001d\u001dO\u0018\u0013\u001d": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "146fae": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "6 Z 5 U 0 Z": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "first fourth sixth device second eighth": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ت ز ص آ ۥ غ": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "پنج نه بله چرا چه یک": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MGYyZmZm": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "p20022": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "L\u0013\u001f\u0013OI": {
+   "compression": "zstd",
+   "encryption": "aesCbc",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "17b72a": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "5 6 X 3 7 1": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "device energy sixth forest null eighth": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ض ض ض آ ا ٗ": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "هشت شش هشت دو هفت هفت": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "MmNkNDdm": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "0pp5rs": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "N\u001f\u0013K\u001dH": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "629b55": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "8 W 8 2 Y V": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "sixth bottle eighth null fourth null": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ص ز غ ا غ ا": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هشت پنج سه نه بله نه": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "YTdmY2Fl": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "959656": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001fL\u001b\u001eLO": {
+   "compression": "zstd",
+   "encryption": "aesCtr",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "936479": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "6 4 X 7 0 1": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "energy seventh ninth apple seventh sixth": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ۧ ا ۩ ۪ ۦ ۨ": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "یک چه هفت چرا کجا سه": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "Nzg5NGMw": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "p50q09": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u001fK\u001a\u0013\u0012I": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "ad4329": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "1 Z 4 8 4 1": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "first camera eighth second fourth fifth": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ص آ ض ۨ ۦ ۥ": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هفت چهار سه خیر بله هفت": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MDQ1ODEy": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "osp04n": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001bK\u001d\u0019K\u0012": {
+   "compression": "zstd",
+   "encryption": "aesGcm",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "f5dabe": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "4 V 5 8 6 0": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second sixth sixth forest third seventh": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۩ ۩ ۩ غ آ ۪": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "دو نه چه هشت هفت هفت": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NzU5NTg5": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "058338": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "\u0012\u0018\u001a\u001bH\u0019": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "4d3fab": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "Z 9 W U 9 5": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "eighth eighth ninth forest eighth sixth": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ج ۩ ص ۦ غ ت": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "کجا چرا بله چگونه دو خیر": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MTdkMDYz": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "s2r66n": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "N\u0012\u001b\u001aNN": {
+   "compression": "zstd",
+   "encryption": "rsa",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "884d8e": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "1 3 Y Y 8 7": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "camera null device second eighth eighth": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "ج ۨ ض ٖ ۧ آ": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "یک دو چه سه یک هفت": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "NWIwNjky": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "82019n": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "OINK\u0012\u001d": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "ef9f6a": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "6 7 8 X X Y": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "fourth seventh bottle fourth apple apple": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "غ ز ۥ ض آ ا": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "صفر خیر خیر کجا چرا سه": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MTJiNThh": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "2198o4": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u001cO\u0013\u0013\u001e\u0012": {
+   "compression": "zstd",
+   "encryption": "rsaSign",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  },
+  "753569": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "none"
+  },
+  "W 9 5 V 1 W": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en1"
+  },
+  "second ninth energy ninth bottle energy": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "en2"
+  },
+  "۪ ٖ ض ۩ ۩ آ": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa1"
+  },
+  "دو بله هفت نه صفر دو": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "fa2"
+  },
+  "MDZlNTll": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "b64"
+  },
+  "pspq81": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "rot13"
+  },
+  "K\u001b\u0013\u001bN\u001a": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "none",
+   "obfuscation": "xor"
+  },
+  "b0b871": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "none"
+  },
+  "5 7 V Y 3 U": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en1"
+  },
+  "seventh seventh seventh null energy apple": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "en2"
+  },
+  "ۥ ۦ ۦ آ ۩ ۩": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa1"
+  },
+  "هفت یک سه چهار بله خیر": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "fa2"
+  },
+  "MTQ2M2Q4": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "b64"
+  },
+  "opn3rq": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "rot13"
+  },
+  "\u0012\u001b\u0012O\u001e\u001b": {
+   "compression": "zstd",
+   "encryption": "mlKem",
+   "sign": "mlDsa",
+   "obfuscation": "xor"
+  }
+ }
+}
