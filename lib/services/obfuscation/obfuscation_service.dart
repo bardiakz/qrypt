@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 // imported with a prefix to avoid clashing with Qrypt's enum of that name.
 import 'package:obfuscate/obfuscate.dart' as obfs;
 import 'package:qrypt/models/obfuscation_method.dart';
+import 'package:qrypt/resources/obfuscation/built_in_obfuscation_maps.dart';
 import 'package:qrypt/resources/obfuscation/built_in_v2_maps.dart';
 import 'package:qrypt/resources/obfuscation/v2_map_pools.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_map_repository.dart';
@@ -35,7 +36,8 @@ extension ObfuscationMethodX on ObfuscationMethod {
 
   /// Replaces the four copy-pasted `usesMappedObfuscation` lists:
   /// the payload handed to obfuscation is hex (plus ':' for AES).
-  bool get isHexMapped => isLegacyMapped || isV2Mapped;
+  bool get isHexMapped =>
+      isLegacyMapped || isV2Mapped || this == ObfuscationMethod.custom;
 
   /// Returns the modern v2 equivalent for legacy mapped methods (en1->en1v2,
   /// en2->en2v2, fa1->fa1v2, fa2->fa2v2). Non-legacy methods are returned
@@ -90,15 +92,20 @@ class ObfuscationService {
   static void rebuild() {
     rebuildWith({
       for (final m in ObfuscationMethod.values)
-        if (m.isHexMapped) m: _mapFor(m),
+        if (m.isLegacyMapped || m.isV2Mapped) m: _mapFor(m),
     });
   }
 
-  /// Repository first (so custom maps work), then the generated built-ins.
+  /// Built-in v2 maps are locked and cannot be overridden. Legacy maps fall
+  /// back to the repository for decoding older messages.
   static Map<String, String> _mapFor(ObfuscationMethod m) {
-    final fromRepo = _repo.getMap(m);
-    if (fromRepo.isNotEmpty || !m.isV2Mapped) return fromRepo;
-    return builtInV2MapForMethod(m);
+    if (m.isV2Mapped) return builtInV2MapForMethod(m);
+    if (m.isLegacyMapped) {
+      final fromRepo = _repo.getMap(m);
+      if (fromRepo.isNotEmpty) return fromRepo;
+      return builtInMapForMethod(m);
+    }
+    return const {};
   }
 
   /// Test hook: build from explicit maps (legacy and v2), no repository.
@@ -257,6 +264,10 @@ class ObfuscationService {
 
   // ---- public API ----
 
+  /// Public builder for custom v2 codecs.
+  static ({String Function(String) encode, String Function(String) decode})
+      buildV2Codec(Map<String, String> map) => _buildV2(map);
+
   static String obfuscate(ObfuscationMethod method, String text) =>
       _codec(method).encode(text);
 
@@ -269,19 +280,26 @@ class ObfuscationService {
   static String? unavailableReason(ObfuscationMethod method) =>
       _unavailable[method];
 
-  /// For the ENCRYPT dropdown: never offer legacy formats for new messages.
+  /// For the ENCRYPT dropdown: never offer legacy formats for new messages; include custom.
   static List<ObfuscationMethod> get selectableForEncrypt => [
     for (final m in ObfuscationMethod.values)
-      if (isAvailable(m) && !m.isLegacyMapped) m,
+      if (!m.isLegacyMapped &&
+          (m == ObfuscationMethod.custom || isAvailable(m)))
+        m,
   ];
 
-  /// For the DECRYPT dropdown (manual mode): everything that can decode.
+  /// For the DECRYPT dropdown (manual mode): everything that can decode; include custom.
   static List<ObfuscationMethod> get selectableForDecrypt => [
     for (final m in ObfuscationMethod.values)
-      if (isAvailable(m)) m,
+      if (m == ObfuscationMethod.custom || isAvailable(m)) m,
   ];
 
   static _Codec _codec(ObfuscationMethod method) {
+    if (method == ObfuscationMethod.custom) {
+      throw ArgumentError(
+        'ObfuscationMethod.custom requires passing an explicit map; use buildV2Codec instead',
+      );
+    }
     if (!_ready) {
       throw StateError(
         'ObfuscationService not initialised: call initialize()/rebuild() '

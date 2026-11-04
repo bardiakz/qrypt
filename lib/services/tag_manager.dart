@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:qrypt/models/Qrypt.dart';
+import 'package:qrypt/models/custom_obfuscation_profile.dart';
 
 import '../models/compression_method.dart';
 import '../models/encryption_method.dart';
@@ -13,6 +14,17 @@ typedef TagMethods = ({
   EncryptionMethod encryption,
   SignMethod sign,
   ObfuscationMethod obfuscation,
+});
+
+typedef CustomTagMethods = ({
+  CompressionMethod compression,
+  EncryptionMethod encryption,
+  SignMethod sign,
+});
+
+typedef CustomTagMatch = ({
+  CustomTagMethods methods,
+  CustomObfuscationProfile profile,
 });
 
 /// Tag = first 6 hex chars of an HMAC over the method NAMES, then obfuscated
@@ -132,5 +144,110 @@ class TagManager {
     if (exact != null) return exact;
     final m = matchedTag(tag);
     return m == null ? null : _byTag[m];
+  }
+
+  // ---- Custom Map Tag Index ----
+
+  static final List<({String rawHash, CustomTagMethods methods})>
+      _customRawHashes = _computeCustomRawHashes();
+
+  static List<({String rawHash, CustomTagMethods methods})>
+      _computeCustomRawHashes() {
+    final list = <({String rawHash, CustomTagMethods methods})>[];
+    for (final comp in CompressionMethod.values) {
+      for (final enc in EncryptionMethod.values) {
+        for (final sign in SignMethod.values) {
+          final rawHash = tagHashFor(comp, enc, sign, ObfuscationMethod.custom);
+          list.add((
+            rawHash: rawHash,
+            methods: (compression: comp, encryption: enc, sign: sign),
+          ));
+        }
+      }
+    }
+    return List.unmodifiable(list);
+  }
+
+  /// Number of raw tag combinations for the custom method (70).
+  static int get customCombinationsCount => _customRawHashes.length;
+
+  static final Map<String, CustomTagMatch> _customByTag = {};
+  static List<String> _customLongestFirst = const [];
+
+  /// Obfuscated custom tags currently recognised.
+  static Iterable<String> get knownCustomTags => _customByTag.keys;
+
+  /// Compute the 70 obfuscated tags for a given custom map.
+  static Map<String, CustomTagMethods> computeCustomTagsForMap(
+    Map<String, String> map,
+  ) {
+    final codec = ObfuscationService.buildV2Codec(map);
+    final mapTags = <String, CustomTagMethods>{};
+    for (final item in _customRawHashes) {
+      final tag = codec.encode(item.rawHash);
+      mapTags[tag] = item.methods;
+    }
+    return mapTags;
+  }
+
+  /// Checks whether [map] has any tag collision with built-in tags or other
+  /// custom profiles. Returns collision reason or null if safe.
+  static String? checkCustomMapCollisions(
+    Map<String, String> map, {
+    String? excludeProfileId,
+  }) {
+    final newTags = computeCustomTagsForMap(map);
+
+    // 1. Check collisions with built-in tags
+    for (final tag in newTags.keys) {
+      if (_byTag.containsKey(tag)) {
+        return 'Tag "$tag" collides with a built-in method tag';
+      }
+    }
+
+    // 2. Check collisions with other saved custom maps
+    for (final entry in _customByTag.entries) {
+      final existingTag = entry.key;
+      final existingProfile = entry.value.profile;
+      if (excludeProfileId != null && existingProfile.id == excludeProfileId) {
+        continue;
+      }
+      if (newTags.containsKey(existingTag)) {
+        return 'Tag "$existingTag" collides with custom map "${existingProfile.name}"';
+      }
+    }
+
+    return null;
+  }
+
+  /// Updates the in-memory custom tag index for all saved custom profiles.
+  static void updateCustomTags(List<CustomObfuscationProfile> profiles) {
+    _customByTag.clear();
+    for (final profile in profiles) {
+      final tags = computeCustomTagsForMap(profile.map);
+      for (final entry in tags.entries) {
+        _customByTag[entry.key] = (
+          methods: entry.value,
+          profile: profile,
+        );
+      }
+    }
+    _customLongestFirst = _customByTag.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+  }
+
+  /// True if [text] starts with a recognised custom tag.
+  static bool hasKnownCustomTagPrefix(String text) =>
+      matchedCustomTag(text) != null;
+
+  /// Matches a custom tag from [text]. Returns the matched tag string and
+  /// details (methods + profile), or null if no saved custom map matched.
+  static ({String tag, CustomTagMatch match})? matchedCustomTag(String text) {
+    for (final tag in _customLongestFirst) {
+      if (text.startsWith(tag)) {
+        return (tag: tag, match: _customByTag[tag]!);
+      }
+    }
+    return null;
   }
 }

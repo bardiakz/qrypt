@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
+import 'package:qrypt/resources/obfuscation/v2_map_pools.dart';
 import 'package:qrypt/services/obfuscate.dart';
+import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
+import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
 import 'package:qrypt/services/tag_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -252,167 +258,347 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildObfuscationMapSettings(BuildContext context) {
-    const editableMethods = <ObfuscationMethod>[
-      ObfuscationMethod.en1,
-      ObfuscationMethod.en2,
-      ObfuscationMethod.fa1,
-      ObfuscationMethod.fa2,
-    ];
+    return FutureBuilder<List<CustomObfuscationProfile>>(
+      future: CustomMapStorageService.instance.loadAll(),
+      builder: (context, snapshot) {
+        final profiles = snapshot.data ?? CustomMapStorageService.instance.profiles;
 
-    return Card(
-      child: Column(
-        children: [
-          const ListTile(
-            leading: Icon(Icons.map_outlined),
-            title: Text('Custom Obfuscation Maps'),
-            subtitle: Text(
-              'Customize EN1, EN2, FA1, and FA2 substitution maps.',
-            ),
+        return Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ListTile(
+                leading: Icon(Icons.map_outlined),
+                title: Text('Custom Obfuscation Maps'),
+                subtitle: Text(
+                  'Generate, import, and share custom substitution maps. Built-in maps are locked.',
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.casino_outlined, size: 18),
+                      label: const Text('Generate Random Map'),
+                      onPressed: () => _showGenerateRandomMapDialog(context),
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.file_download_outlined, size: 18),
+                      label: const Text('Import Map'),
+                      onPressed: () => _showImportMapDialog(context),
+                    ),
+                    if (profiles.isNotEmpty)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.file_upload_outlined, size: 18),
+                        label: const Text('Export All'),
+                        onPressed: () => _exportAllMaps(context),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              if (profiles.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text(
+                      'No custom maps created yet. Generate a random map or import one to get started.',
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: profiles.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final p = profiles[index];
+                    return ListTile(
+                      leading: Icon(
+                        Icons.tune,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      title: Text(p.name),
+                      subtitle: Text(
+                        '17 keys • Created ${p.createdAt.year}-${p.createdAt.month.toString().padLeft(2, '0')}-${p.createdAt.day.toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.qr_code_2),
+                            tooltip: 'Share / QR Code',
+                            onPressed: () => _showShareMapDialog(context, p),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            color: Colors.red.shade600,
+                            tooltip: 'Delete',
+                            onPressed: () => _confirmDeleteMap(context, p),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
-          const Divider(height: 1),
-          ...editableMethods.map((method) {
-            return FutureBuilder<Map<String, String>?>(
-              future: Obfuscate.getCustomMap(method),
-              builder: (context, snapshot) {
-                final hasCustomMap =
-                    snapshot.hasData &&
-                    snapshot.data != null &&
-                    snapshot.data!.isNotEmpty;
-
-                return ListTile(
-                  leading: Icon(
-                    hasCustomMap ? Icons.tune : Icons.lock_outline,
-                    color: hasCustomMap
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey,
-                  ),
-                  title: Text(method.displayName),
-                  subtitle: Text(
-                    hasCustomMap
-                        ? 'Custom map active (built-in remains unchanged)'
-                        : 'Using built-in map (read-only)',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _openObfuscationMapEditor(context, method),
-                );
-              },
-            );
-          }),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Future<void> _openObfuscationMapEditor(
-    BuildContext context,
-    ObfuscationMethod method,
-  ) async {
-    final customMap = await Obfuscate.getCustomMap(method);
-    final builtInMap = Obfuscate.getBuiltInMapForMethod(method);
-    final hasCustomMap = customMap != null && customMap.isNotEmpty;
-    final controller = TextEditingController(
-      text: hasCustomMap ? _mapToEditorText(customMap) : '',
-    );
+  Future<void> _showGenerateRandomMapDialog(BuildContext context) async {
+    final nameController = TextEditingController(text: 'My Custom Map');
+    String selectedPool = 'en-words';
+    String? errorText;
+    bool isGenerating = false;
 
-    if (!context.mounted) {
-      controller.dispose();
-      return;
-    }
+    final poolOptions = const [
+      ('en-words', 'English Words (282 words)'),
+      ('fa-words', 'Persian Words (220 words)'),
+      ('latin', 'Latin Characters (26 chars)'),
+      ('persian', 'Persian Characters (32 chars)'),
+      ('cyrillic', 'Cyrillic Characters (40 chars)'),
+      ('greek', 'Greek Characters (24 chars)'),
+      ('hebrew', 'Hebrew Characters (27 chars)'),
+    ];
 
     await showDialog(
       context: context,
       builder: (context) {
-        String? errorText;
-        bool isSaving = false;
-
         return StatefulBuilder(
           builder: (context, setState) {
-            Future<void> saveMap() async {
-              setState(() {
-                isSaving = true;
-                errorText = null;
-              });
-
-              try {
-                final parsed = _parseEditorText(controller.text);
-                await Obfuscate.setCustomMap(method, parsed);
-                TagManager.initializeTags();
-
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${method.displayName} custom map saved'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                setState(() {
-                  errorText = e.toString().replaceFirst('Exception: ', '');
-                  isSaving = false;
-                });
-              }
-            }
-
-            Future<void> resetMap() async {
-              setState(() {
-                isSaving = true;
-                errorText = null;
-              });
-
-              try {
-                await Obfuscate.clearCustomMap(method);
-                TagManager.initializeTags();
-
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '${method.displayName} reset to built-in map',
-                      ),
-                    ),
-                  );
-                }
-              } catch (e) {
-                setState(() {
-                  errorText = e.toString().replaceFirst('Exception: ', '');
-                  isSaving = false;
-                });
-              }
-            }
-
             return AlertDialog(
-              title: Text(
-                hasCustomMap
-                    ? 'Edit Custom ${method.displayName}'
-                    : 'Add Custom ${method.displayName}',
-              ),
+              title: const Text('Generate Random Map'),
               content: SizedBox(
-                width: 520,
+                width: 440,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Built-in map is read-only. Add your custom map below. Format: key => value (one mapping per line). Use [space] for a space key.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    const Text(
+                      'Generates a fresh, mathematically validated 17-key map using cryptographically secure randomness.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Map Name',
+                        border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedPool,
+                      decoration: const InputDecoration(
+                        labelText: 'Character / Word Pool',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: poolOptions.map((opt) {
+                        return DropdownMenuItem(
+                          value: opt.$1,
+                          child: Text(opt.$2),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => selectedPool = val);
+                        }
+                      },
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        errorText!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isGenerating
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isGenerating
+                      ? null
+                      : () async {
+                          setState(() {
+                            isGenerating = true;
+                            errorText = null;
+                          });
+                          try {
+                            final map = V2MapGenerator.generate(selectedPool);
+                            final name = nameController.text.trim().isEmpty
+                                ? 'My Custom Map'
+                                : nameController.text.trim();
+                            await CustomMapStorageService.instance.saveMap(
+                              name: name,
+                              map: map,
+                            );
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Custom map "$name" generated and saved',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() {
+                              isGenerating = false;
+                              errorText = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
+                            });
+                          }
+                        },
+                  child: isGenerating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Generate & Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    nameController.dispose();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _showShareMapDialog(
+    BuildContext context,
+    CustomObfuscationProfile profile,
+  ) async {
+    final shareJson = CustomMapStorageService.instance.exportMap(profile);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Share: ${profile.name}'),
+          content: SizedBox(
+            width: 380,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Recipients must import this map to decrypt messages obfuscated with it.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: QrImageView(
+                      data: shareJson,
+                      version: QrVersions.auto,
+                      size: 220,
+                      gapless: true,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.copy, size: 16),
+                    label: const Text('Copy JSON to Clipboard'),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: shareJson));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Copied "${profile.name}" JSON to clipboard',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showImportMapDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    String? errorText;
+    bool isImporting = false;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Import Custom Map'),
+              content: SizedBox(
+                width: 440,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Paste the JSON map or bundle below to import it into your saved maps.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: controller,
-                      maxLines: 16,
-                      minLines: 12,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                      ),
+                      maxLines: 6,
                       decoration: const InputDecoration(
+                        hintText: '{"v":1,"n":"...","m":[...]}',
                         border: OutlineInputBorder(),
-                        hintText: 'A => atom\\nB => binary\\n[space] => blank',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.paste, size: 16),
+                        label: const Text('Paste from Clipboard'),
+                        onPressed: () async {
+                          final data = await Clipboard.getData('text/plain');
+                          if (data != null && data.text != null) {
+                            controller.text = data.text!;
+                          }
+                        },
                       ),
                     ),
                     if (errorText != null) ...[
@@ -430,33 +616,55 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: isSaving
+                  onPressed: isImporting
                       ? null
                       : () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
                 ),
-                TextButton(
-                  onPressed: isSaving
-                      ? null
-                      : () {
-                          controller.text = _mapToEditorText(builtInMap);
-                        },
-                  child: const Text('Use Built-in as Template'),
-                ),
-                if (hasCustomMap)
-                  TextButton(
-                    onPressed: isSaving ? null : resetMap,
-                    child: const Text('Reset to Built-in'),
-                  ),
                 ElevatedButton(
-                  onPressed: isSaving ? null : saveMap,
-                  child: isSaving
+                  onPressed: isImporting
+                      ? null
+                      : () async {
+                          setState(() {
+                            isImporting = true;
+                            errorText = null;
+                          });
+                          try {
+                            final imported = await CustomMapStorageService
+                                .instance
+                                .importAllMaps(controller.text.trim());
+                            if (imported.isEmpty) {
+                              throw const FormatException(
+                                'No valid maps found to import',
+                              );
+                            }
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Successfully imported ${imported.length} custom map(s)',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() {
+                              isImporting = false;
+                              errorText = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
+                            });
+                          }
+                        },
+                  child: isImporting
                       ? const SizedBox(
-                          height: 16,
                           width: 16,
+                          height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : const Text('Import'),
                 ),
               ],
             );
@@ -466,63 +674,60 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
 
     controller.dispose();
-    if (mounted) {
-      setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _exportAllMaps(BuildContext context) async {
+    final bundleJson =
+        await CustomMapStorageService.instance.exportAllMaps();
+    await Clipboard.setData(ClipboardData(text: bundleJson));
+    if (context.mounted) {
+      final count = CustomMapStorageService.instance.profiles.length;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Exported $count custom map(s) to clipboard'),
+        ),
+      );
     }
   }
 
-  String _mapToEditorText(Map<String, String> map) {
-    final entries = map.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+  Future<void> _confirmDeleteMap(
+    BuildContext context,
+    CustomObfuscationProfile profile,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Custom Map?'),
+          content: Text(
+            'Are you sure you want to delete "${profile.name}"? '
+            'Messages obfuscated with this map cannot be decrypted unless re-imported.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
 
-    return entries
-        .map((entry) => '${_serializeKey(entry.key)} => ${entry.value}')
-        .join('\n');
-  }
-
-  String _serializeKey(String key) {
-    if (key == ' ') return '[space]';
-    return key;
-  }
-
-  Map<String, String> _parseEditorText(String text) {
-    final map = <String, String>{};
-    final lines = text.split('\n');
-
-    for (var i = 0; i < lines.length; i++) {
-      final rawLine = lines[i];
-      final trimmed = rawLine.trim();
-      if (trimmed.isEmpty || trimmed.startsWith('#')) {
-        continue;
+    if (confirmed == true) {
+      await CustomMapStorageService.instance.deleteMap(profile.id);
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Deleted "${profile.name}"')),
+        );
       }
-
-      final separator = rawLine.indexOf('=>');
-      if (separator < 0) {
-        throw FormatException('Line ${i + 1}: expected key => value');
-      }
-
-      final rawKey = rawLine.substring(0, separator).trim();
-      final value = rawLine.substring(separator + 2).trim();
-      final key = rawKey == '[space]' ? ' ' : rawKey;
-
-      if (key.isEmpty) {
-        throw FormatException('Line ${i + 1}: key cannot be empty');
-      }
-      if (value.isEmpty) {
-        throw FormatException('Line ${i + 1}: value cannot be empty');
-      }
-      if (map.containsKey(key)) {
-        throw FormatException('Line ${i + 1}: duplicate key "$rawKey"');
-      }
-
-      map[key] = value;
     }
-
-    if (map.isEmpty) {
-      throw FormatException('Map cannot be empty');
-    }
-
-    return map;
   }
 
   void _showTimeoutDialog(BuildContext context) {

@@ -43,7 +43,7 @@ void main() {
 
     for (final enc in symmetricEncryptions) {
       for (final comp in CompressionMethod.values) {
-        for (final obf in ObfuscationMethod.values) {
+        for (final obf in ObfuscationMethod.values.where((m) => m != ObfuscationMethod.custom)) {
           test(
             'Roundtrip: ${comp.name} + ${enc.name} + ${obf.name} (tagged)',
             () async {
@@ -96,7 +96,7 @@ void main() {
 
   group('Full Matrix RSA Pipeline Roundtrip Tests (40 Combinations)', () {
     for (final comp in CompressionMethod.values) {
-      for (final obf in ObfuscationMethod.values) {
+      for (final obf in ObfuscationMethod.values.where((m) => m != ObfuscationMethod.custom)) {
         test(
           'Roundtrip: ${comp.name} + rsa + ${obf.name} (tagged)',
           () async {

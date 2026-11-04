@@ -16,6 +16,7 @@ enum ObfuscationMethod {
   en2v2,
   fa1v2,
   fa2v2,
+  custom,
 }
 
 extension ObfuscationMethodName on ObfuscationMethod {
@@ -45,6 +46,8 @@ extension ObfuscationMethodName on ObfuscationMethod {
         return 'FA1 (Character-based)';
       case ObfuscationMethod.fa2v2:
         return 'FA2 (Word-based)';
+      case ObfuscationMethod.custom:
+        return 'Custom';
       // case ObfuscationMethod.reverse:
       //   return 'Reverse';
     }
@@ -54,6 +57,8 @@ extension ObfuscationMethodName on ObfuscationMethod {
     switch (this) {
       case ObfuscationMethod.none:
         return 'None';
+      case ObfuscationMethod.custom:
+        return 'Custom';
       case ObfuscationMethod.en1:
       case ObfuscationMethod.fa1:
       case ObfuscationMethod.en1v2:
@@ -91,6 +96,7 @@ extension ObfuscationMethodName on ObfuscationMethod {
       case ObfuscationMethod.b64:
       case ObfuscationMethod.rot13:
       case ObfuscationMethod.xor:
+      case ObfuscationMethod.custom:
         return 'Language Independent';
       // case ObfuscationMethod.reverse:
       //   return 'Language Independent';
@@ -105,6 +111,8 @@ extension ObfuscationMethodDetails on ObfuscationMethod {
     switch (this) {
       case ObfuscationMethod.none:
         return 'No obfuscation applied';
+      case ObfuscationMethod.custom:
+        return 'User-defined custom substitution map';
       case ObfuscationMethod.en1:
         return 'English character-based substitution cipher';
       case ObfuscationMethod.en2:

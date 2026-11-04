@@ -7,6 +7,7 @@ import 'package:qrypt/providers/resource_providers.dart';
 import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/oqs_loader.dart';
+import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 void main() async {
@@ -16,6 +17,7 @@ void main() async {
     Compression.setNativeLibPaths();
   }
   TagManager.initializeTags();
+  await CustomMapStorageService.instance.initialize();
   // if (kDebugMode) {
   //   final storage = FlutterSecureStorage();
   //   await storage.deleteAll();

@@ -954,6 +954,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       ),
                     ),
 
+                    if (encryptObfuscation == ObfuscationMethod.custom) ...[
+                      const SizedBox(height: AppConstants.smallPadding),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.defaultPadding,
+                        ),
+                        child: CustomMapDropdownButtonForm(
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+                    ],
+
                     if (selectedEncryption == EncryptionMethod.none &&
                         encryptObfuscation == ObfuscationMethod.none) ...[
                       const SizedBox(height: AppConstants.smallPadding),
@@ -1230,6 +1242,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           isDecryptMode: true,
                         ),
                       ),
+
+                      if (selectedObfuscation == ObfuscationMethod.custom) ...[
+                        const SizedBox(height: AppConstants.smallPadding),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: CustomMapDropdownButtonForm(
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                      ],
                     ],
                   ],
 
@@ -1532,6 +1556,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             );
           }
 
+          Map<String, String>? customMapToUse;
+          if (effectiveObfuscation == ObfuscationMethod.custom) {
+            final customProfile = ref.read(selectedCustomMapProvider);
+            if (customProfile == null) {
+              throw Exception(
+                'Please select or import a custom map for Custom obfuscation.',
+              );
+            }
+            customMapToUse = customProfile.map;
+          }
+
           ref.read(inputQryptProvider.notifier).state = Qrypt.withRSA(
             text: _encryptTextController.text,
             encryption: selectedEncryption,
@@ -1539,6 +1574,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             compression: selectedCompression,
             sign: ref.read(selectedSignProvider),
             useTag: useTagManually,
+            customMap: customMapToUse,
             rsaKeyPair:
                 selectedKeyPair ??
                 RSAKeyPair(
@@ -1551,6 +1587,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             rsaReceiverPublicKey: rsaReceiversPublicKey,
           );
         } else {
+          Map<String, String>? customMapToUse;
+          if (effectiveObfuscation == ObfuscationMethod.custom) {
+            final customProfile = ref.read(selectedCustomMapProvider);
+            if (customProfile == null) {
+              throw Exception(
+                'Please select or import a custom map for Custom obfuscation.',
+              );
+            }
+            customMapToUse = customProfile.map;
+          }
+
           final q = Qrypt.withTag(
             text: _encryptTextController.text,
             encryption: selectedEncryption,
@@ -1558,6 +1605,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             compression: selectedCompression,
             sign: ref.read(selectedSignProvider),
             useTag: useTagManually,
+            customMap: customMapToUse,
           );
           if (isAes) {
             q.customKey = aesKeyToUse;
@@ -1656,6 +1704,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           sign: ref.read(selectedSignProvider),
           useTag: false,
         );
+
+        if (selectedObfuscation == ObfuscationMethod.custom) {
+          final customProfile = ref.read(selectedCustomMapProvider);
+          if (customProfile == null) {
+            throw Exception('Please select a custom map to decrypt.');
+          }
+          manualQrypt.customMap = customProfile.map;
+        }
 
         final isAes =
             selectedEncryption == EncryptionMethod.aesGcm ||

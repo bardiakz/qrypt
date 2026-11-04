@@ -29,6 +29,7 @@ class Qrypt {
   bool useTag = false;
   bool useCustomKey = false;
   String tag = '';
+  Map<String, String>? customMap;
 
   //kem properties
   String inputCiphertext = '';
@@ -47,6 +48,7 @@ class Qrypt {
     required this.compression,
     required this.useTag,
     required this.sign,
+    this.customMap,
   }) {
     if (useTag == true) {
       TagManager.setTag(this);
@@ -62,6 +64,7 @@ class Qrypt {
     required this.rsaKeyPair,
     required this.rsaReceiverPublicKey,
     required this.sign,
+    this.customMap,
   }) {
     // Validate RSA parameters
     if (encryption == EncryptionMethod.rsa) {
@@ -81,7 +84,7 @@ class Qrypt {
     }
   }
 
-  Qrypt.autoDecrypt({required this.text}) {
+  Qrypt.autoDecrypt({required this.text, this.customMap}) {
     useTag = true;
   }
 
@@ -99,6 +102,7 @@ class Qrypt {
     required this.obfuscation,
     required this.compression,
     required this.sign,
+    this.customMap,
   });
 
   EncryptionMethod getEncryptionMethod() {

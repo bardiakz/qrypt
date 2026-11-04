@@ -23,11 +23,14 @@ void main() {
     test(
       'knownTags contains exactly 840 unique routing tags (zero collision)',
       () {
+        final builtInObfs = ObfuscationMethod.values
+            .where((m) => m != ObfuscationMethod.custom)
+            .toList();
         final totalCombinations =
             CompressionMethod.values.length *
             EncryptionMethod.values.length *
             SignMethod.values.length *
-            ObfuscationMethod.values.length;
+            builtInObfs.length;
 
         expect(totalCombinations, equals(840));
         expect(
@@ -43,11 +46,14 @@ void main() {
       'every algorithm combination maps bijectively and decodes back to original methods',
       () {
         final seenTags = <String, String>{};
+        final builtInObfs = ObfuscationMethod.values
+            .where((m) => m != ObfuscationMethod.custom)
+            .toList();
 
         for (final comp in CompressionMethod.values) {
           for (final enc in EncryptionMethod.values) {
             for (final sign in SignMethod.values) {
-              for (final obf in ObfuscationMethod.values) {
+              for (final obf in builtInObfs) {
                 final tagHash = TagManager.tagHashFor(comp, enc, sign, obf);
                 final obfsTag = ObfuscationService.obfuscate(obf, tagHash);
 

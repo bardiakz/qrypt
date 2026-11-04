@@ -15,6 +15,7 @@ import '../models/aes_key.dart';
 import '../models/compression_method.dart';
 import '../models/obfuscation_method.dart';
 import '../models/sign_method.dart';
+import '../pages/widgets/custom_map_picker_dialog.dart';
 import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
@@ -348,6 +349,17 @@ class InputHandler {
   }
 
   Qrypt handleObfs(Qrypt qrypt) {
+    if (qrypt.getObfuscationMethod() == ObfuscationMethod.custom) {
+      final map = qrypt.customMap;
+      if (map == null || map.isEmpty) {
+        throw StateError(
+          'Custom obfuscation selected but no custom map provided',
+        );
+      }
+      final codec = ObfuscationService.buildV2Codec(map);
+      qrypt.text = codec.encode(qrypt.text);
+      return qrypt;
+    }
     qrypt.text = ObfuscationService.obfuscate(
       qrypt.getObfuscationMethod(),
       qrypt.text,
@@ -356,6 +368,17 @@ class InputHandler {
   }
 
   Qrypt handleDeObfs(Qrypt qrypt) {
+    if (qrypt.getObfuscationMethod() == ObfuscationMethod.custom) {
+      final map = qrypt.customMap;
+      if (map == null || map.isEmpty) {
+        throw StateError(
+          'Custom obfuscation selected but no custom map provided',
+        );
+      }
+      final codec = ObfuscationService.buildV2Codec(map);
+      qrypt.text = codec.decode(qrypt.text);
+      return qrypt;
+    }
     qrypt.text = ObfuscationService.deobfuscate(
       qrypt.getObfuscationMethod(),
       qrypt.text,
@@ -962,11 +985,7 @@ class InputHandler {
       qrypt = handleDeCompression(qrypt);
     } else {
       String? tag = TagManager.matchedTag(qrypt.text);
-      if (tag == null) {
-        throw FormatException(
-          'Invalid tag format',
-        ); // Changed to throw for better error handling
-      } else {
+      if (tag != null) {
         if (kDebugMode) {
           print('tag is $tag');
         }
@@ -980,7 +999,63 @@ class InputHandler {
         qrypt.compression = methods.compression;
         qrypt.sign = methods.sign;
         qrypt = handleDeObfs(qrypt);
-        if (qrypt.sign == SignMethod.mlDsa) {
+      } else {
+        // Check saved custom map tags
+        final customMatch = TagManager.matchedCustomTag(qrypt.text);
+        if (customMatch != null) {
+          final matchedTag = customMatch.tag;
+          final details = customMatch.match;
+          if (kDebugMode) {
+            print('custom tag matched: $matchedTag (map: ${details.profile.name})');
+          }
+          qrypt.text = qrypt.text.substring(matchedTag.length);
+          qrypt.obfuscation = ObfuscationMethod.custom;
+          qrypt.encryption = details.methods.encryption;
+          qrypt.compression = details.methods.compression;
+          qrypt.sign = details.methods.sign;
+          qrypt.customMap = details.profile.map;
+          qrypt = handleDeObfs(qrypt);
+        } else if (context != null) {
+          // Fallback: prompt user to pick or import a custom map
+          final selectedProfile = await showCustomMapPickerDialog(
+            context,
+            title: 'Custom Map Required',
+            message:
+                'No matching built-in or known custom tag found. If this message uses a custom map, please select or import it.',
+          );
+          if (selectedProfile == null) {
+            throw const FormatException('Invalid tag format');
+          }
+
+          final mapTags = TagManager.computeCustomTagsForMap(selectedProfile.map);
+          String? foundTag;
+          CustomTagMethods? foundMethods;
+          for (final entry in mapTags.entries) {
+            if (qrypt.text.startsWith(entry.key)) {
+              foundTag = entry.key;
+              foundMethods = entry.value;
+              break;
+            }
+          }
+
+          if (foundTag != null) {
+            qrypt.text = qrypt.text.substring(foundTag.length);
+            qrypt.obfuscation = ObfuscationMethod.custom;
+            qrypt.encryption = foundMethods!.encryption;
+            qrypt.compression = foundMethods.compression;
+            qrypt.sign = foundMethods.sign;
+            qrypt.customMap = selectedProfile.map;
+            qrypt = handleDeObfs(qrypt);
+          } else {
+            throw const FormatException(
+              'The selected custom map does not match this message.',
+            );
+          }
+        } else {
+          throw const FormatException('Invalid tag format');
+        }
+      }
+      if (qrypt.sign == SignMethod.mlDsa) {
           if (context == null) {
             throw Exception(
               'Decryption cancelled: No context to select ML-DSA key',
@@ -1029,9 +1104,8 @@ class InputHandler {
         qrypt = await handleDecrypt(qrypt, context);
         qrypt = handleDeCompression(qrypt);
       }
+      return qrypt;
     }
-    return qrypt;
-  }
 
   Future<Qrypt> handleKemProcess(Qrypt krypt, String publicKey) async {
     KemKeyService kem = KemKeyService();

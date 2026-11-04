@@ -6,6 +6,7 @@ import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 
 import '../models/Qrypt.dart';
 import '../models/compression_method.dart';
+import '../models/custom_obfuscation_profile.dart';
 import '../models/sign_method.dart';
 
 final defaultEncryptionProvider = simpleStateProvider<bool>(true);
@@ -23,6 +24,8 @@ final selectedEncryptionProvider = simpleStateProvider<EncryptionMethod>(
 final selectedObfuscationProvider = simpleStateProvider<ObfuscationMethod>(
   ObfuscationMethod.none,
 );
+final selectedCustomMapProvider =
+    simpleStateProvider<CustomObfuscationProfile?>(null);
 final selectedCompressionProvider = simpleStateProvider<CompressionMethod>(
   CompressionMethod.gZip,
 );
