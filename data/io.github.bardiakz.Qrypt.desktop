@@ -1,6 +1,10 @@
 [Desktop Entry]
 Name=Qrypt
-Exec=qrypt
+Comment=High-security encryption, post-quantum key encapsulation, digital signatures, and obfuscation tool
+Exec=qrypt %U
 Icon=io.github.bardiakz.Qrypt
+Terminal=false
 Type=Application
 Categories=Utility;Security;
+StartupWMClass=qrypt
+Keywords=encryption;crypto;security;post-quantum;kem;obfuscation;
