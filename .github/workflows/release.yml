@@ -174,7 +174,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgtk-3-dev pkg-config libsecret-1-dev libjsoncpp-dev
+          sudo apt-get install -y ninja-build libgtk-3-dev pkg-config libsecret-1-dev libjsoncpp-dev rpm
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -197,15 +197,101 @@ jobs:
             cp "liboqs-0.16.0/linux/x86_64/liboqs.so" build/linux/x64/release/bundle/lib/
           fi
 
-      - name: Package Linux bundle
+      - name: Package Linux packages (.tar.gz, .deb, .rpm)
         run: |
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          echo "Packaging version: ${APP_VERSION}"
+
+          # 1. Tarball
           tar -czf qrypt-linux-x64.tar.gz -C build/linux/x64/release bundle
 
-      - name: Upload Linux artifact
+          # 2. Debian package (.deb)
+          DEB_DIR="deb_staging"
+          mkdir -p "$DEB_DIR/opt/qrypt"
+          mkdir -p "$DEB_DIR/usr/bin"
+          mkdir -p "$DEB_DIR/usr/share/applications"
+          mkdir -p "$DEB_DIR/usr/share/icons/hicolor/512x512/apps"
+          mkdir -p "$DEB_DIR/usr/share/pixmaps"
+          mkdir -p "$DEB_DIR/DEBIAN"
+
+          cp -r build/linux/x64/release/bundle/* "$DEB_DIR/opt/qrypt/"
+          ln -s /opt/qrypt/qrypt "$DEB_DIR/usr/bin/qrypt"
+          cp data/io.github.bardiakz.Qrypt.desktop "$DEB_DIR/usr/share/applications/"
+          cp assets/icon/qrypt_icon.png "$DEB_DIR/usr/share/icons/hicolor/512x512/apps/io.github.bardiakz.Qrypt.png"
+          cp assets/icon/qrypt_icon.png "$DEB_DIR/usr/share/pixmaps/io.github.bardiakz.Qrypt.png"
+
+          cat <<EOF > "$DEB_DIR/DEBIAN/control"
+          Package: qrypt
+          Version: ${APP_VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: bardiakz <https://github.com/bardiakz>
+          Description: High-security encryption, post-quantum key encapsulation, digital signatures, and obfuscation tool.
+          Depends: libc6, libgtk-3-0, libglib2.0-0, libsecret-1-0
+          EOF
+          # Strip leading indentation from control file
+          sed -i 's/^[ \t]*//' "$DEB_DIR/DEBIAN/control"
+
+          dpkg-deb --build --root-owner-group "$DEB_DIR" qrypt-linux-amd64.deb
+          rm -rf "$DEB_DIR"
+
+          # 3. RPM package (.rpm)
+          RPM_TOPDIR="${RUNNER_TEMP:-/tmp}/rpmbuild"
+          rm -rf "$RPM_TOPDIR"
+          mkdir -p "$RPM_TOPDIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+          cat <<EOF > "$RPM_TOPDIR/SPECS/qrypt.spec"
+          Name:           qrypt
+          Version:        ${APP_VERSION}
+          Release:        1
+          Summary:        High-security encryption and obfuscation tool
+          License:        MIT
+          AutoReqProv:    no
+          Requires:       gtk3, glib2, libsecret
+
+          %define __brp_check_rpaths %{nil}
+          %define _build_id_links none
+
+          %description
+          Qrypt is a flexible and privacy-first application that allows users to manually
+          encrypt, compress, and obfuscate text.
+
+          %install
+          rm -rf %{buildroot}
+          mkdir -p %{buildroot}/opt/qrypt
+          mkdir -p %{buildroot}/usr/bin
+          mkdir -p %{buildroot}/usr/share/applications
+          mkdir -p %{buildroot}/usr/share/icons/hicolor/512x512/apps
+          mkdir -p %{buildroot}/usr/share/pixmaps
+
+          cp -r ${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/* %{buildroot}/opt/qrypt/
+          ln -s /opt/qrypt/qrypt %{buildroot}/usr/bin/qrypt
+          cp ${GITHUB_WORKSPACE}/data/io.github.bardiakz.Qrypt.desktop %{buildroot}/usr/share/applications/
+          cp ${GITHUB_WORKSPACE}/assets/icon/qrypt_icon.png %{buildroot}/usr/share/icons/hicolor/512x512/apps/io.github.bardiakz.Qrypt.png
+          cp ${GITHUB_WORKSPACE}/assets/icon/qrypt_icon.png %{buildroot}/usr/share/pixmaps/io.github.bardiakz.Qrypt.png
+
+          %files
+          /opt/qrypt
+          /usr/bin/qrypt
+          /usr/share/applications/io.github.bardiakz.Qrypt.desktop
+          /usr/share/icons/hicolor/512x512/apps/io.github.bardiakz.Qrypt.png
+          /usr/share/pixmaps/io.github.bardiakz.Qrypt.png
+          EOF
+          sed -i 's/^[ \t]*//' "$RPM_TOPDIR/SPECS/qrypt.spec"
+
+          QA_RPATHS=2 rpmbuild --define "_topdir $RPM_TOPDIR" -bb "$RPM_TOPDIR/SPECS/qrypt.spec"
+          cp "$RPM_TOPDIR"/RPMS/x86_64/*.rpm qrypt-linux-x86_64.rpm
+          rm -rf "$RPM_TOPDIR"
+
+      - name: Upload Linux artifacts
         uses: actions/upload-artifact@v7
         with:
           name: qrypt-linux
-          path: qrypt-linux-x64.tar.gz
+          path: |
+            qrypt-linux-x64.tar.gz
+            qrypt-linux-amd64.deb
+            qrypt-linux-x86_64.rpm
           if-no-files-found: error
 
   build-macos:
@@ -291,11 +377,32 @@ jobs:
           }
           Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-windows-x64.zip" -Force
 
-      - name: Upload Windows artifact
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            choco install innosetup -y --no-progress
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          }
+          $rawVersion = Select-String -Path "pubspec.yaml" -Pattern "^version:\s*(\S+)" | ForEach-Object { $_.Matches.Groups[1].Value.Split('+')[0] }
+          if (-not $rawVersion) { $rawVersion = "5.3.3" }
+          Write-Host "Building Windows Inno Setup installer for version $rawVersion"
+          $isccCmd = Get-Command iscc -ErrorAction SilentlyContinue
+          if ($isccCmd) {
+            & iscc /DMyAppVersion="$rawVersion" windows\installer\qrypt_setup.iss
+          } elseif (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="$rawVersion" windows\installer\qrypt_setup.iss
+          } else {
+            throw "Inno Setup compiler (ISCC.exe) not found!"
+          }
+
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v7
         with:
           name: qrypt-windows
-          path: qrypt-windows-x64.zip
+          path: |
+            qrypt-windows-x64.zip
+            qrypt-windows-x64-setup.exe
           if-no-files-found: error
 
   release:
