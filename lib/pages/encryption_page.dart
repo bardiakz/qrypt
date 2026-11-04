@@ -348,6 +348,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       ref.read(selectedAESEncryptKeyProvider.notifier).state = keyToSelect;
       _customAesKeyController.text = keyToSelect.key;
       ref.read(customEncryptAesKeyProvider.notifier).state = keyToSelect.key;
+      if (ref.read(selectedAESDecryptKeyProvider) == null) {
+        ref.read(selectedAESDecryptKeyProvider.notifier).state = keyToSelect;
+        _customDecryptAesKeyController.text = keyToSelect.key;
+        ref.read(customDecryptAesKeyProvider.notifier).state = keyToSelect.key;
+      }
     }
   }
 
@@ -1532,6 +1537,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       if (isAes && activeAesKey != null) {
         final storage = ref.read(aesKeyStorageServiceProvider);
         await storage.setLastUsedKeyId(activeAesKey.id);
+        if (ref.read(selectedAESDecryptKeyProvider) == null) {
+          ref.read(selectedAESDecryptKeyProvider.notifier).state = activeAesKey;
+          _customDecryptAesKeyController.text = activeAesKey.key;
+          ref.read(customDecryptAesKeyProvider.notifier).state = activeAesKey.key;
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1578,10 +1588,28 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       }
 
       final typedDecryptKey = _customDecryptAesKeyController.text.trim();
-      final String decryptKeyToUse =
+      String decryptKeyToUse =
           (selectedDecryptKey != null && selectedDecryptKey.key.isNotEmpty)
           ? selectedDecryptKey.key
           : typedDecryptKey;
+
+      if (decryptKeyToUse.isEmpty) {
+        final activeEncryptKey = ref.read(selectedAESEncryptKeyProvider);
+        if (activeEncryptKey != null &&
+            !activeEncryptKey.isCustom &&
+            activeEncryptKey.key.isNotEmpty) {
+          decryptKeyToUse = activeEncryptKey.key;
+        } else {
+          final storage = ref.read(aesKeyStorageServiceProvider);
+          final lastId = await storage.getLastUsedKeyId();
+          if (lastId != null) {
+            final lastKey = await storage.getKeyById(lastId);
+            if (lastKey != null && lastKey.key.isNotEmpty) {
+              decryptKeyToUse = lastKey.key;
+            }
+          }
+        }
+      }
 
       if (!autoDetectTag) {
         final manualQrypt = Qrypt.withTag(

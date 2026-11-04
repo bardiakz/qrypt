@@ -24,6 +24,7 @@ import 'aes/aes_key_storage_service.dart';
 import 'aes_encryption.dart';
 import 'ml_dsa/ml_dsa_key_service.dart';
 import 'obfuscation/obfuscation_service.dart';
+import '../resources/global_resources.dart';
 
 class InputHandler {
   Qrypt handleCompression(Qrypt qrypt) {
@@ -676,10 +677,11 @@ class InputHandler {
             return qrypt;
           }
 
-          // For CBC/CTR (which cannot verify authentication tags), throw immediately.
-          // For AES-GCM, fall through to trial-decryption against saved keys (Step 2)
-          // or user prompt dialog (Step 3) in case the pre-selected key was wrong.
-          if (qrypt.getEncryptionMethod() != EncryptionMethod.aesGcm) {
+          // If pre-selected key fails:
+          // For CBC/CTR, if no dialog context is available, fail closed immediately.
+          // Otherwise, fall through so the user can select/provide the correct key (Step 3).
+          if (qrypt.getEncryptionMethod() != EncryptionMethod.aesGcm &&
+              (buildContext == null || !buildContext.mounted)) {
             throw Exception('AES decryption failed: invalid key');
           }
         }
@@ -748,6 +750,14 @@ class InputHandler {
               qrypt.deCompressedText = decryptedData;
               qrypt.customKey = enteredKey;
               qrypt.useCustomKey = true;
+              try {
+                final storage = const AesKeyStorageService();
+                final savedKeys = await storage.getKeys();
+                final matches = savedKeys.where((k) => k.key == enteredKey);
+                if (matches.isNotEmpty) {
+                  await storage.setLastUsedKeyId(matches.first.id);
+                }
+              } catch (_) {}
               return qrypt;
             } else {
               throw Exception(
@@ -1315,9 +1325,23 @@ class InputHandler {
   Future<String?> _showCustomKeyDialog(BuildContext context) async {
     final TextEditingController keyController = TextEditingController();
     String? errorText;
-    final List<AESKey> savedKeys = await const AesKeyStorageService().getKeys();
+    final storage = const AesKeyStorageService();
+    final List<AESKey> savedKeys = await storage.getKeys();
+    final lastUsedId = await storage.getLastUsedKeyId();
     if (!context.mounted) return null;
     AESKey? selectedSavedKey;
+    if (lastUsedId != null) {
+      final matches = savedKeys.where((k) => k.id == lastUsedId);
+      if (matches.isNotEmpty) {
+        selectedSavedKey = matches.first;
+        keyController.text = selectedSavedKey.key;
+        errorText = validateAesKey(selectedSavedKey.key);
+      }
+    } else if (savedKeys.length == 1) {
+      selectedSavedKey = savedKeys.first;
+      keyController.text = selectedSavedKey.key;
+      errorText = validateAesKey(selectedSavedKey.key);
+    }
 
     return showDialog<String>(
       context: context,
@@ -1370,7 +1394,7 @@ class InputHandler {
                               setState(() {
                                 selectedSavedKey = k;
                                 keyController.text = k.key;
-                                errorText = null;
+                                errorText = validateAesKey(k.key);
                               });
                             }
                           },
@@ -1398,36 +1422,29 @@ class InputHandler {
                         controller: keyController,
                         decoration: InputDecoration(
                           labelText: 'Enter Custom AES Key',
-                          hintText: '16, 24, or 32 bytes (characters if ASCII)',
+                          hintText:
+                              '16, 24, 32 characters, or 44-char Base64 / 64-char Hex',
                           prefixIcon: const Icon(Icons.vpn_key),
                           border: const OutlineInputBorder(),
                           errorText: errorText,
-                          helperText:
-                              'Current byte length: ${utf8.encode(keyController.text).length}',
+                          helperText: keyController.text.isEmpty ||
+                                  validateAesKey(keyController.text) != null
+                              ? null
+                              : 'Valid AES key (${keyController.text.trim().length == 44 ? "256-bit Base64" : keyController.text.trim().length == 64 ? "256-bit Hex" : "${utf8.encode(keyController.text.trim()).length * 8}-bit"})',
                         ),
                         obscureText: true, // Obscure input for security
                         maxLines: 1,
                         autofocus: savedKeys.isEmpty,
                         onChanged: (value) {
                           setState(() {
-                            final byteLength = utf8
-                                .encode(value)
-                                .length; // Check byte length
-                            if (value.isNotEmpty &&
-                                byteLength != 16 &&
-                                byteLength != 24 &&
-                                byteLength != 32) {
-                              errorText =
-                                  'Key must be exactly 16, 24, or 32 bytes';
-                            } else {
-                              errorText = null;
-                            }
+                            selectedSavedKey = null;
+                            errorText = validateAesKey(value);
                           });
                         },
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes',
+                        '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes (or 44-char Base64 / 64-char Hex)',
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -1440,14 +1457,13 @@ class InputHandler {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: errorText != null || keyController.text.isEmpty
+                  onPressed: errorText != null ||
+                          keyController.text.trim().isEmpty ||
+                          validateAesKey(keyController.text.trim()) != null
                       ? null
                       : () {
                           final key = keyController.text.trim();
-                          final byteLength = utf8.encode(key).length;
-                          if (byteLength == 16 ||
-                              byteLength == 24 ||
-                              byteLength == 32) {
+                          if (validateAesKey(key) == null) {
                             Navigator.of(context).pop(key);
                           }
                         },

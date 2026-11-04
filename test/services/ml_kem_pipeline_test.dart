@@ -17,10 +17,12 @@ import 'package:qrypt/services/aes_encryption.dart';
 import 'package:qrypt/services/input_handler.dart';
 import 'package:qrypt/services/kem/kem_service.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
+import 'package:qrypt/services/oqs_loader.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  OqsLoader.initialize();
   FlutterSecureStorage.setMockInitialValues({});
 
   setUpAll(() {
@@ -36,13 +38,14 @@ void main() {
   });
 
   group('ML-KEM Key Parsing & Validation Invariants', () {
-    final kemService = KemKeyService();
+    late final KemKeyService kemService;
     late QryptKEMKeyPair recipientKeyPair;
     late Uint8List senderSharedSecret;
     late String senderSharedSecretBase64;
     late String senderSharedSecretHex;
 
     setUpAll(() async {
+      kemService = KemKeyService();
       recipientKeyPair = await kemService.generateKeyPair('Recipient');
       final encResult = kemService.encapsulateWithPublicKey(
         recipientKeyPair.publicKey,

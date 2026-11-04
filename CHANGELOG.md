@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.1] - 2026-11-04
+
+### Fixed
+- **AES-CBC & AES-CTR Decryption Key Synchronization**:
+  - Synchronized active encryption AES key and last-used key to the decryption pipeline so AES-CBC and AES-CTR ciphertexts decrypt seamlessly in single-tap auto-tag mode without spurious `MissingKeyException` cancellations.
+  - Initialized `selectedAESDecryptKeyProvider` on app launch and updated it on successful encryption when unset.
+  - Upgraded `_showCustomKeyDialog` to automatically pre-select and pre-fill the last-used key (or single saved key), enabling immediate decryption.
+  - Updated custom key dialog validation and `ElevatedButton.onPressed` to accept 44-character Base64 and 64-character Hex 256-bit AES keys via `validateAesKey()` instead of strictly enforcing 16/24/32 raw ASCII character counts.
+  - Persisted `lastUsedKeyId` upon successful manual key entry decryption in `InputHandler`.
+  - Added full test suite in `test/services/aes_cbc_ctr_dialog_and_decrypt_test.dart` verifying CBC/CTR direct decryption, dialog pre-selection, manual hex key entry, and cancellation behavior.
+
+---
+
 ## [5.3.0] - 2026-11-04
 
 ### Added
