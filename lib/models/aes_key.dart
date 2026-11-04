@@ -24,8 +24,20 @@ class AESKey {
   /// Whether this key represents manual custom input rather than a stored key
   bool get isCustom => id == 'custom-manual-input';
 
-  /// Key length in bytes according to UTF-8 encoding
-  int get byteLength => utf8.encode(key).length;
+  /// Key length in bytes (recognizes 44-char Base64 and 64-char Hex as 32 bytes)
+  int get byteLength {
+    final trimmed = key.trim();
+    if (trimmed.length == 44) {
+      try {
+        final decoded = base64.decode(trimmed);
+        if (decoded.length == 32) return 32;
+      } catch (_) {}
+    }
+    if (trimmed.length == 64 && RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(trimmed)) {
+      return 32;
+    }
+    return utf8.encode(key).length;
+  }
 
   /// Key length in bits
   int get bitLength => byteLength * 8;

@@ -74,7 +74,7 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<EncryptionMethod>(
-      initialValue: ref.watch(selectedEncryptionProvider),
+      value: ref.watch(selectedEncryptionProvider),
       items: EncryptionMethod.values.map((alg) {
         return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),
@@ -97,25 +97,34 @@ class CompressionsDropdownButtonForm extends ConsumerWidget {
     super.key,
     required this.selectedCompression,
     required this.primaryColor,
+    this.enabled = true,
   });
 
   final CompressionMethod selectedCompression;
   final Color primaryColor;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DropdownButtonFormField<CompressionMethod>(
-      initialValue: selectedCompression,
+      value: enabled ? selectedCompression : CompressionMethod.none,
       items: CompressionMethod.values.map((alg) {
         return DropdownMenuItem(
           value: alg,
           child: Text(alg.name.toUpperCase()),
         );
       }).toList(),
-      onChanged: (val) =>
-          ref.read(selectedCompressionProvider.notifier).state = val!,
+      onChanged: enabled
+          ? (val) =>
+              ref.read(selectedCompressionProvider.notifier).state = val!
+          : null,
       decoration: InputDecoration(
-        labelText: 'Compression Algorithm',
+        labelText: enabled
+            ? 'Compression Algorithm'
+            : 'Compression (Locked to NONE for ML-KEM)',
+        helperText: enabled
+            ? null
+            : 'KEM ciphertext is high-entropy bytes and bypasses compression',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

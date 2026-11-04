@@ -9,11 +9,13 @@ import '../../../resources/global_resources.dart';
 class CreateAESKeyDialog extends ConsumerStatefulWidget {
   final Color primaryColor;
   final String? initialKey;
+  final String? initialName;
 
   const CreateAESKeyDialog({
     super.key,
     required this.primaryColor,
     this.initialKey,
+    this.initialName,
   });
 
   @override
@@ -30,6 +32,9 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialName != null && widget.initialName!.isNotEmpty) {
+      _nameController.text = widget.initialName!;
+    }
     if (widget.initialKey != null && widget.initialKey!.isNotEmpty) {
       _keyController.text = widget.initialKey!;
       _useManualInput = true;
@@ -98,7 +103,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                             controller: _keyController,
                             decoration: InputDecoration(
                               labelText: 'AES Secret Key',
-                              hintText: '16, 24, or 32 characters',
+                              hintText: '16, 24, 32 chars (or 44 Base64 / 64 Hex)',
                               errorText: _keyController.text.isEmpty
                                   ? null
                                   : validateAesKey(_keyController.text),
@@ -126,7 +131,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Enter exactly 16 (128-bit), 24 (192-bit), or 32 (256-bit) characters.',
+                            'Enter 16 (128-bit), 24 (192-bit), 32 chars (256-bit), or 44-char Base64 / 64-char Hex.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],

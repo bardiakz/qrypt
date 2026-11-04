@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-11-04
+
+### Added
+- **ML-KEM Pipeline Integration**:
+  - Integrated NIST ML-KEM-768 (FIPS 203) / Kyber-768 directly into the standard Qrypt encryption/decryption pipeline (`handleProcess` and `handleDeProcess`).
+  - Added `Qrypt.withKem(...)` constructor for encapsulation against recipient public keys.
+  - TagManager routing support: ML-KEM wire payloads now include standard 6-character routing tags, enabling automatic algorithm detection on decryption without triggering custom map fallbacks.
+  - Seamless post-quantum hybrid composition: ML-KEM payloads can be signed with ML-DSA and obfuscated with built-in or custom maps.
+  - Automatic prompt (`showKemKeySelectionDialog`) during auto-decryption when the recipient private key is needed.
+- **Prefix-Free Transparent Key Validation & Parsing**:
+  - Transparently accepts 16, 24, and 32-character UTF-8 text keys, 44-character Base64 keys, and 64-character Hexadecimal keys across `validateAesKey()`, `parseAesKey()`, and `AESKey` models without requiring non-standard prefixes.
+  - Updated `AESKey.byteLength` and `bitLength` to recognize 44-char Base64 and 64-char Hex representations as 32-byte / 256-bit AES keys.
+- **Shared Secret UI & Conversion**:
+  - Added `MLKemSharedSecretCard` in output view with format toggle between Base64 (44 chars) and Hex (64 chars).
+  - One-tap "Save as AES Key" button pre-filling `CreateAESKeyDialog` for immediate persistence.
+  - Prominent warning banner for senders advising that the freshly encapsulated secret is ephemeral and must be saved immediately.
+- **Pipeline Guards**:
+  - Automatically locked compression to `CompressionMethod.none` in constructors and UI for ML-KEM, preventing futile compression on high-entropy cryptographic bytes.
+- **Testing**:
+  - Comprehensive unit and roundtrip test suite in `test/services/ml_kem_pipeline_test.dart` verifying key validation, parsing, model invariants, full obfuscation permutations, and immediate AES-GCM encryption with derived shared secrets.
+
+---
+
 ## [5.2.0] - 2026-11-04
 
 ### Added

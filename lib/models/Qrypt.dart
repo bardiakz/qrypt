@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:qrypt/models/compression_method.dart';
+import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/models/rsa_key_pair.dart';
 import 'package:qrypt/models/sign_method.dart';
 import '../services/tag_manager.dart';
@@ -36,6 +37,8 @@ class Qrypt {
   Uint8List? ciphertext;
   Uint8List? kemSharedSecret;
   bool useKem = false;
+  String kemReceiverPublicKey = 'noPublicKey';
+  QryptKEMKeyPair? kemKeyPair;
 
   //dsa properties
   Uint8List? dsaVerifyPublicKEy;
@@ -45,11 +48,29 @@ class Qrypt {
     required this.text,
     required this.encryption,
     required this.obfuscation,
-    required this.compression,
+    required CompressionMethod compression,
     required this.useTag,
     required this.sign,
     this.customMap,
+    this.kemReceiverPublicKey = 'noPublicKey',
+    this.kemKeyPair,
+  }) : compression = encryption == EncryptionMethod.mlKem ? CompressionMethod.none : compression {
+    if (useTag == true) {
+      TagManager.setTag(this);
+    }
+  }
+
+  Qrypt.withKem({
+    required this.text,
+    required this.obfuscation,
+    required this.useTag,
+    required this.kemReceiverPublicKey,
+    this.kemKeyPair,
+    required this.sign,
+    this.customMap,
   }) {
+    encryption = EncryptionMethod.mlKem;
+    compression = CompressionMethod.none;
     if (useTag == true) {
       TagManager.setTag(this);
     }
@@ -100,10 +121,12 @@ class Qrypt {
     required this.text,
     required this.encryption,
     required this.obfuscation,
-    required this.compression,
+    required CompressionMethod compression,
     required this.sign,
     this.customMap,
-  });
+    this.kemReceiverPublicKey = 'noPublicKey',
+    this.kemKeyPair,
+  }) : compression = encryption == EncryptionMethod.mlKem ? CompressionMethod.none : compression;
 
   EncryptionMethod getEncryptionMethod() {
     return encryption;

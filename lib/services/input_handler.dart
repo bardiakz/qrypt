@@ -17,6 +17,7 @@ import '../models/obfuscation_method.dart';
 import '../models/sign_method.dart';
 import '../pages/widgets/custom_map_picker_dialog.dart';
 import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
+import '../pages/widgets/ml_kem/kem_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../providers/rsa_providers.dart';
 import 'aes/aes_key_storage_service.dart';
@@ -67,7 +68,7 @@ class InputHandler {
           'An AES key is required for encryption. Please select or generate an AES key.',
         );
       }
-      useKey = encrypt.Key.fromUtf8(qrypt.customKey);
+      useKey = parseAesKey(qrypt.customKey);
     }
 
     String? encryptedText = qrypt.text;
@@ -228,8 +229,38 @@ class InputHandler {
           throw Exception('RSA+Sign encryption failed: $e');
         }
       case EncryptionMethod.mlKem:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        if (qrypt.kemReceiverPublicKey.isEmpty ||
+            qrypt.kemReceiverPublicKey == 'noPublicKey') {
+          throw Exception(
+            'Recipient ML-KEM public key is required for KEM key exchange',
+          );
+        }
+
+        final KemKeyService kem = KemKeyService();
+        Uint8List recipientPublicKeyBytes;
+        try {
+          recipientPublicKeyBytes = base64.decode(qrypt.kemReceiverPublicKey.trim());
+        } catch (e) {
+          throw FormatException('Invalid Base64 format for ML-KEM public key: $e');
+        }
+
+        final encResult = kem.encapsulateWithPublicKey(recipientPublicKeyBytes);
+        qrypt.ciphertext = encResult.ciphertext;
+        qrypt.kemSharedSecret = encResult.sharedSecret;
+
+        // Format KEM ciphertext (1088 bytes) for obfuscation
+        if (usesMappedObfuscation) {
+          final hexBuffer = StringBuffer();
+          for (final byte in encResult.ciphertext) {
+            hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+          }
+          qrypt.text = hexBuffer.toString();
+        } else if (usesBase64Obfuscation) {
+          qrypt.text = String.fromCharCodes(encResult.ciphertext);
+        } else {
+          qrypt.text = base64.encode(encResult.ciphertext);
+        }
+        return qrypt;
     }
   }
 
@@ -632,7 +663,7 @@ class InputHandler {
         if (qrypt.useCustomKey &&
             qrypt.customKey.isNotEmpty &&
             qrypt.customKey != 'noCustomKey') {
-          final decryptKey = encrypt.Key.fromUtf8(qrypt.customKey);
+          final decryptKey = parseAesKey(qrypt.customKey);
           final decryptedData = _decryptWithAESKey(
             qrypt.getEncryptionMethod(),
             parts[0],
@@ -675,7 +706,7 @@ class InputHandler {
                   EncryptionMethod.aesGcm,
                   parts[0],
                   parts[1],
-                  encrypt.Key.fromUtf8(savedKey.key),
+                  parseAesKey(savedKey.key),
                 );
                 if (decryptedData != null) {
                   qrypt.deCompressedText = decryptedData;
@@ -705,7 +736,7 @@ class InputHandler {
         if (buildContext != null && buildContext.mounted) {
           final enteredKey = await _showCustomKeyDialog(buildContext);
           if (enteredKey != null && enteredKey.isNotEmpty) {
-            final customEncryptKey = encrypt.Key.fromUtf8(enteredKey);
+            final customEncryptKey = parseAesKey(enteredKey);
             final decryptedData = _decryptWithAESKey(
               qrypt.getEncryptionMethod(),
               parts[0],
@@ -912,8 +943,70 @@ class InputHandler {
           throw Exception('RSA+Sign decryption failed: $e');
         }
       case EncryptionMethod.mlKem:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        try {
+          if (qrypt.kemKeyPair == null ||
+              qrypt.kemKeyPair!.secretKey.isEmpty) {
+            if (buildContext != null && buildContext.mounted) {
+              final selectedKeyPair = await showKemKeySelectionDialog(
+                context: buildContext,
+                primaryColor: Colors.blue,
+                title: 'Select Decryption Key',
+                message:
+                    'Please select an ML-KEM key pair to decapsulate this secret.',
+                publicKeyRequired: false,
+              );
+              if (selectedKeyPair != null) {
+                qrypt.kemKeyPair = selectedKeyPair;
+              }
+            }
+            if (qrypt.kemKeyPair == null ||
+                qrypt.kemKeyPair!.secretKey.isEmpty) {
+              throw Exception('No valid ML-KEM key pair provided for decapsulation');
+            }
+          }
+
+          Uint8List ciphertextBytes;
+          if (usesMappedObfuscation) {
+            List<int> bytes = [];
+            try {
+              for (int i = 0; i < qrypt.text.length; i += 2) {
+                String hexByte = qrypt.text.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing error in ML-KEM decapsulation: $e');
+              }
+              throw FormatException('Invalid hex format in ML-KEM decapsulation');
+            }
+            ciphertextBytes = Uint8List.fromList(bytes);
+          } else if (usesBase64Obfuscation) {
+            ciphertextBytes = Uint8List.fromList(qrypt.text.codeUnits);
+          } else {
+            try {
+              ciphertextBytes = base64.decode(qrypt.text.trim());
+            } catch (e) {
+              throw FormatException('Invalid Base64 format in ML-KEM decapsulation: $e');
+            }
+          }
+
+          final KemKeyService kem = KemKeyService();
+          final sharedSecret = kem.decapsulateWithSecretKey(
+            ciphertextBytes,
+            qrypt.kemKeyPair!.secretKey,
+          );
+
+          qrypt.kemSharedSecret = sharedSecret;
+          qrypt.ciphertext = ciphertextBytes;
+          qrypt.text = base64.encode(sharedSecret);
+          qrypt.deCompressedText = Uint8List.fromList(utf8.encode(qrypt.text));
+          return qrypt;
+        } catch (e) {
+          if (kDebugMode) {
+            print('ML-KEM decapsulation failed: $e');
+          }
+          throw Exception('ML-KEM decapsulation failed: $e');
+        }
     }
   }
 
@@ -1056,7 +1149,7 @@ class InputHandler {
         }
       }
       if (qrypt.sign == SignMethod.mlDsa) {
-          if (context == null) {
+          if (context == null || !context.mounted) {
             throw Exception(
               'Decryption cancelled: No context to select ML-DSA key',
             );
@@ -1098,6 +1191,29 @@ class InputHandler {
               throw Exception('Decryption cancelled: No key pair selected');
             }
             qrypt.rsaKeyPair = selectedKeyPair;
+          }
+        }
+        if (context != null && !context.mounted) return qrypt;
+        if (qrypt.encryption == EncryptionMethod.mlKem) {
+          if (qrypt.kemKeyPair == null ||
+              qrypt.kemKeyPair!.secretKey.isEmpty) {
+            if (context == null) {
+              throw Exception(
+                'Decryption cancelled: No context to select ML-KEM key',
+              );
+            }
+            final selectedKeyPair = await showKemKeySelectionDialog(
+              context: context,
+              primaryColor: primaryColor,
+              title: 'Select Decryption Key',
+              message:
+                  'This content was encrypted with ML-KEM. Please select the appropriate key pair for decapsulation.',
+              publicKeyRequired: false,
+            );
+            if (selectedKeyPair == null) {
+              throw Exception('Decryption cancelled: No key pair selected');
+            }
+            qrypt.kemKeyPair = selectedKeyPair;
           }
         }
         if (context != null && !context.mounted) return qrypt;

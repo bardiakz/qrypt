@@ -54,9 +54,24 @@ InputDecoration buildInputDecoration({
 String? validateAesKey(String key) {
   if (key.isEmpty) return null;
 
-  final byteLength = utf8.encode(key).length;
+  final trimmed = key.trim();
+
+  // Accept 44-character Base64 (decodes to 32 bytes for 256-bit key)
+  if (trimmed.length == 44) {
+    try {
+      final bytes = base64.decode(trimmed);
+      if (bytes.length == 32) return null;
+    } catch (_) {}
+  }
+
+  // Accept 64-character Hex (decodes to 32 bytes for 256-bit key)
+  if (trimmed.length == 64 && RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(trimmed)) {
+    return null;
+  }
+
+  final byteLength = utf8.encode(trimmed).length;
   if (byteLength != 16 && byteLength != 24 && byteLength != 32) {
-    return 'AES key must be 16, 24, or 32 bytes (got $byteLength bytes)';
+    return 'AES key must be 16, 24, or 32 characters (or 44-char Base64 / 64-char Hex for 256-bit)';
   }
   return null;
 }
