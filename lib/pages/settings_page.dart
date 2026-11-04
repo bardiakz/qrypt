@@ -4,17 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:qrypt/models/custom_obfuscation_profile.dart';
-import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
-import 'package:qrypt/resources/obfuscation/v2_map_pools.dart';
-import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
 import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
-import 'package:qrypt/services/tag_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../providers/aes_providers.dart';
+import '../providers/encryption_providers.dart';
 import '../providers/resource_providers.dart';
 import '../providers/rsa_providers.dart';
 
@@ -117,61 +115,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
     );
   }
-
-  Widget _buildSecuritySettings(BuildContext context, WidgetRef ref) {
-    return Card(
-      child: Column(
-        children: [
-          // SwitchListTile(
-          //   secondary: const Icon(Icons.fingerprint),
-          //   title: const Text('Biometric Lock'),
-          //   subtitle: const Text('Use fingerprint/face unlock'),
-          //   value: true,
-          //   // TODO: Connect to security provider
-          //   onChanged: (value) {
-          //     // TODO: Implement biometric toggle
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       SnackBar(
-          //         content: Text(
-          //           'Biometric lock ${value ? 'enabled' : 'disabled'}',
-          //         ),
-          //       ),
-          //     );
-          //   },
-          // ),
-        ],
-      ),
-    );
-  }
-
-  // Widget _buildDataManagementSettings(BuildContext context, WidgetRef ref) {
-  //   return Card(
-  //     child: Column(
-  //       children: [
-  //         ListTile(
-  //           leading: const Icon(Icons.backup),
-  //           title: const Text('Export Data'),
-  //           subtitle: const Text('Export your encrypted data'),
-  //           trailing: const Icon(Icons.chevron_right),
-  //           onTap: () {
-  //             // TODO: Implement data export
-  //             _showExportDialog(context);
-  //           },
-  //         ),
-  //         ListTile(
-  //           leading: const Icon(Icons.restore),
-  //           title: const Text('Import Data'),
-  //           subtitle: const Text('Import from backup file'),
-  //           trailing: const Icon(Icons.chevron_right),
-  //           onTap: () {
-  //             // TODO: Implement data import
-  //             _showImportDialog(context);
-  //           },
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildAboutSettings(BuildContext context, WidgetRef ref) {
     return FutureBuilder<PackageInfo>(
@@ -730,111 +673,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     }
   }
 
-  void _showTimeoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Auto Lock Timeout'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Immediately'),
-              leading: Radio<int>(value: 0, groupValue: 5, onChanged: (_) {}),
-            ),
-            ListTile(
-              title: const Text('1 minute'),
-              leading: Radio<int>(value: 1, groupValue: 5, onChanged: (_) {}),
-            ),
-            ListTile(
-              title: const Text('5 minutes'),
-              leading: Radio<int>(value: 5, groupValue: 5, onChanged: (_) {}),
-            ),
-            ListTile(
-              title: const Text('15 minutes'),
-              leading: Radio<int>(value: 15, groupValue: 5, onChanged: (_) {}),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Save timeout setting
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showExportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Data'),
-        content: const Text(
-          'This will create an encrypted backup file of all your data. '
-          'Keep this file secure as it contains sensitive information.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement export logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export functionality coming soon'),
-                ),
-              );
-            },
-            child: const Text('Export'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showImportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Import Data'),
-        content: const Text(
-          'Select an encrypted backup file to import. '
-          'This will merge with your existing data.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement import logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Import functionality coming soon'),
-                ),
-              );
-            },
-            child: const Text('Select File'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showVersionDialog(BuildContext context, String version, String build) {
     showDialog(
       context: context,
@@ -920,16 +758,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              final storage = FlutterSecureStorage();
-              storage.deleteAll();
+              const storage = FlutterSecureStorage();
+              await storage.deleteAll();
               ref.invalidate(rsaKeyPairsProvider);
               ref.invalidate(kemKeyPairsProvider);
               ref.invalidate(mlDsaKeyPairsProvider);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Data cleared successfully')),
-              );
+              ref.invalidate(aesKeysProvider);
+              ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
+              ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
+              ref.read(selectedCustomMapProvider.notifier).state = null;
+              await CustomMapStorageService.instance.loadAll();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Data cleared successfully')),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
