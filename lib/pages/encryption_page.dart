@@ -369,23 +369,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
-  // Check if current encryption method is ML-KEM
-  bool _isMLKemMode() {
-    final selectedEncryption = ref.watch(selectedEncryptionProvider);
-    return selectedEncryption == EncryptionMethod.mlKem;
-  }
-
   // Get appropriate input field label based on mode
-  String _getInputFieldLabel(bool isEncryptMode) {
-    if (_isMLKemMode()) {
+  String _getInputFieldLabel(bool isEncryptMode, bool isMLKemMode) {
+    if (isMLKemMode) {
       return isEncryptMode ? "Key Exchange (Optional Note)" : "Ciphertext to Decrypt";
     }
     return "Message";
   }
 
   // Get appropriate input field hint based on mode
-  String _getInputFieldHint(bool isEncryptMode) {
-    if (_isMLKemMode()) {
+  String _getInputFieldHint(bool isEncryptMode, bool isMLKemMode) {
+    if (isMLKemMode) {
       return isEncryptMode
           ? "Optional note (KEM ciphertext is generated automatically)..."
           : "Paste ML-KEM ciphertext (with tag / obfuscation) to decapsulate...";
@@ -403,9 +397,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final autoDetectTag = ref.watch(autoDetectTagProvider);
     final useTagManually = ref.watch(useTagProvider);
     final isProcessing = ref.watch(isProcessingProvider);
-    final isMLKemMode = ref.read(isMLKemModeProvider);
-
     final selectedEncryption = ref.watch(selectedEncryptionProvider);
+    final isMLKemMode = selectedEncryption == EncryptionMethod.mlKem;
+    final shouldShowKemSecret = isEncryptMode
+        ? (isMLKemMode && _mlKemSharedSecret.isNotEmpty)
+        : (_mlKemSharedSecret.isNotEmpty &&
+            ref.watch(processedDecryptProvider).encryption ==
+                EncryptionMethod.mlKem);
+
     final selectedObfuscation = ref.watch(selectedObfuscationProvider);
     final encryptObfuscation = selectedObfuscation.v2Equivalent;
     final selectedCompression = ref.watch(selectedCompressionProvider);
@@ -416,6 +415,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     final isCustomDecryptKey =
         selectedDecryptKey == null || selectedDecryptKey.isCustom;
 
+    ref.listen(selectedEncryptionProvider, (previous, next) {
+      if (previous != next && _mlKemSharedSecret.isNotEmpty) {
+        setState(() {
+          _mlKemSharedSecret = '';
+        });
+      }
+    });
+    ref.listen(appModeProvider, (previous, next) {
+      if (previous != next && _mlKemSharedSecret.isNotEmpty) {
+        setState(() {
+          _mlKemSharedSecret = '';
+        });
+      }
+    });
     ref.listen(selectedAESEncryptKeyProvider, (previous, next) {
       if (next != null && _customAesKeyController.text != next.key) {
         _customAesKeyController.text = next.key;
@@ -504,7 +517,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ),
 
                 // ML-KEM Info Container (only show in ML-KEM mode)
-                if (ref.read(isMLKemModeProvider)) ...[
+                if (isMLKemMode) ...[
                   const SizedBox(height: AppConstants.defaultPadding),
                   buildMLKemInfoContainer(
                     context: context,
@@ -516,7 +529,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
                 // Message input section
                 buildSectionHeader(
-                  title: _getInputFieldLabel(isEncryptMode),
+                  title: _getInputFieldLabel(isEncryptMode, isMLKemMode),
                   characterCount:
                       ref.watch(inputTextProvider).length.toString(),
                   actions: [
@@ -581,8 +594,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     decoration: buildInputDecoration(
                       context: context,
                       primaryColor: primaryColor,
-                      hintText: _getInputFieldHint(isEncryptMode),
-                      labelText: _getInputFieldLabel(isEncryptMode),
+                      hintText: _getInputFieldHint(isEncryptMode, isMLKemMode),
+                      labelText: _getInputFieldLabel(isEncryptMode, isMLKemMode),
                     ),
                   ),
                 ),
@@ -1161,7 +1174,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 const SizedBox(height: AppConstants.defaultPadding),
 
                 // ML-KEM Shared Secret Card (shown whenever a shared secret is encapsulated or decapsulated)
-                if (_mlKemSharedSecret.isNotEmpty) ...[
+                if (shouldShowKemSecret) ...[
                   MLKemSharedSecretCard(
                     context: context,
                     primaryColor: primaryColor,
@@ -1487,9 +1500,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           setState(() {
             _mlKemSharedSecret = base64.encode(processed.kemSharedSecret!);
           });
+        } else if (_mlKemSharedSecret.isNotEmpty) {
+          setState(() {
+            _mlKemSharedSecret = '';
+          });
         }
       } else {
         // Default encryption logic (AES-GCM + GZip + EN2 + Tag)
+        if (_mlKemSharedSecret.isNotEmpty) {
+          setState(() {
+            _mlKemSharedSecret = '';
+          });
+        }
         final q = Qrypt.withTag(
           text: _encryptTextController.text,
           encryption: EncryptionMethod.aesGcm,
@@ -1620,6 +1642,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           setState(() {
             _mlKemSharedSecret = base64.encode(deProcessed.kemSharedSecret!);
           });
+        } else if (_mlKemSharedSecret.isNotEmpty) {
+          setState(() {
+            _mlKemSharedSecret = '';
+          });
         }
       } else {
         final autoQrypt = Qrypt.autoDecrypt(text: _decryptTextController.text);
@@ -1638,6 +1664,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             deProcessed.kemSharedSecret!.isNotEmpty) {
           setState(() {
             _mlKemSharedSecret = base64.encode(deProcessed.kemSharedSecret!);
+          });
+        } else if (_mlKemSharedSecret.isNotEmpty) {
+          setState(() {
+            _mlKemSharedSecret = '';
           });
         }
       }

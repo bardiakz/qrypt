@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Testing**:
   - Comprehensive unit and roundtrip test suite in `test/services/ml_kem_pipeline_test.dart` verifying key validation, parsing, model invariants, full obfuscation permutations, and immediate AES-GCM encryption with derived shared secrets.
 
+### Fixed
+- Fixed reactive mode switching so the ML-KEM info container immediately unmounts when changing the encryption algorithm away from ML-KEM.
+- Resolved UI bug where the ephemeral "Save this secret now" banner and shared secret card lingered after switching to AES or other encryption algorithms.
+- Added automatic state listeners and pipeline guards to clear ephemeral KEM shared secret state on algorithm changes, swipe mode switches, and non-KEM encryption/decryption operations.
+
 ---
 
 ## [5.2.0] - 2026-11-04
