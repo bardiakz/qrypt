@@ -216,7 +216,8 @@ jobs:
 
           cp -r build/linux/x64/release/bundle/* "$DEB_DIR/opt/qrypt/"
           ln -s /opt/qrypt/qrypt "$DEB_DIR/usr/bin/qrypt"
-          cp data/io.github.bardiakz.Qrypt.desktop "$DEB_DIR/usr/share/applications/"
+          cp data/io.github.bardiakz.Qrypt.desktop "$DEB_DIR/usr/share/applications/io.github.bardiakz.Qrypt.desktop"
+          cp data/io.github.bardiakz.Qrypt.desktop "$DEB_DIR/usr/share/applications/qrypt.desktop"
           cp data/io.github.bardiakz.Qrypt.desktop "$DEB_DIR/etc/skel/Desktop/qrypt.desktop"
 
           for size in 16 32 64 128 256 512; do
@@ -319,7 +320,8 @@ jobs:
 
           cp -r ${GITHUB_WORKSPACE}/build/linux/x64/release/bundle/* %{buildroot}/opt/qrypt/
           ln -s /opt/qrypt/qrypt %{buildroot}/usr/bin/qrypt
-          cp ${GITHUB_WORKSPACE}/data/io.github.bardiakz.Qrypt.desktop %{buildroot}/usr/share/applications/
+          cp ${GITHUB_WORKSPACE}/data/io.github.bardiakz.Qrypt.desktop %{buildroot}/usr/share/applications/io.github.bardiakz.Qrypt.desktop
+          cp ${GITHUB_WORKSPACE}/data/io.github.bardiakz.Qrypt.desktop %{buildroot}/usr/share/applications/qrypt.desktop
           cp ${GITHUB_WORKSPACE}/data/io.github.bardiakz.Qrypt.desktop %{buildroot}/etc/skel/Desktop/qrypt.desktop
 
           for size in 16 32 64 128 256 512; do
@@ -373,7 +375,7 @@ jobs:
           %files
           /opt/qrypt
           /usr/bin/qrypt
-          /usr/share/applications/io.github.bardiakz.Qrypt.desktop
+          /usr/share/applications/*.desktop
           /etc/skel/Desktop/qrypt.desktop
           /usr/share/icons/hicolor/*/apps/*.png
           /usr/share/pixmaps/*.png
