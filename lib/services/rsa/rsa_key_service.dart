@@ -171,7 +171,7 @@ class RSAKeyService {
 
   bool _isGenerating = false;
 
-  /// Generates a new RSA key pair with the specified name (always 2048-bit)
+  /// Generates a new RSA key pair with the specified name and key size
   Future<RSAKeyPair> generateKeyPair(String name, {int keySize = 2048}) async {
     if (_isGenerating) {
       throw Exception('Key generation already in progress');
@@ -183,9 +183,6 @@ class RSAKeyService {
         throw Exception('A key pair with the name "$name" already exists');
       }
 
-      // Force 2048-bit keys
-      const int forcedKeySize = 2048;
-
       // Create RSA key generator
       final keyGen = RSAKeyGenerator();
       final secureRandom = _createSecureRandom();
@@ -193,7 +190,7 @@ class RSAKeyService {
       // Initialize key generator with parameters
       keyGen.init(
         ParametersWithRandom(
-          RSAKeyGeneratorParameters(BigInt.parse('65537'), forcedKeySize, 64),
+          RSAKeyGeneratorParameters(BigInt.parse('65537'), keySize, 64),
           secureRandom,
         ),
       );
@@ -270,12 +267,12 @@ class RSAKeyService {
       final plaintextBytes = utf8.encode(plaintext);
 
       // Create OAEP cipher for encryption
-      final cipher = OAEPEncoding(RSAEngine());
+      final cipher = OAEPEncoding.withSHA256(RSAEngine());
       cipher.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
       final encryptedBytes = cipher.process(Uint8List.fromList(plaintextBytes));
 
       // Create OAEP cipher for decryption
-      final decryptCipher = OAEPEncoding(RSAEngine());
+      final decryptCipher = OAEPEncoding.withSHA256(RSAEngine());
       decryptCipher.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
       final decryptedBytes = decryptCipher.process(encryptedBytes);
 
@@ -299,7 +296,7 @@ class RSAKeyService {
       final plaintextBytes = utf8.encode(plaintext);
 
       // Create OAEP cipher with SHA-256
-      final cipher = OAEPEncoding(RSAEngine());
+      final cipher = OAEPEncoding.withSHA256(RSAEngine());
       cipher.init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
 
       final encryptedBytes = cipher.process(Uint8List.fromList(plaintextBytes));
@@ -339,7 +336,7 @@ class RSAKeyService {
       final encryptedBytes = base64.decode(ciphertext);
 
       // Create OAEP cipher with SHA-256
-      final cipher = OAEPEncoding(RSAEngine());
+      final cipher = OAEPEncoding.withSHA256(RSAEngine());
       cipher.init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
 
       final decryptedBytes = cipher.process(encryptedBytes);

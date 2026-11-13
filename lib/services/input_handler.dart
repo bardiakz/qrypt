@@ -1131,35 +1131,22 @@ class InputHandler {
             qrypt.rsaSenderPublicKey,
           );
 
-          if (isSignatureValid) {
-            if (kDebugMode) {
-              print('Signature verification successful ✓');
-            }
-            if (buildContext != null && buildContext.mounted) {
-              ScaffoldMessenger.of(buildContext).showSnackBar(
-                const SnackBar(
-                  content: Text('Signature verification successful ✓'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            if (kDebugMode) {
-              print(
-                '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
-              );
-            }
-            if (buildContext != null && buildContext.mounted) {
-              ScaffoldMessenger.of(buildContext).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '⚠️ WARNING: Signature verification failed! Data may be tampered with.',
-                  ),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            // Note: Not throwing exception to allow data access despite signature failure
+          if (!isSignatureValid) {
+            throw const FormatException(
+              'RSA signature verification failed. Message may have been altered or forged.',
+            );
+          }
+
+          if (kDebugMode) {
+            print('Signature verification successful ✓');
+          }
+          if (buildContext != null && buildContext.mounted) {
+            ScaffoldMessenger.of(buildContext).showSnackBar(
+              const SnackBar(
+                content: Text('Signature verification successful ✓'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
 
           // The original data is base64 encoded compressed data

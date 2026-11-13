@@ -16,7 +16,7 @@ extension EncryptionMethodName on EncryptionMethod {
       case EncryptionMethod.aesGcm:
         return 'AES-GCM';
       case EncryptionMethod.rsa:
-        return 'RSA-OAEP-SHA1';
+        return 'RSA-OAEP-256';
       case EncryptionMethod.rsaSign:
         return 'RSA-PSS256-OAEP1 (with sign)';
       case EncryptionMethod.mlKem:

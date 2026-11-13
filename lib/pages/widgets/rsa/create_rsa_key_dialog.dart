@@ -20,6 +20,9 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
   final _privateKeyController = TextEditingController();
   bool _isGenerating = false;
   bool _useManualInput = false;
+  int _selectedKeySize = 3072;
+
+  static const List<int> _keySizeOptions = [2048, 3072, 4096];
 
   @override
   void dispose() {
@@ -44,6 +47,31 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
                 hintText: 'Enter a name for this key pair',
               ),
             ),
+            if (!_useManualInput) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                value: _selectedKeySize,
+                decoration: const InputDecoration(
+                  labelText: 'Key Size (bits)',
+                  helperText: '3072+ bits is recommended for new keys',
+                ),
+                items: _keySizeOptions.map((size) {
+                  return DropdownMenuItem<int>(
+                    value: size,
+                    child: Text(
+                      '$size bits${size == 3072 ? ' (Recommended)' : ''}',
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedKeySize = value;
+                    });
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -162,7 +190,10 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
         await service.saveKeyPair(keyPair);
       } else {
         // For generation, generateKeyPair() already saves it internally
-        keyPair = await service.generateKeyPair(_nameController.text.trim());
+        keyPair = await service.generateKeyPair(
+          _nameController.text.trim(),
+          keySize: _selectedKeySize,
+        );
       }
 
       // Refresh the provider to update the UI

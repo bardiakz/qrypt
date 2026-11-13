@@ -7,6 +7,7 @@ import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
+import 'package:qrypt/providers/rsa_providers.dart';
 import 'package:qrypt/services/input_handler.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
@@ -211,6 +212,62 @@ void main() {
         true,
       );
       expect(deProcessed.text, equals(plaintext));
+    });
+  });
+
+  group('Legacy rsaSign decode fail-closed verification', () {
+    testWidgets('handleDecrypt throws when rsaSign signature is invalid', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: SizedBox(key: Key('target'))),
+        ),
+      );
+      final context = tester.element(find.byKey(const Key('target')));
+
+      final ih = InputHandler();
+      final rsa = RSAKeyService();
+      final senderKeyPair = await rsa.generateKeyPair('rsa_sign_sender');
+      final receiverKeyPair = await rsa.generateKeyPair('rsa_sign_receiver');
+      final wrongKeyPair = await rsa.generateKeyPair('rsa_sign_wrong');
+
+      final encryptQrypt = Qrypt(
+        text: 'Top secret data for rsaSign',
+        encryption: EncryptionMethod.rsaSign,
+        obfuscation: ObfuscationMethod.b64,
+        compression: CompressionMethod.none,
+        sign: SignMethod.none,
+      );
+      encryptQrypt.compressedText = utf8.encode('Top secret data for rsaSign');
+      encryptQrypt.rsaKeyPair = senderKeyPair; // used to sign in rsaSign
+      encryptQrypt.rsaReceiverPublicKey = receiverKeyPair.publicKey; // used to encrypt
+
+      final encryptedQrypt = await ih.handleEncrypt(encryptQrypt);
+
+      // Now attempt decrypt with receiver private key but WRONG sender public key
+      final decryptQrypt = Qrypt(
+        text: encryptedQrypt.text,
+        encryption: EncryptionMethod.rsaSign,
+        obfuscation: ObfuscationMethod.b64,
+        compression: CompressionMethod.none,
+        sign: SignMethod.none,
+      );
+      decryptQrypt.rsaKeyPair = receiverKeyPair;
+      // Set global decrypt public key to the wrong key
+      decryptPublicKeyGlobal = wrongKeyPair.publicKey;
+
+      expect(
+        () => ih.handleDecrypt(decryptQrypt, context),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('RSA+Sign decryption failed'),
+          ),
+        ),
+      );
+      expect(decryptQrypt.deCompressedText.isEmpty, isTrue);
     });
   });
 }

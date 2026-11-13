@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/rsa_key_pair.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
 import 'package:qrypt/services/rsa/rsa_key_storage_service.dart';
@@ -36,6 +37,32 @@ void main() {
 
       final keySize = rsaService.getKeySize(generatedKeyPair.publicKey);
       expect(keySize, equals(2048));
+    });
+
+    test('generateKeyPair respects keySize parameter for 3072-bit keys', () async {
+      final keyPair3072 = await rsaService.generateKeyPair(
+        '3072-bit Test Key',
+        keySize: 3072,
+      );
+      final keySize = rsaService.getKeySize(keyPair3072.publicKey);
+      expect(keySize, equals(3072));
+
+      // Verify OAEP encrypt/decrypt works with 3072-bit keys
+      const plaintext = 'OAEP with 3072-bit RSA key and SHA-256';
+      final ciphertext = await rsaService.encryptWithPublicKey(
+        plaintext,
+        keyPair3072.publicKey,
+      );
+      expect(ciphertext, isNotEmpty);
+      final decrypted = await rsaService.decryptWithPrivateKey(
+        ciphertext,
+        keyPair3072.privateKey,
+      );
+      expect(decrypted, equals(plaintext));
+    });
+
+    test('EncryptionMethod.rsa displayName is RSA-OAEP-256', () {
+      expect(EncryptionMethod.rsa.displayName, equals('RSA-OAEP-256'));
     });
 
     test(
