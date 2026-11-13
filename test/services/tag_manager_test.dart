@@ -21,7 +21,7 @@ void main() {
 
   group('TagManager Collision & Bijection Invariants', () {
     test(
-      'knownTags contains exactly 840 unique routing tags (zero collision)',
+      'knownTags contains exactly 1260 unique routing tags (zero collision)',
       () {
         final builtInObfs = ObfuscationMethod.values
             .where((m) => m != ObfuscationMethod.custom)
@@ -32,10 +32,10 @@ void main() {
             SignMethod.values.length *
             builtInObfs.length;
 
-        expect(totalCombinations, equals(840));
+        expect(totalCombinations, equals(1260));
         expect(
           TagManager.knownTags.length,
-          equals(840),
+          equals(1260),
           reason:
               'Collision detected in 6-character tag hashes! Multiple algorithm combinations mapped to the same tag.',
         );

@@ -17,6 +17,11 @@ final selectedRSAEncryptKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
 final selectedRSADecryptKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
   null,
 );
+final selectedRSASignKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
+  null,
+);
 final rsaReceiverPublicKeyProvider = simpleStateProvider<String>('');
 final rsaDecryptPublicKeyProvider = simpleStateProvider<String>('');
+final rsaVerifyPublicKeyProvider = simpleStateProvider<String>('');
 String decryptPublicKeyGlobal = '';
+String rsaVerifyPublicKeyGlobal = '';

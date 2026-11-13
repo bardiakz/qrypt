@@ -19,6 +19,7 @@ import '../pages/widgets/custom_map_picker_dialog.dart';
 import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import '../pages/widgets/ml_kem/kem_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
+import '../pages/widgets/rsa/rsa_public_key_input_dialog.dart';
 import '../providers/rsa_providers.dart';
 import 'aes/aes_key_storage_service.dart';
 import 'aes_encryption.dart';
@@ -265,9 +266,93 @@ class InputHandler {
     }
   }
 
-  Qrypt handleSign(Qrypt qrypt) {
+  Future<Qrypt> handleSign(Qrypt qrypt) async {
     switch (qrypt.getSignMethod()) {
       case SignMethod.none:
+        return qrypt;
+      case SignMethod.rsaPss:
+        final rsa = RSAKeyService();
+        final rawPrivateKey = (qrypt.rsaSignKeyPair != null &&
+                qrypt.rsaSignKeyPair!.privateKey.isNotEmpty
+            ? qrypt.rsaSignKeyPair!.privateKey
+            : qrypt.rsaKeyPair.privateKey)
+            .trim();
+        final normalizedPrivateKey =
+            rawPrivateKey.replaceAll(RegExp(r'\r\n|\r|\n'), '\n');
+
+        if (normalizedPrivateKey.isEmpty ||
+            normalizedPrivateKey == 'n' ||
+            !normalizedPrivateKey.contains('BEGIN PRIVATE KEY')) {
+          throw Exception('No valid RSA private key provided for signing');
+        }
+
+        bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
+        bool usesBase64Obfuscation =
+            qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+        Uint8List originalMessage;
+        if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
+          if (qrypt.getObfuscationMethod() == ObfuscationMethod.none) {
+            originalMessage = utf8.encode(qrypt.text);
+          } else if (usesMappedObfuscation) {
+            List<int> bytes = [];
+            try {
+              for (int i = 0; i < qrypt.text.length; i += 2) {
+                String hexByte = qrypt.text.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing error in RSA sign: $e');
+              }
+              throw FormatException('Invalid hex format for signing');
+            }
+            originalMessage = Uint8List.fromList(bytes);
+          } else if (usesBase64Obfuscation) {
+            originalMessage = Uint8List.fromList(qrypt.text.codeUnits);
+          } else {
+            originalMessage = base64Decode(qrypt.text);
+          }
+        } else {
+          try {
+            originalMessage = utf8.encode(qrypt.text);
+          } catch (e) {
+            if (kDebugMode) {
+              print('UTF8 encode error in RSA sign: $e');
+            }
+            throw Exception('Invalid data for signing');
+          }
+        }
+
+        final String messageToSign = base64Encode(originalMessage);
+        final String signature = await rsa.signWithPrivateKey(
+          messageToSign,
+          normalizedPrivateKey,
+        );
+
+        Map<String, String> signedPackage = {
+          'message': messageToSign,
+          'signature': signature,
+        };
+
+        String signedPackageJson = jsonEncode(signedPackage);
+        Uint8List signedPackageBytes = utf8.encode(signedPackageJson);
+
+        if (usesMappedObfuscation) {
+          StringBuffer hexBuffer = StringBuffer();
+          for (var byte in signedPackageBytes) {
+            hexBuffer.write(byte.toRadixString(16).padLeft(2, '0'));
+          }
+          qrypt.text = hexBuffer.toString();
+          if (qrypt.text.length % 2 != 0) {
+            qrypt.text = '0${qrypt.text}';
+          }
+        } else if (usesBase64Obfuscation) {
+          qrypt.text = String.fromCharCodes(signedPackageBytes);
+        } else {
+          qrypt.text = base64Encode(signedPackageBytes);
+        }
+
         return qrypt;
       case SignMethod.mlDsa:
         MlDsaKeyService dsa = MlDsaKeyService();
@@ -418,9 +503,143 @@ class InputHandler {
     return qrypt;
   }
 
-  Qrypt handleVerify(Qrypt qrypt, BuildContext context) {
+  Future<Qrypt> handleVerify(Qrypt qrypt, BuildContext context) async {
     switch (qrypt.getSignMethod()) {
       case SignMethod.none:
+        return qrypt;
+      case SignMethod.rsaPss:
+        final rsa = RSAKeyService();
+
+        try {
+          final rawKey = (qrypt.rsaVerifyPublicKey != null &&
+                  qrypt.rsaVerifyPublicKey!.isNotEmpty)
+              ? qrypt.rsaVerifyPublicKey
+              : (qrypt.rsaSenderPublicKey.isNotEmpty &&
+                      qrypt.rsaSenderPublicKey != 'noPublicKey')
+                  ? qrypt.rsaSenderPublicKey
+                  : null;
+
+          if (rawKey == null || rawKey.isEmpty) {
+            throw const FormatException(
+              'RSA public key is required for signature verification.',
+            );
+          }
+
+          final normalizedPublicKey =
+              rawKey.trim().replaceAll(RegExp(r'\r\n|\r|\n'), '\n');
+
+          if (!normalizedPublicKey.contains('BEGIN PUBLIC KEY')) {
+            throw const FormatException(
+              'Invalid RSA public key format for signature verification.',
+            );
+          }
+
+          bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
+          bool usesBase64Obfuscation =
+              qrypt.getObfuscationMethod() == ObfuscationMethod.b64;
+
+          String packageJson;
+
+          if (usesMappedObfuscation) {
+            String hexString = qrypt.text;
+            if (hexString.length % 2 != 0) {
+              throw FormatException(
+                'Invalid hex string length: ${hexString.length}. Hex strings must have even length.',
+              );
+            }
+
+            List<int> bytes = [];
+            try {
+              for (int i = 0; i < hexString.length; i += 2) {
+                String hexByte = hexString.substring(i, i + 2);
+                bytes.add(int.parse(hexByte, radix: 16));
+              }
+              packageJson = utf8.decode(bytes);
+            } catch (e) {
+              if (kDebugMode) {
+                print('Hex parsing or UTF8 decode error in RSA verify: $e');
+              }
+              throw FormatException('Invalid format in verification: $e');
+            }
+          } else if (usesBase64Obfuscation) {
+            try {
+              packageJson = utf8.decode(qrypt.text.codeUnits);
+            } catch (e) {
+              if (kDebugMode) {
+                print('UTF8 decode error in RSA verify (base64): $e');
+              }
+              throw Exception('Invalid data in verification');
+            }
+          } else {
+            try {
+              packageJson = utf8.decode(base64Decode(qrypt.text));
+            } catch (e) {
+              if (kDebugMode) {
+                print('Base64 or UTF8 decode error in RSA verify: $e');
+              }
+              throw Exception('Invalid data in verification');
+            }
+          }
+
+          Map<String, dynamic> signedPackage = jsonDecode(packageJson);
+          if (!signedPackage.containsKey('message') ||
+              !signedPackage.containsKey('signature')) {
+            throw const FormatException(
+              'Malformed signed package: missing message or signature.',
+            );
+          }
+
+          final String messageToVerify = signedPackage['message'];
+          final String signature = signedPackage['signature'];
+
+          bool isValid = await rsa.verifyWithPublicKey(
+            messageToVerify,
+            signature,
+            normalizedPublicKey,
+          );
+
+          if (!isValid) {
+            throw const FormatException(
+              'RSA-PSS signature verification failed. Message may have been altered or forged.',
+            );
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('RSA signature verification successful ✓'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (kDebugMode) {
+            print('RSA signature verification successful ✓');
+          }
+
+          Uint8List originalMessage = base64Decode(messageToVerify);
+          if (qrypt.getEncryptionMethod() == EncryptionMethod.none) {
+            qrypt.deCompressedText = originalMessage;
+            qrypt.text = "BINARY_DATA_PLACEHOLDER";
+          } else {
+            try {
+              String originalDataString = utf8.decode(originalMessage);
+              qrypt.text = originalDataString;
+            } catch (e) {
+              qrypt.deCompressedText = originalMessage;
+              qrypt.text = "BINARY_DATA_PLACEHOLDER";
+            }
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error during RSA verification: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          if (kDebugMode) {
+            print('Error during RSA verification: $e');
+          }
+          throw Exception('RSA verification failed: $e');
+        }
+
         return qrypt;
       case SignMethod.mlDsa:
         MlDsaKeyService dsa = MlDsaKeyService();
@@ -1066,7 +1285,7 @@ class InputHandler {
     qrypt = await handleEncrypt(qrypt);
 
     if (qrypt.getSignMethod() != SignMethod.none) {
-      qrypt = handleSign(qrypt);
+      qrypt = await handleSign(qrypt);
     }
     qrypt.text = qrypt.tag + qrypt.text;
     qrypt = handleObfs(qrypt);
@@ -1082,7 +1301,7 @@ class InputHandler {
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
       if (qrypt.getSignMethod() != SignMethod.none && context != null) {
-        qrypt = handleVerify(qrypt, context);
+        qrypt = await handleVerify(qrypt, context);
       }
       qrypt = await handleDecrypt(qrypt, context);
       qrypt = handleDeCompression(qrypt);
@@ -1158,6 +1377,30 @@ class InputHandler {
           throw const FormatException('Invalid tag format');
         }
       }
+      if (qrypt.sign == SignMethod.rsaPss) {
+        final hasKey = (qrypt.rsaVerifyPublicKey != null &&
+                qrypt.rsaVerifyPublicKey!.isNotEmpty) ||
+            (qrypt.rsaSenderPublicKey.isNotEmpty &&
+                qrypt.rsaSenderPublicKey != 'noPublicKey');
+        if (!hasKey) {
+          if (context == null || !context.mounted) {
+            throw Exception(
+              'Decryption cancelled: No context to select RSA verification key',
+            );
+          }
+          String? rsaSenderPublicKey = await showRSAPublicKeyInputDialog(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Select RSA Verification Key',
+            message:
+                'This content was signed with RSA-PSS. Please select or paste the sender\'s public key for verification.',
+          );
+          if (rsaSenderPublicKey == null || rsaSenderPublicKey.isEmpty) {
+            throw Exception('Decryption cancelled: No key selected');
+          }
+          qrypt.rsaVerifyPublicKey = rsaSenderPublicKey;
+        }
+      }
       if (qrypt.sign == SignMethod.mlDsa) {
           if (context == null || !context.mounted) {
             throw Exception(
@@ -1178,7 +1421,7 @@ class InputHandler {
         }
         if (context != null && !context.mounted) return qrypt;
         if (context != null) {
-          qrypt = handleVerify(qrypt, context);
+          qrypt = await handleVerify(qrypt, context);
         }
         if (qrypt.encryption == EncryptionMethod.rsa ||
             qrypt.encryption == EncryptionMethod.rsaSign) {

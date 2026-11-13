@@ -138,7 +138,7 @@ void main() {
 
       final context = tester.element(find.byKey(const Key('target')));
 
-      final result = ih.handleVerify(qrypt, context);
+      final result = await ih.handleVerify(qrypt, context);
       expect(result.text, equals(expectedPayload));
     });
   });

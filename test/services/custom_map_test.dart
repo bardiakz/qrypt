@@ -33,9 +33,9 @@ void main() {
     }
   });
 
-  group('840 Built-in Tags Invariant', () {
-    test('built-in tags remain exactly 840 and are untouched by custom', () {
-      expect(TagManager.knownTags.length, equals(840));
+  group('Built-in Tags Invariant', () {
+    test('built-in tags remain exactly 1260 and are untouched by custom', () {
+      expect(TagManager.knownTags.length, equals(1260));
     });
   });
 

@@ -50,6 +50,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   final _mlKemPublicKeyController = TextEditingController();
   final _mlKemDecryptController = TextEditingController();
   final _dsaPublicKeyController = TextEditingController();
+  final _rsaVerifyPublicKeyController = TextEditingController();
   final InputHandler ih = InputHandler();
   bool _isKeyPromptActive = false;
   bool _obscureEncryptAesKey = true;
@@ -69,6 +70,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     _customDecryptAesKeyController.dispose();
     _mlKemPublicKeyController.dispose();
     _mlKemDecryptController.dispose();
+    _dsaPublicKeyController.dispose();
+    _rsaVerifyPublicKeyController.dispose();
     super.dispose();
   }
 
@@ -825,6 +828,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ),
                       ),
                       if (ref.watch(selectedSignProvider) ==
+                          SignMethod.rsaPss) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.defaultPadding,
+                          ),
+                          child: RSASignKeySelector(
+                            primaryColor: primaryColor,
+                          ),
+                        ),
+                      ],
+                      if (ref.watch(selectedSignProvider) ==
                           SignMethod.mlDsa) ...[
                         const SizedBox(height: AppConstants.defaultPadding),
                         Padding(
@@ -1064,6 +1079,34 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           selectedSign: ref.read(selectedSignProvider),
                           primaryColor: primaryColor,
                         ),
+                      ),
+                    ],
+                    if (ref.watch(selectedSignProvider) ==
+                        SignMethod.rsaPss) ...[
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      buildPublicKeyField(
+                        context: context,
+                        controller: _rsaVerifyPublicKeyController,
+                        primaryColor: primaryColor,
+                        onChanged: (val) {
+                          try {
+                            String normalized = val.trim().replaceAll(
+                              RegExp(r'\r\n|\r|\n'),
+                              '\n',
+                            );
+                            ref
+                                .read(rsaVerifyPublicKeyProvider.notifier)
+                                .state = normalized;
+                            rsaVerifyPublicKeyGlobal = normalized;
+                          } catch (e) {
+                            if (kDebugMode) {
+                              print('Error normalizing RSA verify key: $e');
+                            }
+                          }
+                        },
+                        validationPattern: r'^[A-Za-z0-9+/=\n\r\s-]+',
+                        isEncryptMode: isEncryptMode,
+                        labelText: 'RSA Sender Public Key (Verify)',
                       ),
                     ],
                     if (ref.watch(selectedSignProvider) ==
@@ -1490,6 +1533,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           ref.read(inputQryptProvider.notifier).state = q;
         }
 
+        if (ref.read(selectedSignProvider) == SignMethod.rsaPss) {
+          ref.read(inputQryptProvider.notifier).state.rsaSignKeyPair = ref.read(
+            selectedRSASignKeyPairProvider,
+          );
+        }
+
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
           ref.read(inputQryptProvider.notifier).state.dsaKeyPair = ref.read(
             selectedMlDsaSignKeyPairProvider,
@@ -1651,6 +1700,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           manualQrypt.rsaKeyPair = ref.read(
             selectedRSADecryptKeyPairProvider,
           )!;
+        }
+
+        if (ref.read(selectedSignProvider) == SignMethod.rsaPss) {
+          final verifyKey = ref.read(rsaVerifyPublicKeyProvider);
+          if (verifyKey.isNotEmpty) {
+            manualQrypt.rsaVerifyPublicKey = verifyKey;
+          }
         }
 
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {

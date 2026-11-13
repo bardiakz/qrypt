@@ -73,13 +73,23 @@ class EncryptionsDropdownButtonForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(selectedEncryptionProvider);
+    final effectiveValue = selected.isUserSelectable
+        ? selected
+        : EncryptionMethod.aesGcm;
+
     return DropdownButtonFormField<EncryptionMethod>(
-      value: ref.watch(selectedEncryptionProvider),
-      items: EncryptionMethod.values.map((alg) {
+      value: effectiveValue,
+      items: EncryptionMethod.values
+          .where((alg) => alg.isUserSelectable)
+          .map((alg) {
         return DropdownMenuItem(value: alg, child: Text(alg.displayName));
       }).toList(),
-      onChanged: (val) =>
-          ref.read(selectedEncryptionProvider.notifier).state = val!,
+      onChanged: (val) {
+        if (val != null) {
+          ref.read(selectedEncryptionProvider.notifier).state = val;
+        }
+      },
       decoration: InputDecoration(
         labelText: 'Encryption Algorithm',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

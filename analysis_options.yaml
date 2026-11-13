@@ -10,6 +10,7 @@
 analyzer:
   exclude:
     - build/**
+    - .flatpak-builder/**
     - android/**
     - ios/**
     - web/**

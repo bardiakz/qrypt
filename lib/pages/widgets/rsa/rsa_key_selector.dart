@@ -6,7 +6,7 @@ import '../../../resources/global_resources.dart';
 import 'create_rsa_key_dialog.dart';
 import 'rsa_key_management_dialog.dart';
 
-enum RSAKeyType { encrypt, decrypt }
+enum RSAKeyType { encrypt, decrypt, sign }
 
 class RSAKeySelector extends ConsumerWidget {
   final Color primaryColor;
@@ -143,6 +143,8 @@ class RSAKeySelector extends ConsumerWidget {
         return selectedRSAEncryptKeyPairProvider;
       case RSAKeyType.decrypt:
         return selectedRSADecryptKeyPairProvider;
+      case RSAKeyType.sign:
+        return selectedRSASignKeyPairProvider;
     }
   }
 
@@ -154,6 +156,9 @@ class RSAKeySelector extends ConsumerWidget {
         break;
       case RSAKeyType.decrypt:
         ref.read(selectedRSADecryptKeyPairProvider.notifier).state = keyPair;
+        break;
+      case RSAKeyType.sign:
+        ref.read(selectedRSASignKeyPairProvider.notifier).state = keyPair;
         break;
     }
   }
@@ -199,6 +204,21 @@ class RSADecryptKeySelector extends StatelessWidget {
       primaryColor: primaryColor,
       keyType: RSAKeyType.decrypt,
       title: 'RSA Key Pair (Decrypt)',
+    );
+  }
+}
+
+class RSASignKeySelector extends StatelessWidget {
+  final Color primaryColor;
+
+  const RSASignKeySelector({super.key, required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return RSAKeySelector(
+      primaryColor: primaryColor,
+      keyType: RSAKeyType.sign,
+      title: 'RSA Key Pair (Sign)',
     );
   }
 }

@@ -44,6 +44,10 @@ class Qrypt {
   Uint8List? dsaVerifyPublicKEy;
   QryptMLDSAKeyPair? dsaKeyPair;
 
+  //rsa sign properties
+  RSAKeyPair? rsaSignKeyPair;
+  String? rsaVerifyPublicKey;
+
   Qrypt.withTag({
     required this.text,
     required this.encryption,

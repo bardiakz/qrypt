@@ -24,3 +24,9 @@ extension EncryptionMethodName on EncryptionMethod {
     }
   }
 }
+
+extension EncryptionMethodHelpers on EncryptionMethod {
+  /// Whether this method should be shown in the UI encryption picker.
+  /// [rsaSign] is a legacy combined mode kept only for backward-compatible decode.
+  bool get isUserSelectable => this != EncryptionMethod.rsaSign;
+}
