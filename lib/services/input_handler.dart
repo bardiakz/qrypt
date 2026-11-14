@@ -131,10 +131,22 @@ class InputHandler {
             throw Exception('No valid RSA public key provided for encryption');
           }
 
-          RSAKeyService rsa = RSAKeyService();
+          final rsaKeyService = RSAKeyService();
+
+          // RSA-OAEP-SHA256 max plaintext = (keyBits / 8) - 2*32 - 2
+          // (modulus bytes minus 2× hash length minus 2)
+          final keyBits = rsaKeyService.getKeySize(qrypt.rsaReceiverPublicKey);
+          final maxBytes = (keyBits ~/ 8) - 66;
+          if (qrypt.compressedText.length > maxBytes) {
+            throw RsaPayloadTooLargeException(
+              maxBytes: maxBytes,
+              actualBytes: qrypt.compressedText.length,
+            );
+          }
+
           // Convert compressed bytes to string for RSA encryption
           String textToEncrypt = base64.encode(qrypt.compressedText);
-          String encryptedResult = await rsa.encryptWithPublicKey(
+          String encryptedResult = await rsaKeyService.encryptWithPublicKey(
             textToEncrypt,
             qrypt.rsaReceiverPublicKey,
           );
@@ -158,6 +170,8 @@ class InputHandler {
           }
 
           return qrypt;
+        } on RsaPayloadTooLargeException {
+          rethrow;
         } catch (e) {
           if (kDebugMode) {
             print('RSA encryption failed: $e');
