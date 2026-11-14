@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-11-14
+
+### Added
+- **Orthogonal RSA-PSS Digital Signatures (`SignMethod.rsaPss`)**:
+  - Decoupled RSA digital signatures from encryption modes by introducing `SignMethod.rsaPss` ("RSA-PSS (SHA-256)"), enabling RSA signatures to be composed orthogonally with any encryption cipher (AES-GCM, AES-CBC, AES-CTR, ML-KEM) or standalone plaintext.
+  - Implemented standard **Encrypt-then-Sign** (EtS) pipeline ordering in `InputHandler`.
+  - Added `RSASignKeySelector` widget for explicit signing key selection and `rsa_public_key_input_dialog.dart` for prompt-based recipient public key input during auto-tag verification.
+  - Expanded `TagManager` and custom map tag combinations from 840 to 1,260 with 0 hash collisions.
+- **Configurable RSA Key Sizes**:
+  - Added user-selectable key size dropdown in `CreateRSAKeyDialog` supporting `2048`, `3072`, and `4096` bits, defaulting to `3072` bits for newly generated keys (aligned with NIST guidance).
+  - Unlocked `RSAKeyService.generateKeyPair(keySize)` to respect caller-specified key sizes instead of hardcoding 2048 bits.
+- **RSA Payload Size Guard**:
+  - Added pre-encryption payload size guard in `InputHandler` enforcing maximum plaintext limits: `(keyBits ~/ 8) - 66` (e.g. 190 bytes for 2048-bit, 318 bytes for 3072-bit).
+  - Throws typed `RsaPayloadTooLargeException` with actionable user guidance suggesting AES-GCM for larger payloads rather than crashing with unhandled cipher buffer errors.
+- **Cross-Platform Packaging & Desktop Distribution**:
+  - Added CI release workflows for building Linux `.deb`, `.rpm`, and Windows installers.
+  - Added multi-resolution Linux application icons (16x16 to 512x512) and automatic desktop database and icon cache updates (`gtk-update-icon-cache`, `update-desktop-database`).
+
+### Changed
+- **RSA-OAEP-256 Padding Upgrade**:
+  - Upgraded RSA-OAEP cipher padding to SHA-256 (`OAEPEncoding.withSHA256`) across encryption, decryption, and key validation routines.
+  - Updated algorithm display name from `RSA-OAEP-SHA1` to `RSA-OAEP-256`.
+- **Legacy `rsaSign` UI Deprecation**:
+  - Flagged legacy bundled `EncryptionMethod.rsaSign` with `isUserSelectable = false` to hide it from manual encryption dropdowns while preserving full backward-compatibility for auto-decrypting legacy messages.
+- **State Architecture & Scoped Riverpod Providers**:
+  - Replaced mutable top-level globals (`decryptPublicKeyGlobal`, `verifyMlDsaPublicKeyGlobal`, `decryptKemPublicKeyGlobal`, `rsaVerifyPublicKeyGlobal`) with scoped Riverpod providers in `lib/providers/key_input_providers.dart`.
+  - Removed state mutation anti-patterns from `EncryptionPage.build()`, migrating side-effects to `ref.listen` and `initState`.
+
+### Fixed
+- **Fail-Closed Signature Verification**:
+  - Hardened signature verification in the legacy `rsaSign` decode path so verification failures immediately throw `FormatException` and halt data return, eliminating a fail-open flaw.
+  - Enforced strict fail-closed verification for `SignMethod.rsaPss`.
+- **Settings Data Cleanup & Android Manifest**:
+  - Comprehensive provider invalidation and custom obfuscation map cache reloading upon "Clear All Data" in `SettingsPage`.
+  - Removed invalid activity action declaration from `AndroidManifest.xml`.
+
+---
+
 ## [5.3.1] - 2026-11-04
 
 ### Fixed
