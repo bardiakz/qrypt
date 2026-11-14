@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed state mutation anti-patterns from `EncryptionPage.build()`, migrating side-effects to `ref.listen` and `initState`.
 
 ### Fixed
+- **Android Gradle Plugin & Gradle Alignment**:
+  - Upgraded Android Gradle Plugin from `9.1.0` to `9.1.1` in `android/settings.gradle.kts` to meet Flutter's minimum AGP requirement.
+  - Upgraded Gradle wrapper to `9.5.0` (`gradle-9.5.0-all.zip`) in `gradle-wrapper.properties` to clear Flutter Gradle deprecation warnings.
 - **Fail-Closed Signature Verification**:
   - Hardened signature verification in the legacy `rsaSign` decode path so verification failures immediately throw `FormatException` and halt data return, eliminating a fail-open flaw.
   - Enforced strict fail-closed verification for `SignMethod.rsaPss`.
