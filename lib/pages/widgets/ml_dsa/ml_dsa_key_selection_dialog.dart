@@ -70,7 +70,6 @@ class _MlDsaPublicKeyInputDialogState
           _errorText = null;
           // Save to provider
           ref.read(verifyMlDsaPublicKeyProvider.notifier).state = normalized;
-          verifyMlDsaPublicKeyGlobal = normalized;
 
           if (kDebugMode) {
             print(

@@ -7,7 +7,6 @@ import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
-import 'package:qrypt/providers/rsa_providers.dart';
 import 'package:qrypt/services/input_handler.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/rsa/rsa_key_service.dart';
@@ -254,8 +253,8 @@ void main() {
         sign: SignMethod.none,
       );
       decryptQrypt.rsaKeyPair = receiverKeyPair;
-      // Set global decrypt public key to the wrong key
-      decryptPublicKeyGlobal = wrongKeyPair.publicKey;
+      // Set sender public key to the wrong key
+      decryptQrypt.rsaSenderPublicKey = wrongKeyPair.publicKey;
 
       expect(
         () => ih.handleDecrypt(decryptQrypt, context),

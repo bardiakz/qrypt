@@ -18,5 +18,6 @@ final selectedKemDecryptKeyPairProvider = simpleStateProvider<QryptKEMKeyPair?>(
   null,
 );
 final receiverKemPublicKeyProvider = simpleStateProvider<String>('');
+/// Public key PEM used for ML-KEM decryption (replaces decryptKemPublicKeyGlobal)
 final decryptKemPublicKeyProvider = simpleStateProvider<String>('');
-String decryptKemPublicKeyGlobal = '';
+final kemDecryptPublicKeyProvider = decryptKemPublicKeyProvider;

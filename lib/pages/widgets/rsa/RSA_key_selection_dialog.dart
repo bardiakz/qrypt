@@ -11,6 +11,7 @@ class RSAKeySelectionDialog extends ConsumerStatefulWidget {
   final String title;
   final String message;
   final bool publicKeyRequired;
+  final ValueChanged<String>? onPublicKeySelected;
 
   const RSAKeySelectionDialog({
     super.key,
@@ -18,6 +19,7 @@ class RSAKeySelectionDialog extends ConsumerStatefulWidget {
     this.title = 'Select RSA Key Pair',
     this.message = 'Please select an RSA key pair to use for decryption.',
     required this.publicKeyRequired,
+    this.onPublicKeySelected,
   });
 
   @override
@@ -179,7 +181,7 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
                         );
                         ref.read(rsaDecryptPublicKeyProvider.notifier).state =
                             normalized;
-                        decryptPublicKeyGlobal = normalized;
+                        widget.onPublicKeySelected?.call(normalized);
                         // if (kDebugMode) {
                         //   print('Saved normalized public key: $normalized');
                         //   print('Key code units: ${normalized.codeUnits}');
@@ -283,6 +285,10 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
   }
 
   void _confirmSelection() {
+    if (widget.publicKeyRequired) {
+      final key = ref.read(rsaDecryptPublicKeyProvider);
+      widget.onPublicKeySelected?.call(key);
+    }
     Navigator.of(context).pop(_selectedKeyPair);
   }
 
@@ -305,6 +311,7 @@ Future<RSAKeyPair?> showRSAKeySelectionDialog({
   String title = 'Select RSA Key Pair',
   String message = 'Please select an RSA key pair to use for decryption.',
   required bool publicKeyRequired,
+  ValueChanged<String>? onPublicKeySelected,
 }) {
   return showDialog<RSAKeyPair>(
     context: context,
@@ -314,6 +321,7 @@ Future<RSAKeyPair?> showRSAKeySelectionDialog({
       title: title,
       message: message,
       publicKeyRequired: publicKeyRequired,
+      onPublicKeySelected: onPublicKeySelected,
     ),
   );
 }

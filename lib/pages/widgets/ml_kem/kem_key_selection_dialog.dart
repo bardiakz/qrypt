@@ -179,7 +179,6 @@ class _KemKeySelectionDialogState extends ConsumerState<KemKeySelectionDialog> {
                         );
                         ref.read(decryptKemPublicKeyProvider.notifier).state =
                             normalized;
-                        decryptKemPublicKeyGlobal = normalized;
                         // if (kDebugMode) {
                         //   print('Saved normalized public key: $normalized');
                         //   print('Key code units: ${normalized.codeUnits}');

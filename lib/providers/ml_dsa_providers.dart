@@ -17,6 +17,7 @@ final selectedMlDsaSignKeyPairProvider =
     simpleStateProvider<QryptMLDSAKeyPair?>(null);
 final selectedMlDsaVerifyKeyPairProvider =
     simpleStateProvider<QryptMLDSAKeyPair?>(null);
+/// Public key PEM used for ML-DSA verification (replaces verifyMlDsaPublicKeyGlobal)
 final verifyMlDsaPublicKeyProvider = simpleStateProvider<String>('');
+final mlDsaVerifyPublicKeyProvider = verifyMlDsaPublicKeyProvider;
 final signMlDsaPublicKeyProvider = simpleStateProvider<String>('');
-String verifyMlDsaPublicKeyGlobal = '';

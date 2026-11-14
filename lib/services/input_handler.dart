@@ -20,7 +20,6 @@ import '../pages/widgets/ml_dsa/ml_dsa_key_selection_dialog.dart';
 import '../pages/widgets/ml_kem/kem_key_selection_dialog.dart';
 import '../pages/widgets/rsa/RSA_key_selection_dialog.dart';
 import '../pages/widgets/rsa/rsa_public_key_input_dialog.dart';
-import '../providers/rsa_providers.dart';
 import 'aes/aes_key_storage_service.dart';
 import 'aes_encryption.dart';
 import 'ml_dsa/ml_dsa_key_service.dart';
@@ -1059,8 +1058,6 @@ class InputHandler {
 
       case EncryptionMethod.rsaSign:
         try {
-          qrypt.rsaSenderPublicKey = decryptPublicKeyGlobal;
-
           // Validate keys
           if (qrypt.rsaKeyPair.privateKey.isEmpty ||
               qrypt.rsaKeyPair.privateKey == 'noPrivateKey' ||
@@ -1440,6 +1437,9 @@ class InputHandler {
               message:
                   'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
               publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
+              onPublicKeySelected: (key) {
+                qrypt.rsaSenderPublicKey = key;
+              },
             );
             if (selectedKeyPair == null) {
               throw Exception('Decryption cancelled: No key pair selected');

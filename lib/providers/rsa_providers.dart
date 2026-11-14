@@ -21,7 +21,6 @@ final selectedRSASignKeyPairProvider = simpleStateProvider<RSAKeyPair?>(
   null,
 );
 final rsaReceiverPublicKeyProvider = simpleStateProvider<String>('');
+/// Public key PEM used for RSA decryption (replaces decryptPublicKeyGlobal)
 final rsaDecryptPublicKeyProvider = simpleStateProvider<String>('');
 final rsaVerifyPublicKeyProvider = simpleStateProvider<String>('');
-String decryptPublicKeyGlobal = '';
-String rsaVerifyPublicKeyGlobal = '';

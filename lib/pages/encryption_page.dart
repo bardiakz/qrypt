@@ -321,6 +321,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initAutoSelectAesKey();
+      ref.read(currentTextControllerProvider.notifier).state =
+          _encryptTextController;
     });
   }
 
@@ -436,6 +438,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           _mlKemSharedSecret = '';
         });
       }
+      ref.read(currentTextControllerProvider.notifier).state =
+          next == AppMode.encrypt
+              ? _encryptTextController
+              : _decryptTextController;
     });
     ref.listen(selectedAESEncryptKeyProvider, (previous, next) {
       if (next != null && _customAesKeyController.text != next.key) {
@@ -447,10 +453,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         _customDecryptAesKeyController.text = next.key;
       }
     });
-
-    Future(() {
-      ref.read(currentTextControllerProvider.notifier).state =
-          _encryptTextController;
+    ref.listen(rsaDecryptPublicKeyProvider, (previous, next) {
+      if (_decryptPublicKeyController.text != next) {
+        _decryptPublicKeyController.text = next;
+      }
+    });
+    ref.listen(rsaVerifyPublicKeyProvider, (previous, next) {
+      if (_rsaVerifyPublicKeyController.text != next) {
+        _rsaVerifyPublicKeyController.text = next;
+      }
+    });
+    ref.listen(verifyMlDsaPublicKeyProvider, (previous, next) {
+      if (_dsaPublicKeyController.text != next) {
+        _dsaPublicKeyController.text = next;
+      }
     });
 
     return SafeArea(
@@ -1054,7 +1070,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                       )
                                       .state =
                                   normalized;
-                              decryptPublicKeyGlobal = normalized;
                             } catch (e) {
                               if (kDebugMode) {
                                 print('Error normalizing public key: $e');
@@ -1097,7 +1112,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             ref
                                 .read(rsaVerifyPublicKeyProvider.notifier)
                                 .state = normalized;
-                            rsaVerifyPublicKeyGlobal = normalized;
                           } catch (e) {
                             if (kDebugMode) {
                               print('Error normalizing RSA verify key: $e');
@@ -1700,6 +1714,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           manualQrypt.rsaKeyPair = ref.read(
             selectedRSADecryptKeyPairProvider,
           )!;
+        }
+
+        if (selectedEncryption == EncryptionMethod.rsaSign) {
+          final decryptPubKey = ref.read(rsaDecryptPublicKeyProvider);
+          if (decryptPubKey.isNotEmpty) {
+            manualQrypt.rsaSenderPublicKey = decryptPubKey;
+          }
         }
 
         if (ref.read(selectedSignProvider) == SignMethod.rsaPss) {

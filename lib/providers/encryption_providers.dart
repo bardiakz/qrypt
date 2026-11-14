@@ -9,6 +9,8 @@ import '../models/compression_method.dart';
 import '../models/custom_obfuscation_profile.dart';
 import '../models/sign_method.dart';
 
+export 'key_input_providers.dart';
+
 final defaultEncryptionProvider = simpleStateProvider<bool>(true);
 final useTagProvider = simpleStateProvider<bool>(true);
 

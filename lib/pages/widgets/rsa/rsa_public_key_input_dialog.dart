@@ -57,7 +57,6 @@ class _RSAPublicKeyInputDialogState
         } else {
           _errorText = null;
           ref.read(rsaVerifyPublicKeyProvider.notifier).state = normalized;
-          rsaVerifyPublicKeyGlobal = normalized;
         }
       });
     } catch (e) {
