@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.1] - 2026-11-15
+
+### Changed
+- **Modernized `Qrypt` Model & Safe Defaults**:
+  - Replaced fragile `late final` variables (`encryption`, `obfuscation`, `compression`) with safe default enum values (`.none`), permanently eliminating the risk of `LateInitializationError` during `Qrypt.autoDecrypt` or early property inspections.
+  - Added `RSAKeyPair.empty` singleton constant, eliminating redundant heap allocations and `DateTime.now()` calls on every `Qrypt` instantiation.
+  - Renamed typo `dsaVerifyPublicKEy` to standard camelCase `dsaVerifyPublicKey`, retaining a backward-compatible `@Deprecated` alias so existing integrations continue functioning seamlessly.
+  - Optimized buffer initialization using `Uint8List(0)` and `const <int>[]` rather than allocating via `utf8.encode('')`.
+  - Added dedicated unit test suite in `test/models/qrypt_model_test.dart` (594 tests passing).
+
+---
+
 ## [5.4.0] - 2026-11-14
 
 ### Added
