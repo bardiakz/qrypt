@@ -291,8 +291,8 @@ class _KemKeySelectionDialogState extends ConsumerState<KemKeySelectionDialog> {
       builder: (context) =>
           CreateKemKeyDialog(primaryColor: widget.primaryColor),
     ).then((_) {
-      // Refresh the key pairs after creating a new one
-      ref.refresh(kemKeyPairsProvider);
+      // Invalidate the key pairs after creating a new one
+      ref.invalidate(kemKeyPairsProvider);
     });
   }
 }

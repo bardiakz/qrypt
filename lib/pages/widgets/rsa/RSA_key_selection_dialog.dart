@@ -298,8 +298,8 @@ class _RSAKeySelectionDialogState extends ConsumerState<RSAKeySelectionDialog> {
       builder: (context) =>
           CreateRSAKeyDialog(primaryColor: widget.primaryColor),
     ).then((_) {
-      // Refresh the key pairs after creating a new one
-      ref.refresh(rsaKeyPairsProvider);
+      // Invalidate the key pairs after creating a new one
+      ref.invalidate(rsaKeyPairsProvider);
     });
   }
 }

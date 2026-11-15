@@ -125,19 +125,23 @@ Widget buildActionButton({
   required Color color,
   required VoidCallback onTap,
   required String semanticLabel,
+  String? tooltip,
 }) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.smallPadding),
-        child: Icon(
-          icon,
-          color: color,
-          size: AppConstants.iconSize,
-          semanticLabel: semanticLabel,
+  return Tooltip(
+    message: tooltip ?? semanticLabel,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppConstants.switchBorderRadius),
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.smallPadding),
+          child: Icon(
+            icon,
+            color: color,
+            size: AppConstants.iconSize,
+            semanticLabel: semanticLabel,
+          ),
         ),
       ),
     ),

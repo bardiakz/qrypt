@@ -273,7 +273,7 @@ class MlDsaKeyService {
   }
 
   /// Gets the expected sizes for ML-DSA algorithms
-  Map<String, int> _getAlgorithmSizes(String algorithm) {
+  Map<String, int> getAlgorithmSizes(String algorithm) {
     switch (algorithm) {
       case 'ML-DSA-44':
         return {

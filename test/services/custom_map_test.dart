@@ -7,7 +7,6 @@ import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
-import 'package:qrypt/resources/obfuscation/v2_map_pools.dart';
 import 'package:qrypt/services/input_handler.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
@@ -184,7 +183,7 @@ void main() {
 
       // Obfuscate tag using profile's codec
       final codec = ObfuscationService.buildV2Codec(profile.map);
-      final obfsTag = codec.encode(q.tag!);
+      final obfsTag = codec.encode(q.tag);
 
       final fullMessage = '$obfsTag:other_message_data';
       final match = TagManager.matchedCustomTag(fullMessage);
@@ -225,7 +224,7 @@ void main() {
         customMap: profile1.map,
       );
       TagManager.setTag(q1);
-      final tag1 = ObfuscationService.buildV2Codec(profile1.map).encode(q1.tag!);
+      final tag1 = ObfuscationService.buildV2Codec(profile1.map).encode(q1.tag);
 
       final q2 = Qrypt(
         text: 'p2',
@@ -236,7 +235,7 @@ void main() {
         customMap: profile2.map,
       );
       TagManager.setTag(q2);
-      final tag2 = ObfuscationService.buildV2Codec(profile2.map).encode(q2.tag!);
+      final tag2 = ObfuscationService.buildV2Codec(profile2.map).encode(q2.tag);
 
       final match1 = TagManager.matchedCustomTag('$tag1:body');
       final match2 = TagManager.matchedCustomTag('$tag2:body');
@@ -264,7 +263,7 @@ void main() {
         customMap: profile.map,
       );
       TagManager.setTag(q);
-      final tag = ObfuscationService.buildV2Codec(profile.map).encode(q.tag!);
+      final tag = ObfuscationService.buildV2Codec(profile.map).encode(q.tag);
 
       expect(TagManager.matchedCustomTag('$tag:body'), isNotNull);
 

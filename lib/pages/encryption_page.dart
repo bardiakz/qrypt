@@ -379,6 +379,80 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
   }
 
+  void _onShortcutTriggerProcess() {
+    if (ref.read(isProcessingProvider)) return;
+    final isEncryptMode = ref.read(appModeProvider) == AppMode.encrypt;
+    final defaultEncryption = ref.read(defaultEncryptionProvider);
+    final selectedEncryption = ref.read(selectedEncryptionProvider);
+    final selectedCompression = ref.read(selectedCompressionProvider);
+    final useTagManually = ref.read(useTagProvider);
+    final selectedObfuscation = ref.read(selectedObfuscationProvider);
+
+    if (isEncryptMode) {
+      _encrypt(
+        defaultEncryption,
+        selectedEncryption,
+        selectedObfuscation,
+        selectedCompression,
+        useTagManually,
+      );
+    } else {
+      final autoDetectTag = ref.read(autoDetectTagProvider);
+      _decrypt(
+        autoDetectTag,
+        selectedEncryption,
+        selectedObfuscation,
+        selectedCompression,
+      );
+    }
+  }
+
+  void _onShortcutCopyOutput() {
+    final isEncryptMode = ref.read(appModeProvider) == AppMode.encrypt;
+    final outputText = isEncryptMode
+        ? ref.read(processedEncryptProvider).text
+        : ref.read(processedDecryptProvider).text;
+    if (outputText.isNotEmpty) {
+      copyToClipboard(outputText, context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No output to copy')),
+      );
+    }
+  }
+
+  void _onShortcutClearInput() {
+    final isEncryptMode = ref.read(appModeProvider) == AppMode.encrypt;
+    if (isEncryptMode) {
+      _encryptTextController.clear();
+      ref.read(inputTextProvider.notifier).state = '';
+      setState(() {
+        _mlKemSharedSecret = '';
+      });
+    } else {
+      _decryptTextController.clear();
+      ref.read(inputTextProvider.notifier).state = '';
+      setState(() {
+        _mlKemSharedSecret = '';
+      });
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Input cleared (Ctrl+L)'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _onShortcutToggleMode() {
+    final isEncryptMode = ref.read(appModeProvider) == AppMode.encrypt;
+    if (isEncryptMode) {
+      _onSwipeLeft();
+    } else {
+      _onSwipeRight();
+    }
+  }
+
   // Get appropriate input field label based on mode
   String _getInputFieldLabel(bool isEncryptMode, bool isMLKemMode) {
     if (isMLKemMode) {
@@ -469,11 +543,41 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       }
     });
 
-    return SafeArea(
-      child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(AppConstants.smallPadding),
-          child: GestureDetector(
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.enter, control: true):
+            _onShortcutTriggerProcess,
+        const SingleActivator(LogicalKeyboardKey.enter, meta: true):
+            _onShortcutTriggerProcess,
+        const SingleActivator(
+          LogicalKeyboardKey.keyC,
+          control: true,
+          shift: true,
+        ): _onShortcutCopyOutput,
+        const SingleActivator(
+          LogicalKeyboardKey.keyC,
+          meta: true,
+          shift: true,
+        ): _onShortcutCopyOutput,
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true):
+            _onShortcutClearInput,
+        const SingleActivator(LogicalKeyboardKey.keyL, meta: true):
+            _onShortcutClearInput,
+        const SingleActivator(LogicalKeyboardKey.keyM, control: true):
+            _onShortcutToggleMode,
+        const SingleActivator(LogicalKeyboardKey.keyM, meta: true):
+            _onShortcutToggleMode,
+      },
+      child: Focus(
+        autofocus: true,
+        child: SafeArea(
+          child: Scaffold(
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 880),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.smallPadding),
+                  child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) {
               const double sensitivity = 100.0;
               if (details.primaryVelocity != null) {
@@ -483,9 +587,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   _onSwipeLeft();
                 }
               }
-            },
-            onHorizontalDragUpdate: (DragUpdateDetails details) {
-              ///TODO:Add visual feedback during drag
             },
             child: ListView(
               children: [
@@ -576,6 +677,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         }
                       },
                       semanticLabel: 'Clear text',
+                      tooltip: 'Clear input (Ctrl+L)',
                     ),
                     buildActionButton(
                       icon: Icons.content_paste,
@@ -595,6 +697,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         }
                       },
                       semanticLabel: 'Paste from clipboard',
+                      tooltip: 'Paste from clipboard',
                     ),
                   ],
                 ),
@@ -912,57 +1015,62 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       horizontal: AppConstants.defaultPadding,
                     ),
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isProcessing
-                          ? null
-                          : () {
-                              _encrypt(
-                                defaultEncryption,
-                                selectedEncryption,
-                                encryptObfuscation,
-                                selectedCompression,
-                                useTagManually,
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppConstants.defaultPadding,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.borderRadius,
+                    child: Tooltip(
+                      message: isMLKemMode
+                          ? 'Encapsulate & Encrypt (Ctrl+Enter)'
+                          : 'Encrypt (Ctrl+Enter)',
+                      child: ElevatedButton(
+                        onPressed: isProcessing
+                            ? null
+                            : () {
+                                _encrypt(
+                                  defaultEncryption,
+                                  selectedEncryption,
+                                  encryptObfuscation,
+                                  selectedCompression,
+                                  useTagManually,
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppConstants.defaultPadding,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
                           ),
                         ),
-                      ),
-                      child: isProcessing
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(isMLKemMode ? Icons.key : Icons.lock),
-                                const SizedBox(
-                                  width: AppConstants.smallPadding,
+                        child: isProcessing
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
-                                Text(
-                                  isMLKemMode
-                                      ? "Encapsulate & Encrypt"
-                                      : "Encrypt",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(isMLKemMode ? Icons.key : Icons.lock),
+                                  const SizedBox(
+                                    width: AppConstants.smallPadding,
                                   ),
-                                ),
-                              ],
-                            ),
+                                  Text(
+                                    isMLKemMode
+                                        ? "Encapsulate & Encrypt"
+                                        : "Encrypt",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
                   ),
                 ] else ...[
@@ -1172,54 +1280,57 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       horizontal: AppConstants.defaultPadding,
                     ),
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isProcessing
-                          ? null
-                          : () {
-                              _decrypt(
-                                autoDetectTag,
-                                selectedEncryption,
-                                selectedObfuscation,
-                                selectedCompression,
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppConstants.defaultPadding,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.borderRadius,
+                    child: Tooltip(
+                      message: 'Decrypt (Ctrl+Enter)',
+                      child: ElevatedButton(
+                        onPressed: isProcessing
+                            ? null
+                            : () {
+                                _decrypt(
+                                  autoDetectTag,
+                                  selectedEncryption,
+                                  selectedObfuscation,
+                                  selectedCompression,
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppConstants.defaultPadding,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
                           ),
                         ),
-                      ),
-                      child: isProcessing
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lock_open),
-                                SizedBox(
-                                  width: AppConstants.smallPadding,
+                        child: isProcessing
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
-                                Text(
-                                  "Decrypt",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.lock_open),
+                                  SizedBox(
+                                    width: AppConstants.smallPadding,
                                   ),
-                                ),
-                              ],
-                            ),
+                                  Text(
+                                    "Decrypt",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
                   ),
                 ],
@@ -1284,6 +1395,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         }
                       },
                       semanticLabel: 'Copy output to clipboard',
+                      tooltip: 'Copy output (Ctrl+Shift+C)',
                     ),
                   ],
                 ),
@@ -1323,7 +1435,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+),
+        ),
+      );
   }
 
   void _encrypt(

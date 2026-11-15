@@ -148,7 +148,7 @@ class KemKeyManagementDialog extends ConsumerWidget {
     if (confirmed == true) {
       try {
         await ref.read(kemKeyServiceProvider).deleteKeyPair(keyId);
-        ref.refresh(kemKeyPairsProvider);
+        ref.invalidate(kemKeyPairsProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Key pair deleted successfully')),

@@ -221,8 +221,8 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
         );
       }
 
-      // Refresh the provider to update the UI
-      ref.refresh(mlDsaKeyPairsProvider);
+      // Invalidate the provider to update the UI
+      ref.invalidate(mlDsaKeyPairsProvider);
 
       if (mounted) {
         Navigator.of(context).pop();

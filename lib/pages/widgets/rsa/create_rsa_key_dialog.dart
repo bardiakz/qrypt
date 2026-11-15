@@ -50,7 +50,7 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
             if (!_useManualInput) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
-                value: _selectedKeySize,
+                initialValue: _selectedKeySize,
                 decoration: const InputDecoration(
                   labelText: 'Key Size (bits)',
                   helperText: '3072+ bits is recommended for new keys',
@@ -196,8 +196,8 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
         );
       }
 
-      // Refresh the provider to update the UI
-      ref.refresh(rsaKeyPairsProvider);
+      // Invalidate the provider to update the UI
+      ref.invalidate(rsaKeyPairsProvider);
 
       if (mounted) {
         Navigator.of(context).pop();

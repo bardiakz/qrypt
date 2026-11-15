@@ -167,8 +167,8 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
         keyPair = await service.generateKeyPair(_nameController.text.trim());
       }
 
-      // Refresh the provider to update the UI
-      ref.refresh(kemKeyPairsProvider);
+      // Invalidate the provider to update the UI
+      ref.invalidate(kemKeyPairsProvider);
 
       if (mounted) {
         Navigator.of(context).pop();

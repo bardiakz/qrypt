@@ -573,7 +573,7 @@ class RSAKeyService {
   }
 
   /// Normalizes a PEM string by standardizing line endings and removing invalid characters
-  String _normalizePem(String pem) {
+  String normalizePem(String pem) {
     try {
       // Remove leading/trailing whitespace and normalize line endings to \n
       String normalized = pem.trim().replaceAll(RegExp(r'\r\n|\r|\n'), '\n');

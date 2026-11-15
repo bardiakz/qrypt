@@ -153,7 +153,7 @@ class MlDsaKeyManagementDialog extends ConsumerWidget {
     if (confirmed == true) {
       try {
         await ref.read(mlDsaKeyServiceProvider).deleteKeyPair(keyId);
-        ref.refresh(mlDsaKeyPairsProvider);
+        ref.invalidate(mlDsaKeyPairsProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Key pair deleted successfully')),

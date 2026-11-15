@@ -146,7 +146,7 @@ class RSAKeyManagementDialog extends ConsumerWidget {
     if (confirmed == true) {
       try {
         await ref.read(rsaKeyServiceProvider).deleteKeyPair(keyId);
-        ref.refresh(rsaKeyPairsProvider);
+        ref.invalidate(rsaKeyPairsProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Key pair deleted successfully')),
