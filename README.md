@@ -64,6 +64,47 @@ Qrypt processes messages through a deterministic, layered pipeline:
 
 ---
 
+## Key Exchange Flow (ML-KEM-768) 🤝
+
+Qrypt implements the NIST FIPS 203 post-quantum Key Encapsulation Mechanism (ML-KEM-768 / Kyber) to securely establish symmetric keys between parties without relying on classical Diffie-Hellman or RSA key exchange:
+
+```
+Alice (Sender)                                              Bob (Receiver)
+──────────────                                              ──────────────
+                                                   1. Generate ML-KEM-768 Key Pair
+                                                      ┌───────────────────────────┐
+                                                      │ Public Key  / Private Key │
+                                                      └─────────────┬─────────────┘
+                                                                    │
+                                Bob's Public Key                    │
+                       ◄────────────────────────────────────────────┘
+2. Encapsulate Secret
+   ┌──────────────────────────────────────────┐
+   │ Encapsulate(Bob's Public Key)            │
+   │   ├── Shared Secret  (32 bytes)          │
+   │   └── KEM Ciphertext (1088 bytes)        │
+   └────────────────────┬─────────────────────┘
+                        │
+                        │   KEM Ciphertext (Tagged / Signed)
+                        └───────────────────────────────────────────►
+                                                            3. Decapsulate Secret
+                                                               ┌───────────────────────────┐
+                                                               │ Decapsulate(Ciphertext,   │
+                                                               │             Private Key)  │
+                                                               │   └── Shared Secret       │
+                                                               └─────────────┬─────────────┘
+                                                                             │
+                            Both Parties Now Share:                          ▼
+                   ┌──────────────────────────────────────┐        ┌──────────────────┐
+                   │    Shared Secret (32-byte AES Key)   │ <====> │  Shared Secret   │
+                   └──────────────────────────────────────┘        └──────────────────┘
+```
+
+* **One-Tap AES Key Conversion**: Senders and receivers can immediately save the derived 32-byte shared secret as a persistent 256-bit AES key.
+* **Hybrid Authenticated Exchange**: The KEM package can be digitally signed with **ML-DSA** or **RSA-PSS** to verify sender identity and eliminate man-in-the-middle risks.
+
+---
+
 ## Key Management 🔑
 
 All keys are managed strictly on-device using platform-native hardware keystores (`FlutterSecureStorage`):
