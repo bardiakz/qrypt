@@ -659,8 +659,8 @@ class InputHandler {
 
         try {
           // CHECK: Ensure public key is available before verification
-          if (qrypt.dsaVerifyPublicKEy == null ||
-              qrypt.dsaVerifyPublicKEy!.isEmpty) {
+          if (qrypt.dsaVerifyPublicKey == null ||
+              qrypt.dsaVerifyPublicKey!.isEmpty) {
             throw const FormatException(
               'ML-DSA public key is required for signature verification.',
             );
@@ -769,7 +769,7 @@ class InputHandler {
           bool isValid = dsa.verifySignature(
             originalMessage, // The original message
             signature, // The signature
-            qrypt.dsaVerifyPublicKEy!, // The public key for verification
+            qrypt.dsaVerifyPublicKey!, // The public key for verification
           );
 
           if (!isValid) {
@@ -1415,7 +1415,7 @@ class InputHandler {
           if (dsaSenderPublicKey == null) {
             throw Exception('Decryption cancelled: No key pair selected');
           }
-          qrypt.dsaVerifyPublicKEy = base64Decode(dsaSenderPublicKey);
+          qrypt.dsaVerifyPublicKey = base64Decode(dsaSenderPublicKey);
         }
         if (context != null && !context.mounted) return qrypt;
         if (context != null) {

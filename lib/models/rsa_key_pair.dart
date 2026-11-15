@@ -5,6 +5,14 @@ class RSAKeyPair {
   final String privateKey;
   final DateTime createdAt;
 
+  static final RSAKeyPair empty = RSAKeyPair(
+    id: '',
+    name: '',
+    publicKey: '',
+    privateKey: '',
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
+
   RSAKeyPair({
     required this.id,
     required this.name,

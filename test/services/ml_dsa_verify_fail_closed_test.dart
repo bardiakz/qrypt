@@ -28,7 +28,7 @@ void main() {
         obfuscation: ObfuscationMethod.none,
         compression: CompressionMethod.none,
       );
-      qrypt.dsaVerifyPublicKEy = null;
+      qrypt.dsaVerifyPublicKey = null;
 
       await tester.pumpWidget(
         const MaterialApp(
@@ -79,7 +79,7 @@ void main() {
         encryption: EncryptionMethod.aesGcm,
         compression: CompressionMethod.none,
       );
-      qrypt.dsaVerifyPublicKEy = keyPair.publicKey;
+      qrypt.dsaVerifyPublicKey = keyPair.publicKey;
 
       await tester.pumpWidget(
         const MaterialApp(
@@ -128,7 +128,7 @@ void main() {
         encryption: EncryptionMethod.aesGcm,
         compression: CompressionMethod.none,
       );
-      qrypt.dsaVerifyPublicKEy = keyPair.publicKey;
+      qrypt.dsaVerifyPublicKey = keyPair.publicKey;
 
       await tester.pumpWidget(
         const MaterialApp(

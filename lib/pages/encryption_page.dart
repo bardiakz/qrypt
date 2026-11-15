@@ -1731,7 +1731,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         }
 
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
-          manualQrypt.dsaVerifyPublicKEy = base64Decode(
+          manualQrypt.dsaVerifyPublicKey = base64Decode(
             ref.read(verifyMlDsaPublicKeyProvider),
           );
         }

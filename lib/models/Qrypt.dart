@@ -1,29 +1,28 @@
-import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/models/rsa_key_pair.dart';
 import 'package:qrypt/models/sign_method.dart';
+
 import '../services/tag_manager.dart';
 import 'encryption_method.dart';
 import 'ml_dsa_key_pair.dart';
 import 'obfuscation_method.dart';
 
+/// Core payload container encapsulating text, crypto algorithms, key materials,
+/// and pipeline state across compression, encryption, signing, and obfuscation.
 class Qrypt {
   String text = '';
-  Uint8List compressedText = utf8.encode('');
-  List<int> deCompressedText = utf8.encode('');
-  late final EncryptionMethod encryption;
-  late final ObfuscationMethod obfuscation;
-  late final CompressionMethod compression;
+  Uint8List compressedText = Uint8List(0);
+  List<int> deCompressedText = const <int>[];
+
+  EncryptionMethod encryption = EncryptionMethod.none;
+  ObfuscationMethod obfuscation = ObfuscationMethod.none;
+  CompressionMethod compression = CompressionMethod.none;
   SignMethod sign = SignMethod.none;
-  RSAKeyPair rsaKeyPair = RSAKeyPair(
-    id: '',
-    name: '',
-    publicKey: '',
-    privateKey: '',
-    createdAt: DateTime.now(),
-  );
+
+  RSAKeyPair rsaKeyPair = RSAKeyPair.empty;
   String rsaReceiverPublicKey = 'noPublicKey';
   String rsaSenderPublicKey = 'noPublicKey';
   String customKey = 'noCustomKey';
@@ -32,7 +31,7 @@ class Qrypt {
   String tag = '';
   Map<String, String>? customMap;
 
-  //kem properties
+  // ML-KEM properties
   String inputCiphertext = '';
   Uint8List? ciphertext;
   Uint8List? kemSharedSecret;
@@ -40,13 +39,35 @@ class Qrypt {
   String kemReceiverPublicKey = 'noPublicKey';
   QryptKEMKeyPair? kemKeyPair;
 
-  //dsa properties
-  Uint8List? dsaVerifyPublicKEy;
+  // ML-DSA properties
+  Uint8List? dsaVerifyPublicKey;
+
+  /// Backward-compatible alias for [dsaVerifyPublicKey].
+  @Deprecated('Use dsaVerifyPublicKey instead')
+  Uint8List? get dsaVerifyPublicKEy => dsaVerifyPublicKey;
+
+  @Deprecated('Use dsaVerifyPublicKey instead')
+  set dsaVerifyPublicKEy(Uint8List? value) => dsaVerifyPublicKey = value;
+
   QryptMLDSAKeyPair? dsaKeyPair;
 
-  //rsa sign properties
+  // RSA-PSS sign properties
   RSAKeyPair? rsaSignKeyPair;
   String? rsaVerifyPublicKey;
+
+  Qrypt({
+    required this.text,
+    required this.encryption,
+    required this.obfuscation,
+    required CompressionMethod compression,
+    required this.sign,
+    this.customMap,
+    this.kemReceiverPublicKey = 'noPublicKey',
+    this.kemKeyPair,
+  }) : compression =
+           encryption == EncryptionMethod.mlKem
+               ? CompressionMethod.none
+               : compression;
 
   Qrypt.withTag({
     required this.text,
@@ -58,8 +79,11 @@ class Qrypt {
     this.customMap,
     this.kemReceiverPublicKey = 'noPublicKey',
     this.kemKeyPair,
-  }) : compression = encryption == EncryptionMethod.mlKem ? CompressionMethod.none : compression {
-    if (useTag == true) {
+  }) : compression =
+           encryption == EncryptionMethod.mlKem
+               ? CompressionMethod.none
+               : compression {
+    if (useTag) {
       TagManager.setTag(this);
     }
   }
@@ -72,10 +96,9 @@ class Qrypt {
     this.kemKeyPair,
     required this.sign,
     this.customMap,
-  }) {
-    encryption = EncryptionMethod.mlKem;
-    compression = CompressionMethod.none;
-    if (useTag == true) {
+  }) : encryption = EncryptionMethod.mlKem,
+       compression = CompressionMethod.none {
+    if (useTag) {
       TagManager.setTag(this);
     }
   }
@@ -91,7 +114,6 @@ class Qrypt {
     required this.sign,
     this.customMap,
   }) {
-    // Validate RSA parameters
     if (encryption == EncryptionMethod.rsa) {
       if (rsaReceiverPublicKey.isEmpty ||
           rsaReceiverPublicKey == 'noPublicKey') {
@@ -104,7 +126,7 @@ class Qrypt {
       }
     }
 
-    if (useTag == true) {
+    if (useTag) {
       TagManager.setTag(this);
     }
   }
@@ -121,37 +143,15 @@ class Qrypt {
     useKem = true;
   }
 
-  Qrypt({
-    required this.text,
-    required this.encryption,
-    required this.obfuscation,
-    required CompressionMethod compression,
-    required this.sign,
-    this.customMap,
-    this.kemReceiverPublicKey = 'noPublicKey',
-    this.kemKeyPair,
-  }) : compression = encryption == EncryptionMethod.mlKem ? CompressionMethod.none : compression;
+  EncryptionMethod getEncryptionMethod() => encryption;
+  ObfuscationMethod getObfuscationMethod() => obfuscation;
+  CompressionMethod getCompressionMethod() => compression;
+  SignMethod getSignMethod() => sign;
 
-  EncryptionMethod getEncryptionMethod() {
-    return encryption;
-  }
-
-  ObfuscationMethod getObfuscationMethod() {
-    return obfuscation;
-  }
-
-  CompressionMethod getCompressionMethod() {
-    return compression;
-  }
-
-  SignMethod getSignMethod() {
-    return sign;
-  }
-
-  // Validation method to check if RSA parameters are valid
+  /// Validates whether receiver public key parameters are valid for RSA encryption.
   bool isValidForRSAEncryption() {
     if (encryption != EncryptionMethod.rsa) {
-      return true; // Not RSA, so RSA validation doesn't apply
+      return true;
     }
 
     return rsaReceiverPublicKey.isNotEmpty &&
@@ -159,7 +159,7 @@ class Qrypt {
         rsaReceiverPublicKey.contains('BEGIN PUBLIC KEY');
   }
 
-  // Method to set RSA parameters with validation
+  /// Sets RSA key pair and receiver public key parameters with validation.
   void setRSAParameters(RSAKeyPair keyPair, String publicKey) {
     if (publicKey.isEmpty || publicKey == 'noPublicKey') {
       throw ArgumentError('Invalid public key provided');
@@ -171,4 +171,8 @@ class Qrypt {
     rsaKeyPair = keyPair;
     rsaReceiverPublicKey = publicKey.trim();
   }
+
+  @override
+  String toString() =>
+      'Qrypt(enc: ${encryption.name}, comp: ${compression.name}, sign: ${sign.name}, obf: ${obfuscation.name}, tag: $tag)';
 }
