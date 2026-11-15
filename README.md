@@ -1,182 +1,111 @@
 # Qrypt 🔐
 
-**⚠️ Disclaimer**: This tool is for educational and legitimate use cases only. Users are responsible for compliance with local laws and regulations regarding encryption and data protection.
+**⚠️ Disclaimer**: This tool is for educational and legitimate privacy use cases only. Users are responsible for compliance with local laws and regulations regarding encryption and data protection.
 
-A comprehensive Flutter application for text encryption, compression, obfuscation, and digital signing with support for multiple algorithms, customizable processing pipelines, and quantum-safe cryptography.
+A flexible, privacy-first Flutter application for text compression, encryption, digital signing, and obfuscation. Designed for scenarios where end-to-end encryption is missing, restricted, or unavailable, Qrypt puts full control in the user's hands to securely exchange messages across any communication channel (e.g., SMS, chat, email, forums).
+
+---
 
 ## Features ✨
 
 ### 🔒 Encryption Methods
+- **AES-GCM**: Advanced Encryption Standard with Galois/Counter Mode (authenticated encryption, recommended default).
+- **AES-CBC**: AES with Cipher Block Chaining and cryptographically secure random IVs.
+- **AES-CTR**: AES in Counter mode for streaming encryption.
+- **RSA-OAEP-256**: Asymmetric public-key encryption using PKCS#1 v2.1 OAEP padding with SHA-256 and configurable key sizes (2048, 3072, and 4096 bits). Includes payload size protection.
+- **ML-KEM-768 (Kyber)**: NIST-standardized (FIPS 203) Module-Lattice-Based Key Encapsulation Mechanism for post-quantum key exchange.
+- **None**: Pass plaintext directly to the signing/obfuscation stages.
 
-- **AES-CBC**: Advanced Encryption Standard with Cipher Block Chaining
-- **AES-CTR**: AES with Counter mode for streaming encryption
-- **AES-GCM**: AES with Galois/Counter Mode for authenticated encryption
-- **RSA**: RSA encryption with public-key cryptography and built-in key pair generation
-- **RSA+Sign**: RSA encryption combined with RSA digital signatures for authenticated encryption
-- **ML-KEM (Kyber)**: Post-quantum key encapsulation mechanism for quantum-safe key exchange
-
-### 🛡️ Quantum-Safe Cryptography
-
-#### ML-KEM (Key Encapsulation Mechanism)
-- **ML-KEM-768**: NIST-standardized Module-Lattice-Based Key Encapsulation Mechanism
-- Key exchange resistant to quantum computer attacks
-- Built-in key pair generation and management
-- Ciphertext encapsulation and shared secret extraction
-
-#### ML-DSA (Digital Signature Algorithm)
-- **ML-DSA**: Post-quantum digital signature algorithm based on lattice cryptography
-- Quantum-resistant message signing and verification
-- Integrated key pair management with secure key storage
-- Compatible with all encryption methods for authenticated encryption
+### ✍️ Digital Signatures (Authentication & Integrity)
+Signatures are orthogonal to encryption—they follow the standard **Encrypt-then-Sign (EtS)** pipeline and can be composed with any encryption method or used on standalone text:
+- **ML-DSA (Dilithium)**: NIST-standardized (FIPS 204) lattice-based post-quantum digital signature algorithm.
+- **RSA-PSS (SHA-256)**: Probabilistic Signature Scheme (PKCS#1 v2.1 / RFC 8017) with SHA-256 and fail-closed verification.
+- **None**: Unsigned message transmission.
 
 ### 🗜️ Compression Algorithms
-
-- **GZip**: Industry-standard compression with good balance of size and speed
-- **LZ4**: High-speed compression/decompression for performance-critical applications
-- **Brotli**: Modern compression with excellent ratios for web applications
-- **Zstd**: Facebook's high-performance compression with tunable compression levels
+- **Zstandard (Zstd)**: High-performance compression algorithm with excellent compression ratios.
+- **Brotli**: Modern Google compression format with high compression efficiency.
+- **GZip**: Industry-standard compression offering a balanced size-to-speed profile.
+- **LZ4**: Ultra-fast compression/decompression for latency-critical tasks.
+- **None**: Uncompressed payload.
 
 ### 🎭 Obfuscation Techniques
-
-- **Character Mapping**: Custom language-specific character substitution
-  - English variants (EN1, EN2)
-  - Persian/Farsi variants (FA1, FA2)
-- **Base64**: Simple encoding obfuscation
-- **ROT13**: Classical letter substitution cipher
-- **XOR**: Bitwise XOR with configurable key
-- **None**: No obfuscation applied
+- **Code-Defined Character Mapping**: Token-based natural language substitution:
+  - English variants (**EN1**, **EN2**)
+  - Persian/Farsi variants (**FA1**, **FA2**)
+  - **Custom Profiles**: Create, import, export, and share custom obfuscation maps via QR code.
+- **Base64**: Clean URL-safe ASCII encoding.
+- **ROT13**: Classical Caesar cipher alphabet rotation.
+- **XOR**: Bitwise byte manipulation.
+- **None**: Output raw ciphertext without masking.
 
 ### 🏷️ Smart Tagging System
+- **Deterministic Routing Tags**: 6-character HMAC routing tags identify exact pipeline configurations.
+- **Single-Tap Auto-Decryption**: Automatically parses algorithm combinations, selects keys, validates signatures, and unwraps payloads.
+- **Backward Compatibility**: Fully compatible with legacy combined `rsaSign` formats and older profile tags.
 
-- Automatic method detection from embedded tags
-- Seamless encoding/decoding without manual configuration
-- Compact tag format for efficient storage and transmission
-- Version-aware tag parsing for backward compatibility
+---
 
-## Architecture 🏗️
+## Processing Pipeline 🏗️
+
+Qrypt processes messages through a deterministic, layered pipeline:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Input Text    │ -> │  Compression    │ -> │   Encryption    │ <-- Optional: ML-KEM shared secret 
-└─────────────────┘    └─────────────────┘    └─────────────────┘               as encryption key
-                                                        │
-┌─────────────────┐    ┌─────────────────┐              │
-│  Final Output   │ <- │  Obfuscation    │ <-           │
-└─────────────────┘    └─────────────────┘              │
-                              ^                         │
-                              └─── Tag Addition ←───────┘
-
-
-    ┌─────────────────────────────────────────────────────┐
-    │                Quantum-Safe Layer                   │
-    │                                                     │
-    │  ML-KEM Key Exchange        ML-DSA Digital Signing  │
-    │  ┌─────────┐  ┌─────────┐   ┌─────────┐  ┌────────┐ │
-    │  │ Public  │  │ Secret  │   │ Private │  │ Public │ │
-    │  │   Key   │  │   Key   │   │   Key   │  │   Key  │ │
-    │  └─────────┘  └─────────┘   └─────────┘  └────────┘ │
-    │       │           │              │           │      │
-    │       ▼           ▼              ▼           ▼      │
-    │  ┌─────────────────────┐   ┌─────────────────────┐  │ 
-    │  │   Shared Secret     │   │   Digital Signature │  │
-    │  └─────────────────────┘   └─────────────────────┘  │
-    └─────────────────────────────────────────────────────┘
+┌──────────────┐     ┌─────────────┐     ┌────────────┐     ┌───────────────────┐     ┌─────────────┐     ┌──────────────┐
+│  Input Text  │ ──> │ Compression │ ──> │ Encryption │ ──> │  Digital Signing  │ ──> │ Obfuscation │ ──> │ Final Output │
+└──────────────┘     └─────────────┘     └────────────┘     └───────────────────┘     └─────────────┘     └──────────────┘
+                        • None              • AES-GCM          • None                    • Custom Maps       (Prepended with
+                        • Zstd              • AES-CBC          • RSA-PSS (SHA-256)       • EN1 / EN2         6-character tag)
+                        • Brotli            • AES-CTR          • ML-DSA (Dilithium)      • FA1 / FA2
+                        • GZip              • RSA-OAEP-256                               • Base64 / ROT13
+                        • LZ4               • ML-KEM-768                                 • None
+                                            • None
 ```
+
+---
 
 ## Key Management 🔑
 
-### RSA Key Pairs
-- Generate new RSA key pairs (2048-bit) with secure random number generation
-- Import existing PEM-formatted public/private key pairs
-- Key validation with format verification and cryptographic checks
-- Export capabilities for sharing public keys securely
-- Support for both encryption/decryption and signing/verification operations
+All keys are managed strictly on-device using platform-native hardware keystores (`FlutterSecureStorage`):
 
-### ML-KEM (Quantum-Safe Key Exchange)
-- Generate ML-KEM-768 key pairs for post-quantum security
-- Key encapsulation mechanism for secure key exchange
-- Ciphertext generation and shared secret extraction
-- Future-proof against quantum computing threats
-- Compatible with classical encryption for hybrid security
+* **AES Keys**: Generates, stores, and validates 128, 192, and 256-bit AES keys (supporting UTF-8 text, 44-character Base64, and 64-character Hex formats).
+* **RSA Key Pairs**: Generates 2048, 3072, or 4096-bit RSA keys (defaulting to 3072-bit NIST standard). Supports PEM import/export and separate key pairs for encryption vs. digital signatures.
+* **ML-KEM Keys**: Generates and encapsulates post-quantum ML-KEM-768 public/private keys with immediate conversion of derived shared secrets to saved AES keys.
+* **ML-DSA Keys**: Generates and manages lattice-based post-quantum signature key pairs.
+* **Custom Obfuscation Maps**: In-app management, validation, collision checks, and QR code sharing.
 
-### ML-DSA (Quantum-Safe Digital Signatures)
-- Generate ML-DSA key pairs for post-quantum digital signatures
-- Message signing with private keys
-- Signature verification with public keys
-- Integrated with all encryption methods for authenticated communication
-- Tamper-evident messaging with cryptographic proof of authenticity
+---
 
-## Configuration 🔧
+## Security & Implementation Details 🛡️
 
-### Environment Variables
+1. **Zero Secret Hardcoding**: No default encryption keys or `.env` files are bundled. All key material is generated or imported by the user.
+2. **Fail-Closed Verification**: Digital signatures strictly fail closed—missing keys, corrupt signatures, or tampering immediately halts decompression and decryption.
+3. **Payload Bounds Check**: RSA-OAEP enforces maximum plaintext limits before encryption, protecting against cipher buffer exceptions.
+4. **Decompression Bomb Protection**: Input and ratio expansion guards prevent decompression bomb exploits across all compression codecs.
 
-The application uses environment variables for obfuscation mappings:
+---
 
-```env
-# Format: OBF_{LANGUAGE}_{VERSION}_{CHARACTER}=replacement
-OBF_EN1_A=word_for_a
-OBF_EN1_B=word_for_b
-OBF_FA1_ا=persian_word
-```
+## Algorithms Summary 📊
 
-### Supported Languages
+### Ciphers
+| Algorithm | Key Size / Spec | Type | Quantum-Resistant | Primary Use Case |
+|---|---|---|:---:|---|
+| **AES-GCM** | 128, 192, 256-bit | Symmetric | Yes* (256-bit) | Default bulk authenticated encryption |
+| **AES-CBC** | 128, 192, 256-bit | Symmetric | Yes* (256-bit) | Standard block cipher |
+| **AES-CTR** | 128, 192, 256-bit | Symmetric | Yes* (256-bit) | Stream cipher |
+| **RSA-OAEP-256** | 2048, 3072, 4096-bit | Asymmetric | No | Asymmetric key transport / small payloads |
+| **ML-KEM-768** | FIPS 203 (Kyber) | Asymmetric | Yes | Post-quantum key encapsulation |
 
-- **EN1/EN2**: English character mappings
-- **FA1/FA2**: Persian/Farsi character mappings
+*\*AES-256 provides 128-bit security against Grover's quantum search algorithm.*
 
-## Security Considerations 🛡️
+### Signatures
+| Algorithm | Key Size / Spec | Quantum-Resistant | Standard |
+|---|---|:---:|---|
+| **RSA-PSS** | 2048, 3072, 4096-bit (SHA-256) | No | PKCS#1 v2.1 / RFC 8017 |
+| **ML-DSA** | FIPS 204 (Dilithium) | Yes | NIST Post-Quantum Standard |
 
-### Encryption Security
-1. **Key Management**: All encryption keys are securely stored using platform-specific secure storage
-2. **Quantum Resistance**: Use ML-KEM and ML-DSA for future-proof security against quantum attacks
-3. **Hybrid Security**: Combine classical and post-quantum algorithms for maximum security
-4. **Key Rotation**: Regularly generate new key pairs for forward secrecy
+---
 
-### Authentication & Integrity
-1. **Digital Signatures**: ML-DSA provides quantum-resistant authentication
-2. **Message Integrity**: Cryptographic signatures detect tampering
-3. **Key Verification**: Public key fingerprints ensure key authenticity
-4. **Signature Verification**: Automatic verification with clear success/failure indicators
+## License & Contributing 📄
 
-### Implementation Security
-1. **Secure Storage**: Cryptographic keys are stored securely using platform-native secure storage
-2. **Obfuscation Limits**: Character mapping provides obfuscation, not cryptographic security
-3. **Tag Security**: Tags may reveal processing methods but not keys or content
-4. **Memory Security**: Sensitive data cleared from memory after use
-
-## Usage Examples 📝
-
-### Basic Encryption
-1. Enter your text in the input field
-2. Select compression method (optional)
-3. Choose encryption method (AES recommended for symmetric, RSA for asymmetric)
-4. Select obfuscation method if needed
-5. Process and copy the encrypted output
-
-### Quantum-Safe Communication (advanced)
-1. Generate ML-KEM key pairs for both parties
-2. Use ML-KEM for creating shared secret
-3. Sign KEM ciphertext with ML-DSA key
-4. Share the secret with the receiver
-5. Combine shared secret with classical encryption for hybrid security
-
-## Performance 📊
-
-### Compression Algorithms
-
-| Algorithm | Compression Ratio | Speed  | Memory Usage |
-|-----------|-------------------|--------|--------------|
-| GZip      | High              | Medium | Medium       |
-| LZ4       | Medium            | Fast   | Low          |
-| Brotli    | Very High         | Slow   | High         |
-| Zstd      | High              | Fast   | Medium       |
-
-### Encryption Performance
-
-| Algorithm  | Key Size   | Speed  | Quantum Safe | Use Case                  |
-|------------|------------|--------|--------------|---------------------------|
-| AES-256    | 256-bit    | Fast   | Yes*         | Symmetric encryption      |
-| RSA-2048   | 2048-bit   | Medium | No           | Asymmetric encryption     |
-| ML-KEM-768 | 1184-bytes | Fast   | Yes          | Post-quantum key exchange |
-
-*Note: AES-256 is considered quantum-resistant for confidentiality due to its large key size, as Grover's algorithm reduces its effective security to 128 bits.
+Contributions, bug reports, and pull requests are welcome! Please ensure code changes follow repository guidelines (`AGENTS.md`) and all tests pass with `flutter test`.
