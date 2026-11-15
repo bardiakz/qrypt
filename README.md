@@ -137,7 +137,7 @@ All keys are managed strictly on-device using platform-native hardware keystores
 | **RSA-OAEP-256** | 2048, 3072, 4096-bit | Asymmetric | No | Asymmetric key transport / small payloads |
 | **ML-KEM-768** | FIPS 203 (Kyber) | Asymmetric | Yes | Post-quantum key encapsulation |
 
-*\*AES-256 provides 128-bit security against Grover's quantum search algorithm.*
+*\*AES-256 is considered quantum-safe: while Grover's algorithm theoretically provides a quadratic speedup (reducing brute-force search complexity to ~2¹²⁸ quantum operations), executing 2¹²⁸ quantum operations remains computationally infeasible in practice due to physical limits on circuit depth and parallelization.*
 
 ### Signatures
 | Algorithm | Key Size / Spec | Quantum-Resistant | Standard |
