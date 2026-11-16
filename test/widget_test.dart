@@ -8,7 +8,9 @@ import 'package:qrypt/services/tag_manager.dart';
 
 void main() {
   setUpAll(() async {
-    FlutterSecureStorage.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({
+      'disclaimer_accepted_v1': 'true',
+    });
     await Obfuscate.setAllMaps();
     TagManager.initializeTags();
   });
@@ -30,7 +32,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterSecureStorage.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({
+        'disclaimer_accepted_v1': 'true',
+      });
       await tester.pumpWidget(const ProviderScope(child: MyApp()));
       await tester.pumpAndSettle();
 

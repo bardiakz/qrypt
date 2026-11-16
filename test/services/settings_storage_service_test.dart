@@ -86,4 +86,29 @@ void main() {
       );
     });
   });
+
+  group('SettingsStorageService disclaimer acceptance', () {
+    test('returns false when no acceptance value stored', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      expect(await SettingsStorageService.isDisclaimerAccepted(), isFalse);
+    });
+
+    test('returns true when stored value is true', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'disclaimer_accepted_v1': 'true',
+      });
+      expect(await SettingsStorageService.isDisclaimerAccepted(), isTrue);
+    });
+
+    test('setDisclaimerAccepted writes correct value to storage', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      expect(await SettingsStorageService.isDisclaimerAccepted(), isFalse);
+
+      await SettingsStorageService.setDisclaimerAccepted(true);
+      expect(await SettingsStorageService.isDisclaimerAccepted(), isTrue);
+
+      await SettingsStorageService.setDisclaimerAccepted(false);
+      expect(await SettingsStorageService.isDisclaimerAccepted(), isFalse);
+    });
+  });
 }

@@ -32,6 +32,8 @@ import 'key_management_page.dart';
 import 'widgets/aes/aes_key_management_dialog.dart';
 import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
+import 'widgets/disclaimer_dialog.dart';
+import '../services/settings/settings_storage_service.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
   const EncryptionPage({super.key});
@@ -320,10 +322,18 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkDisclaimer();
       _initAutoSelectAesKey();
       ref.read(currentTextControllerProvider.notifier).state =
           _encryptTextController;
     });
+  }
+
+  Future<void> _checkDisclaimer() async {
+    final accepted = await SettingsStorageService.isDisclaimerAccepted();
+    if (!accepted && mounted) {
+      await DisclaimerDialog.show(context, isFirstTime: true);
+    }
   }
 
   Future<void> _initAutoSelectAesKey() async {

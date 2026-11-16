@@ -14,7 +14,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    FlutterSecureStorage.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({
+      'disclaimer_accepted_v1': 'true',
+    });
     await Obfuscate.setAllMaps();
     TagManager.initializeTags();
   });
@@ -27,7 +29,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterSecureStorage.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({
+        'disclaimer_accepted_v1': 'true',
+      });
 
       // 1. Pump EncryptionPage with selectedObfuscationProvider = en2 (legacy).
       // Disable defaultEncryption so manual obfuscation dropdown is rendered in encrypt mode.

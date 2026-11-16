@@ -10,6 +10,7 @@ import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
 import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'widgets/disclaimer_dialog.dart';
 
 import '../providers/aes_providers.dart';
 import '../providers/encryption_providers.dart';
@@ -164,9 +165,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.gavel_outlined),
+                title: const Text('Disclaimer & Terms'),
+                subtitle: const Text('No-warranty and compatibility terms'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  DisclaimerDialog.show(context, isFirstTime: false);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
-                title: const Text('Disclaimer'),
-                trailing: const Icon(Icons.open_in_new),
+                title: const Text('Privacy Policy'),
+                subtitle: const Text('Offline and data storage policy'),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   _showPrivacyDialog(context);
                 },
@@ -697,10 +708,51 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'This tool is for educational and legitimate use cases only. Users are responsible for compliance with local laws and regulations regarding encryption and data protection.',
+        title: const Row(
+          children: [
+            Icon(Icons.privacy_tip_outlined),
+            SizedBox(width: 8),
+            Text('Privacy Policy'),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '100% Offline & Private',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Qrypt does not collect, monitor, track, or transmit any user data or telemetry. The application functions entirely offline without internet dependencies.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Local Secure Storage',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Cryptographic keys (AES, RSA, ML-KEM, ML-DSA), custom obfuscation maps, and user preferences are stored exclusively on your device using OS-backed secure storage. No data is ever uploaded.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'User Control',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'You can permanently erase all stored keys and application settings at any time using the "Clear All Saved Data" option below or by uninstalling the application.',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [

@@ -14,6 +14,25 @@ class SettingsStorageService {
   static const String _defaultObfuscationKey = 'default_obfuscation_method';
   static const String _defaultCompressionKey = 'default_compression_method';
   static const String _defaultSignKey = 'default_sign_method';
+  static const String _disclaimerAcceptedKey = 'disclaimer_accepted_v1';
+
+  static Future<bool> isDisclaimerAccepted() async {
+    try {
+      final value = await _storage.read(key: _disclaimerAcceptedKey);
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<void> setDisclaimerAccepted(bool accepted) async {
+    try {
+      await _storage.write(
+        key: _disclaimerAcceptedKey,
+        value: accepted ? 'true' : 'false',
+      );
+    } catch (e) {}
+  }
 
   static Future<EncryptionMethod> getDefaultEncryptionMethod() async {
     try {

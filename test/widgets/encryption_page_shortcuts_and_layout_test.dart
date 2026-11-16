@@ -12,7 +12,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    FlutterSecureStorage.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({
+      'disclaimer_accepted_v1': 'true',
+    });
     await Obfuscate.setAllMaps();
     TagManager.initializeTags();
   });
