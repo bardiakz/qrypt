@@ -10,12 +10,10 @@ Widget modeSwitch(
   TextEditingController encryptTextController,
   TextEditingController decryptTextController,
 ) {
-  return Tooltip(
-    message: 'Switch mode (Ctrl+M)',
-    child: SizedBox(
-      height: 48,
-      width: 260,
-      child: Stack(
+  return SizedBox(
+    height: 48,
+    width: 260,
+    child: Stack(
         children: [
           // Background bar
           Container(
@@ -83,6 +81,5 @@ Widget modeSwitch(
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
