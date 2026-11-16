@@ -17,33 +17,7 @@ void main() {
     TagManager.initializeTags();
   });
 
-  group('EncryptionPage Desktop Ergonomics & Shortcuts', () {
-    testWidgets('renders desktop constrained layout with maxWidth 880', (
-      WidgetTester tester,
-    ) async {
-      tester.view.physicalSize = const Size(1920, 1080);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: EncryptionPage(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Verify ConstrainedBox with maxWidth: 880 exists
-      final constrainedBoxFinder = find.byWidgetPredicate(
-        (widget) =>
-            widget is ConstrainedBox &&
-            widget.constraints.maxWidth == 880.0,
-      );
-      expect(constrainedBoxFinder, findsOneWidget);
-    });
-
+  group('EncryptionPage Desktop Shortcuts', () {
     testWidgets('provides CallbackShortcuts for Ctrl+M, Ctrl+Enter, Ctrl+L, Ctrl+Shift+C', (
       WidgetTester tester,
     ) async {

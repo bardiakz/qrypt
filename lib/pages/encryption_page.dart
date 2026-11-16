@@ -572,12 +572,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         autofocus: true,
         child: SafeArea(
           child: Scaffold(
-            body: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 880),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppConstants.smallPadding),
-                  child: GestureDetector(
+            body: Padding(
+              padding: const EdgeInsets.all(AppConstants.smallPadding),
+              child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) {
               const double sensitivity = 100.0;
               if (details.primaryVelocity != null) {
@@ -1437,9 +1434,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       ),
     ),
   ),
-),
-        ),
-      );
+);
   }
 
   void _encrypt(
