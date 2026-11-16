@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-11-16
+
+### Added
+- **Desktop Keyboard Shortcuts**:
+  - `Ctrl+Enter` / `Cmd+Enter`: Trigger encryption or decryption processing.
+  - `Ctrl+M` / `Cmd+M`: Quickly toggle between Encrypt and Decrypt modes.
+  - `Ctrl+Shift+C` / `Cmd+Shift+C`: Copy the processed output to the clipboard.
+  - `Ctrl+L` / `Cmd+L`: Clear the current input text field and reset temporary session state.
+- **Action Button Tooltips**:
+  - Added descriptive `Tooltip` widgets to primary actions (Clear, Paste, Copy, Process) displaying their functionality and keyboard shortcuts.
+- **First-Launch Disclaimer & Legal Terms**:
+  - Added a non-dismissible first-time `DisclaimerDialog` requiring explicit user acknowledgement (`I Understand & Accept`) before using the app.
+  - Persisted acceptance state in secure storage (`SettingsStorageService`).
+  - Added persistent access to the Disclaimer & Terms via **Settings > About**.
+- **Explicit Backward Compatibility & Warranty Notices**:
+  - Explicitly documents that while best efforts are made to preserve backward compatibility, backward compatibility across versions is **not guaranteed** across cryptographic library updates, algorithm evolutions, or tag format revisions.
+  - Standard "AS IS" disclaimer of warranties and comprehensive limitation of liability protecting authors against claims of data loss or compromised keys.
+- **Privacy Policy Revamp & In-App Synchronization**:
+  - Fully updated `PRIVACY_POLICY.md` detailing 100% offline zero-telemetry architecture, local OS keystore security (`FlutterSecureStorage`), user data sovereignty, and unencrypted backup advisories.
+  - Synchronized the in-app Settings Privacy Policy dialog with an option to view the full document online.
+
+### Changed
+- **Idiomatic Riverpod Invalidation**:
+  - Replaced `ref.refresh()` calls with `ref.invalidate()` across key management and selection dialogs to avoid unhandled return value warnings.
+- **Color Opacity Modernization**:
+  - Updated deprecated `Color.withOpacity(...)` calls to modern `Color.withValues(alpha: ...)`.
+
+---
+
 ## [5.4.1] - 2026-11-15
 
 ### Changed
