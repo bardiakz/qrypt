@@ -708,16 +708,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.privacy_tip_outlined),
-            SizedBox(width: 8),
-            Text('Privacy Policy'),
-          ],
-        ),
+        title: const Text('Privacy Policy'),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: SingleChildScrollView(
+          child: const SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -738,17 +732,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Cryptographic keys (AES, RSA, ML-KEM, ML-DSA), custom obfuscation maps, and user preferences are stored exclusively on your device using OS-backed secure storage. No data is ever uploaded.',
+                  'Cryptographic keys (AES, RSA, ML-KEM, ML-DSA), custom obfuscation maps, and user preferences are stored exclusively on your device using OS-backed secure storage. No data is ever uploaded or shared.',
                   style: TextStyle(fontSize: 13),
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'User Control',
+                  'User Data Sovereignty',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'You can permanently erase all stored keys and application settings at any time using the "Clear All Saved Data" option below or by uninstalling the application.',
+                  'You have total control over your data. You can permanently erase all stored keys and application settings at any time via "Clear All Saved Data" below or by uninstalling the app.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'No Warranty & Compatibility',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'The software is provided "AS IS". Backward compatibility is not guaranteed across future algorithm or format updates. See Disclaimer & Terms for full legal details.',
                   style: TextStyle(fontSize: 13),
                 ),
               ],
@@ -756,6 +760,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ),
         actions: [
+          TextButton(
+            onPressed: () => _launchURL(
+              context,
+              'https://github.com/bardiakz/qrypt/blob/main/PRIVACY_POLICY.md',
+              'Could not open Privacy Policy online',
+            ),
+            child: const Text('View Online'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),

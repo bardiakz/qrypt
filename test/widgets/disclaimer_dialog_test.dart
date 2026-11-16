@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qrypt/pages/encryption_page.dart';
+import 'package:qrypt/pages/settings_page.dart';
 import 'package:qrypt/pages/widgets/disclaimer_dialog.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/settings/settings_storage_service.dart';
@@ -142,6 +144,50 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(DisclaimerDialog), findsNothing);
+    });
+
+    testWidgets('SettingsPage renders Privacy Policy and opens updated dialog', (
+      WidgetTester tester,
+    ) async {
+      PackageInfo.setMockInitialValues(
+        appName: 'Qrypt',
+        packageName: 'com.example.qrypt',
+        version: '5.4.1',
+        buildNumber: '21',
+        buildSignature: '',
+      );
+
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: SettingsPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final privacyTile = find.widgetWithText(ListTile, 'Privacy Policy');
+      expect(privacyTile, findsOneWidget);
+
+      await tester.tap(privacyTile);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Privacy Policy'), findsWidgets);
+      expect(find.textContaining('100% Offline & Private'), findsOneWidget);
+      expect(find.textContaining('Local Secure Storage'), findsOneWidget);
+      expect(find.textContaining('No Warranty & Compatibility'), findsOneWidget);
+      expect(find.text('View Online'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('100% Offline & Private'), findsNothing);
     });
   });
 }
