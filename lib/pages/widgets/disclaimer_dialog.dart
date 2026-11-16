@@ -104,7 +104,7 @@ class DisclaimerDialog extends StatelessWidget {
                 context,
                 title: '3. No Guaranteed Backward Compatibility',
                 body:
-                    'While we endeavor to maintain backward compatibility across updates where feasible, backward compatibility is NOT guaranteed. Cryptographic standards, algorithms, padding schemes, and tag encodings evolve over time. Older ciphertexts, tags, or keys may become deprecated or unreadable in future versions. The developers and maintainers accept no responsibility or liability if older encrypted data or tags cannot be decrypted by future versions or vice versa.',
+                    'While we try our best to maintain backward compatibility across updates where feasible, backward compatibility is NOT guaranteed. Cryptographic standards, algorithms, padding schemes, and tag encodings evolve over time. Older ciphertexts, tags, or keys may become deprecated or unreadable in future versions. The developers and maintainers accept no responsibility or liability if older encrypted data or tags cannot be decrypted by future versions or vice versa.',
                 isHighlight: true,
               ),
               _buildSection(
