@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/ml_dsa_key_pair.dart';
 import '../../../providers/ml_dsa_providers.dart';
+import '../qr/qr_share_dialog.dart';
 import 'create_ml_dsa_key_dialog.dart';
 
 class MlDsaKeyManagementDialog extends ConsumerWidget {
@@ -186,16 +187,55 @@ class MlDsaKeyManagementDialog extends ConsumerWidget {
               const SizedBox(height: 4),
               SelectableText(keyPair.algorithm),
               const SizedBox(height: 16),
-              const Text(
-                'Public Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Public Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Public Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'ML-DSA Public Key: ${keyPair.name}',
+                        data: base64Encode(keyPair.publicKey),
+                        subtitle: 'Share this verification key with recipients',
+                        primaryColor: primaryColor,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.publicKey)),
               const SizedBox(height: 16),
-              const Text(
-                'Secret Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Secret Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Secret Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'ML-DSA Secret Key: ${keyPair.name}',
+                        data: base64Encode(keyPair.secretKey),
+                        subtitle: 'Keep this signing key secret',
+                        primaryColor: primaryColor,
+                        isSensitive: true,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.secretKey)),

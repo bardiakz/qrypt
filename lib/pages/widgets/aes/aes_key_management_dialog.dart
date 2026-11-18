@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/aes_key.dart';
 import '../../../providers/aes_providers.dart';
 import '../../../resources/global_resources.dart';
+import '../qr/qr_share_dialog.dart';
 import 'create_aes_key_dialog.dart';
 
 class AESKeyManagementDialog extends ConsumerWidget {
@@ -83,6 +84,21 @@ class AESKeyManagementDialog extends ConsumerWidget {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.qr_code_2, size: 20),
+                                      tooltip: 'Show QR code',
+                                      onPressed: () {
+                                        showQrShareDialog(
+                                          context: context,
+                                          title: 'AES Key: ${key.name}',
+                                          data: key.key,
+                                          subtitle:
+                                              '${key.bitLength}-bit symmetric encryption key',
+                                          primaryColor: primaryColor,
+                                          isSensitive: true,
+                                        );
+                                      },
+                                    ),
                                     IconButton(
                                       icon: const Icon(Icons.copy, size: 20),
                                       tooltip: 'Copy key',

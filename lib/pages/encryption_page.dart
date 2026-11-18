@@ -33,6 +33,7 @@ import 'widgets/aes/aes_key_management_dialog.dart';
 import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
 import 'widgets/disclaimer_dialog.dart';
+import 'widgets/qr/qr_share_dialog.dart';
 import '../services/settings/settings_storage_service.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
@@ -1384,6 +1385,36 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             .length
                             .toString(),
                   actions: [
+                    buildActionButton(
+                      icon: Icons.qr_code_2,
+                      color: primaryColor,
+                      onTap: () {
+                        final outputText = isEncryptMode
+                            ? ref.watch(processedEncryptProvider).text
+                            : ref.watch(processedDecryptProvider).text;
+                        if (outputText.isNotEmpty) {
+                          showQrShareDialog(
+                            context: context,
+                            title: isEncryptMode
+                                ? 'Ciphertext QR Code'
+                                : 'Decrypted Output QR Code',
+                            data: outputText,
+                            subtitle: isEncryptMode
+                                ? 'Scan with another device to import ciphertext'
+                                : 'Scan to view decrypted content',
+                            primaryColor: primaryColor,
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('No output to display as QR code'),
+                            ),
+                          );
+                        }
+                      },
+                      semanticLabel: 'Share output as QR code',
+                      tooltip: 'Share as QR code',
+                    ),
                     buildActionButton(
                       icon: Icons.content_copy,
                       color: primaryColor,

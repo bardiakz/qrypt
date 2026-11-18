@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
 
 import '../../../providers/kem_providers.dart';
+import '../qr/qr_share_dialog.dart';
 import 'create_kem_key_dialog.dart';
 
 class KemKeyManagementDialog extends ConsumerWidget {
@@ -174,16 +175,55 @@ class KemKeyManagementDialog extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Public Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Public Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Public Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'ML-KEM Public Key: ${keyPair.name}',
+                        data: base64Encode(keyPair.kemKeyPair.publicKey),
+                        subtitle: 'Share this public key for encapsulation',
+                        primaryColor: primaryColor,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.kemKeyPair.publicKey)),
               const SizedBox(height: 16),
-              const Text(
-                'Secret Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Secret Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Secret Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'ML-KEM Secret Key: ${keyPair.name}',
+                        data: base64Encode(keyPair.kemKeyPair.secretKey),
+                        subtitle: 'Keep this decapsulation key secret',
+                        primaryColor: primaryColor,
+                        isSensitive: true,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.kemKeyPair.secretKey)),

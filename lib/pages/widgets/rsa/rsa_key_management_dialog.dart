@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/rsa_key_pair.dart';
 import '../../../providers/rsa_providers.dart';
+import '../qr/qr_share_dialog.dart';
 import 'create_rsa_key_dialog.dart';
 
 class RSAKeyManagementDialog extends ConsumerWidget {
@@ -172,16 +173,55 @@ class RSAKeyManagementDialog extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Public Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Public Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Public Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'RSA Public Key: ${keyPair.name}',
+                        data: keyPair.publicKey,
+                        subtitle: 'Share this public key with senders',
+                        primaryColor: primaryColor,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(keyPair.publicKey),
               const SizedBox(height: 16),
-              const Text(
-                'Private Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Private Key:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_2, size: 20),
+                    tooltip: 'Show Private Key QR',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      showQrShareDialog(
+                        context: context,
+                        title: 'RSA Private Key: ${keyPair.name}',
+                        data: keyPair.privateKey,
+                        subtitle: 'Keep this private key secret',
+                        primaryColor: primaryColor,
+                        isSensitive: true,
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SelectableText(keyPair.privateKey),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
@@ -11,6 +10,7 @@ import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'widgets/disclaimer_dialog.dart';
+import 'widgets/qr/qr_share_dialog.dart';
 
 import '../providers/aes_providers.dart';
 import '../providers/encryption_providers.dart';
@@ -451,63 +451,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   ) async {
     final shareJson = CustomMapStorageService.instance.exportMap(profile);
 
-    await showDialog(
+    await showQrShareDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Share: ${profile.name}'),
-          content: SizedBox(
-            width: 380,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Recipients must import this map to decrypt messages obfuscated with it.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: QrImageView(
-                      data: shareJson,
-                      version: QrVersions.auto,
-                      size: 220,
-                      gapless: true,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.copy, size: 16),
-                    label: const Text('Copy JSON to Clipboard'),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: shareJson));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Copied "${profile.name}" JSON to clipboard',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
+      title: 'Share: ${profile.name}',
+      data: shareJson,
+      subtitle:
+          'Recipients must import this map to decrypt messages obfuscated with it.',
+      copySuccessMessage: 'Copied "${profile.name}" JSON to clipboard',
     );
   }
 

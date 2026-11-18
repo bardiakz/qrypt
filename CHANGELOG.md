@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.5.0] - 2026-11-18
 
 ### Security
+- **Odd-Nibble Hex Validation (SEC-08)**:
+  - Enforced strict even-length validation in `Aes.fromHex` across AES-CBC, AES-CTR, and AES-GCM decoders. Truncated or corrupt hex inputs now fail fast with an explicit `FormatException` instead of silently dropping the trailing 4 bits.
+- **Dependency Pinning (SEC-11)**:
+  - Pinned unconstrained `any` dependencies in `pubspec.yaml` (`es_compression: ^2.0.16`, `path: ^1.9.1`, `crypto: ^3.0.8`) to guarantee deterministic CI builds.
+- **Eliminate Untrusted CWD Library Search Path (SEC-03)**:
+  - Guarded CWD fallback in `Compression.setNativeLibPaths()` and `OqsLoader` with debug/test mode checks, preventing DLL/SO hijacking in release distributions.
 - **RSASSA-PSS Migration (SEC-06)**:
   - Migrated `SignMethod.rsaPss` from legacy EMSA-PKCS1-v1_5 to genuine RSASSA-PSS (SHA-256 with 32-byte salt, MGF1-SHA256, and secure entropy via Fortuna).
   - *Backward Compatibility Notice*: Digital signatures created in versions &le; 5.4.1 used PKCS#1 v1.5 and will not verify under 5.5.0+. Verification error messages explicitly advise that the signature may have originated from an earlier Qrypt release.
@@ -17,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Corrected public exponent encoding in `_encodePrivateKeyToPem` (was previously serializing the private exponent $d$ in the public exponent position due to PointyCastle inheritance properties). Exported private keys are now strictly standard-compliant with OpenSSL and external cryptographic tools.
 
 ### Added
+- **Air-Gapped QR Code Sharing**:
+  - Added a dedicated QR code export action in the Output section header on `EncryptionPage` to share ciphertexts or decrypted text directly to mobile devices without network connectivity.
+  - Added QR code sharing across all cryptographic key dialogs: AES symmetric keys, RSA public/private keys, ML-KEM (Kyber) public keys and negotiated shared secrets, and ML-DSA (Dilithium) verification keys.
+  - Unified all QR code displays under a contrast-isolated, auto-sizing `QrShareDialog` with payload density advisories and oversized payload protections.
 - **Desktop Keyboard Shortcuts**:
   - `Ctrl+Enter` / `Cmd+Enter`: Trigger encryption or decryption processing.
   - `Ctrl+M` / `Cmd+M`: Quickly toggle between Encrypt and Decrypt modes.

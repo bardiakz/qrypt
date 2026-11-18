@@ -53,6 +53,7 @@
                     <li>Added streaming decompression safety guard (25 MB ceiling) to prevent zip bomb Denial of Service.</li>
                     <li>Fixed PKCS#8 RSA private key export for full standard compliance with OpenSSL.</li>
                     <li>Aligned GTK desktop application ID for improved Wayland and taskbar integration.</li>
+                    <li>Added air-gapped QR code sharing for ciphertexts, symmetric keys, and asymmetric/quantum public keys.</li>
                     <li>Added desktop keyboard shortcuts (Ctrl+Enter, Ctrl+M, Ctrl+Shift+C, Ctrl+L) and action tooltips.</li>
                     <li>Added persistent first-launch disclaimer and updated offline privacy policy.</li>
                 </ul>
