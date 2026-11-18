@@ -17,9 +17,9 @@ dependencies:
   encrypt: ^5.0.3
   archive: ^4.0.7
 
-  es_compression: any
-  path: any
-  crypto: any
+  es_compression: ^2.0.16
+  path: ^1.9.1
+  crypto: ^3.0.8
   flutter_launcher_icons: ^0.14.4
   pointycastle: ^3.9.1
   flutter_secure_storage: ^10.0.0

@@ -64,20 +64,8 @@ class Aes extends Encryption {
     encrypt.Key key,
   ) {
     // Convert hex back to bytes
-    final encryptedBytes = Uint8List.fromList(
-      List.generate(
-        hexCiphertext.length ~/ 2,
-        (i) => int.parse(hexCiphertext.substring(i * 2, i * 2 + 2), radix: 16),
-      ),
-    );
-
-    final ivBytes = Uint8List.fromList(
-      List.generate(
-        hexIV.length ~/ 2,
-        (i) => int.parse(hexIV.substring(i * 2, i * 2 + 2), radix: 16),
-      ),
-    );
-
+    final encryptedBytes = _fromHex(hexCiphertext);
+    final ivBytes = _fromHex(hexIV);
     final iv = encrypt.IV(ivBytes);
 
     final encrypter = encrypt.Encrypter(
@@ -160,7 +148,14 @@ class Aes extends Encryption {
   static String _toHex(List<int> bytes) =>
       bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
-  static Uint8List _fromHex(String hex) {
+  /// Parse a hexadecimal string into bytes.
+  /// Throws [FormatException] if the hex string has an odd length or contains invalid hex characters.
+  static Uint8List fromHex(String hex) {
+    if (hex.length.isOdd) {
+      throw FormatException(
+        'Hex string must have an even length (got length ${hex.length})',
+      );
+    }
     return Uint8List.fromList(
       List.generate(
         hex.length ~/ 2,
@@ -168,4 +163,6 @@ class Aes extends Encryption {
       ),
     );
   }
+
+  static Uint8List _fromHex(String hex) => fromHex(hex);
 }
