@@ -24,9 +24,10 @@ class OqsLoader {
     final String currentDir = Directory.current.path;
 
     final candidateArchiveRoots = [
-      path.join(currentDir, 'liboqs-0.16.0'),
       path.join(execDir, 'liboqs-0.16.0'),
       path.join(execDir, 'data', 'flutter_assets', 'liboqs-0.16.0'),
+      if (kDebugMode || Platform.environment.containsKey('FLUTTER_TEST'))
+        path.join(currentDir, 'liboqs-0.16.0'),
     ];
 
     String? foundRoot;

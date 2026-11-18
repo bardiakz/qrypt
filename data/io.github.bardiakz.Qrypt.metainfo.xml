@@ -45,6 +45,19 @@
     </screenshots>
     <launchable type="desktop-id">io.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
+        <release version="5.5.0" date="2026-11-18">
+            <description>
+                <p>Security hardening, cryptographic modernization, and desktop enhancements:</p>
+                <ul>
+                    <li>Migrated RSA signature scheme to genuine RSASSA-PSS (SHA-256 with 32-byte salt).</li>
+                    <li>Added streaming decompression safety guard (25 MB ceiling) to prevent zip bomb Denial of Service.</li>
+                    <li>Fixed PKCS#8 RSA private key export for full standard compliance with OpenSSL.</li>
+                    <li>Aligned GTK desktop application ID for improved Wayland and taskbar integration.</li>
+                    <li>Added desktop keyboard shortcuts (Ctrl+Enter, Ctrl+M, Ctrl+Shift+C, Ctrl+L) and action tooltips.</li>
+                    <li>Added persistent first-launch disclaimer and updated offline privacy policy.</li>
+                </ul>
+            </description>
+        </release>
         <release version="4.4.9" date="2025-09-23" />
     </releases>
     <content_rating type="oars-1.1" />

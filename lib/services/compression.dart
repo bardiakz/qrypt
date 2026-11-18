@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:es_compression/lz4.dart';
 import 'package:es_compression/brotli.dart';
 import 'package:es_compression/zstd.dart';
@@ -95,16 +96,27 @@ class Compression {
   }
 
   static void setNativeLibPaths() {
+    final execDir = getExecutableDir();
     final List<String> candidatePaths = [
-      path.join(Directory.current.path, 'native_libs'),
-      path.join(getExecutableDir(), 'data', 'flutter_assets', 'native_libs'),
-      path.join(getExecutableDir(), 'native_libs'),
-      getExecutableDir(),
+      path.join(execDir, 'data', 'flutter_assets', 'native_libs'),
+      path.join(execDir, 'native_libs'),
+      if (kDebugMode || Platform.environment.containsKey('FLUTTER_TEST'))
+        path.join(Directory.current.path, 'native_libs'),
+      execDir,
     ];
 
+    final String expectedLib = Platform.isWindows
+        ? 'eslz4-win64.dll'
+        : Platform.isMacOS
+            ? 'eslz4-mac64.dylib'
+            : 'eslz4-linux64.so';
+
     final String basePath = candidatePaths.firstWhere(
-      (candidate) => Directory(candidate).existsSync(),
-      orElse: () => candidatePaths.first,
+      (dir) => File(path.join(dir, expectedLib)).existsSync(),
+      orElse: () => candidatePaths.firstWhere(
+        (dir) => Directory(dir).existsSync(),
+        orElse: () => candidatePaths.first,
+      ),
     );
 
     String lz4LibPath;
