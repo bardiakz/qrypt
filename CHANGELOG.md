@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.5.0] - 2026-11-16
+## [5.5.0] - 2026-11-18
+
+### Security
+- **RSASSA-PSS Migration (SEC-06)**:
+  - Migrated `SignMethod.rsaPss` from legacy EMSA-PKCS1-v1_5 to genuine RSASSA-PSS (SHA-256 with 32-byte salt, MGF1-SHA256, and secure entropy via Fortuna).
+  - *Backward Compatibility Notice*: Digital signatures created in versions &le; 5.4.1 used PKCS#1 v1.5 and will not verify under 5.5.0+. Verification error messages explicitly advise that the signature may have originated from an earlier Qrypt release.
+- **Streaming Decompression Bomb Protection (SEC-07)**:
+  - Added a strict 25 MB safety expansion ceiling across all four decompressors (`GZip`, `LZ4`, `Brotli`, `Zstandard`) via `_decodeBounded` and zero-copy `BoundedByteSink`. Payloads exceeding 25 MB abort immediately with a clear `FormatException`, preventing Out-of-Memory crashes and UI freezing.
+- **PKCS#8 RSA Private Key Serialization Fix**:
+  - Corrected public exponent encoding in `_encodePrivateKeyToPem` (was previously serializing the private exponent $d$ in the public exponent position due to PointyCastle inheritance properties). Exported private keys are now strictly standard-compliant with OpenSSL and external cryptographic tools.
 
 ### Added
 - **Desktop Keyboard Shortcuts**:

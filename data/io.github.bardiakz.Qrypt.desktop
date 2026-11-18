@@ -6,5 +6,5 @@ Icon=io.github.bardiakz.Qrypt
 Terminal=false
 Type=Application
 Categories=Utility;Security;
-StartupWMClass=qrypt
+StartupWMClass=io.github.bardiakz.Qrypt
 Keywords=encryption;crypto;security;post-quantum;kem;obfuscation;

@@ -1,23 +1,29 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:es_compression/lz4.dart';
 import 'package:es_compression/brotli.dart';
 import 'package:es_compression/zstd.dart';
-import 'package:flutter/foundation.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as path;
 
 class Compression {
+  /// Default expansion ceiling for clipboard/text-fed payloads (25 MB).
+  static const int defaultMaxDecompressedBytes = 25 * 1024 * 1024;
+
   ///Compresses data using GZip
   static Uint8List gZipCompress(List<int> data) {
     final encoder = GZipEncoder();
     return Uint8List.fromList(encoder.encode(data));
   }
 
-  ///Decompresses data using GZip
-  static List<int> gZipDeCompress(List<int> compressedData) {
+  ///Decompresses data using GZip with streaming expansion limits
+  static List<int> gZipDeCompress(
+    List<int> compressedData, {
+    int maxBytes = defaultMaxDecompressedBytes,
+  }) {
     if (compressedData.isEmpty) return <int>[];
-    final decoder = GZipDecoder();
-    return decoder.decodeBytes(compressedData);
+    return _decodeBounded(gzip.decoder, compressedData, maxBytes: maxBytes);
   }
 
   static Uint8List lz4Compress(List<int> data) {
@@ -25,10 +31,12 @@ class Compression {
     return Uint8List.fromList(encoder.encode(data));
   }
 
-  static List<int> lz4DeCompress(List<int> compressedData) {
+  static List<int> lz4DeCompress(
+    List<int> compressedData, {
+    int maxBytes = defaultMaxDecompressedBytes,
+  }) {
     if (compressedData.isEmpty) return <int>[];
-    final decoder = Lz4Codec();
-    return decoder.decode(compressedData);
+    return _decodeBounded(Lz4Codec().decoder, compressedData, maxBytes: maxBytes);
   }
 
   static Uint8List brotliCompress(List<int> data) {
@@ -36,10 +44,12 @@ class Compression {
     return Uint8List.fromList(encoder.encode(data));
   }
 
-  static List<int> brotliDeCompress(List<int> compressedData) {
+  static List<int> brotliDeCompress(
+    List<int> compressedData, {
+    int maxBytes = defaultMaxDecompressedBytes,
+  }) {
     if (compressedData.isEmpty) return <int>[];
-    final decoder = BrotliCodec();
-    return decoder.decode(compressedData);
+    return _decodeBounded(BrotliCodec().decoder, compressedData, maxBytes: maxBytes);
   }
 
   static Uint8List zstdCompress(List<int> data) {
@@ -47,10 +57,36 @@ class Compression {
     return Uint8List.fromList(encoder.encode(data));
   }
 
-  static List<int> zstdDeCompress(List<int> compressedData) {
+  static List<int> zstdDeCompress(
+    List<int> compressedData, {
+    int maxBytes = defaultMaxDecompressedBytes,
+  }) {
     if (compressedData.isEmpty) return <int>[];
-    final decoder = ZstdCodec();
-    return decoder.decode(compressedData);
+    return _decodeBounded(ZstdCodec().decoder, compressedData, maxBytes: maxBytes);
+  }
+
+  static Uint8List _decodeBounded(
+    Converter<List<int>, List<int>> decoder,
+    List<int> data, {
+    required int maxBytes,
+  }) {
+    final boundedSink = BoundedByteSink(maxBytes: maxBytes);
+    final conversionSink = decoder.startChunkedConversion(boundedSink);
+    bool isClosed = false;
+    try {
+      conversionSink.add(data);
+      isClosed = true;
+      conversionSink.close();
+      return boundedSink.takeBytes();
+    } finally {
+      if (!isClosed) {
+        try {
+          conversionSink.close();
+        } catch (_) {
+          // Suppress secondary cleanup exceptions on abort path to preserve primary bomb exception
+        }
+      }
+    }
   }
 
   static String getExecutableDir() {
@@ -108,3 +144,52 @@ class Compression {
     ZstdCodec.libraryPath = zstdLibPath;
   }
 }
+
+class DecompressionBombException implements Exception {
+  final int maxBytes;
+  final int currentBytes;
+  const DecompressionBombException(this.maxBytes, this.currentBytes);
+
+  @override
+  String toString() =>
+      'DecompressionBombException: Exceeded maximum allowed uncompressed size of $maxBytes bytes (encountered $currentBytes bytes)';
+}
+
+class BoundedByteSink extends ByteConversionSinkBase {
+  final int maxBytes;
+  final BytesBuilder _builder = BytesBuilder();
+  int _totalBytes = 0;
+
+  BoundedByteSink({required this.maxBytes});
+
+  @override
+  void add(List<int> chunk) {
+    _checkLimit(chunk.length);
+    _builder.add(chunk);
+  }
+
+  @override
+  void addSlice(List<int> chunk, int start, int end, bool isLast) {
+    RangeError.checkValidRange(start, end, chunk.length);
+    final sliceLen = end - start;
+    _checkLimit(sliceLen);
+    if (chunk is Uint8List) {
+      _builder.add(Uint8List.view(chunk.buffer, chunk.offsetInBytes + start, sliceLen));
+    } else {
+      _builder.add(chunk.sublist(start, end));
+    }
+  }
+
+  void _checkLimit(int incoming) {
+    _totalBytes += incoming;
+    if (_totalBytes > maxBytes) {
+      throw DecompressionBombException(maxBytes, _totalBytes);
+    }
+  }
+
+  @override
+  void close() {}
+
+  Uint8List takeBytes() => _builder.takeBytes();
+}
+

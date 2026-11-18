@@ -9,7 +9,7 @@ import 'package:pointycastle/key_generators/rsa_key_generator.dart';
 import 'package:pointycastle/random/fortuna_random.dart';
 import 'package:pointycastle/key_generators/api.dart';
 import 'package:pointycastle/digests/sha256.dart';
-import 'package:pointycastle/signers/rsa_signer.dart';
+import 'package:pointycastle/signers/pss_signer.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -107,7 +107,9 @@ class RSAKeyService {
     final rsaPrivateKeySeq = ASN1Sequence();
     rsaPrivateKeySeq.add(ASN1Integer(BigInt.from(0))); // version
     rsaPrivateKeySeq.add(ASN1Integer(privateKey.modulus!));
-    rsaPrivateKeySeq.add(ASN1Integer(privateKey.exponent!));
+    rsaPrivateKeySeq.add(
+      ASN1Integer(privateKey.publicExponent ?? BigInt.parse('65537')),
+    );
     rsaPrivateKeySeq.add(ASN1Integer(privateKey.privateExponent!));
     rsaPrivateKeySeq.add(ASN1Integer(privateKey.p!));
     rsaPrivateKeySeq.add(ASN1Integer(privateKey.q!));
@@ -373,11 +375,17 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
 
-      final messageBytes = utf8.encode(message);
+      final messageBytes = Uint8List.fromList(utf8.encode(message));
 
-      // Create RSA signer with PSS and SHA-256
-      final signer = RSASigner(SHA256Digest(), '0609608648016503040201');
-      signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+      final signer = PSSSigner(RSAEngine(), SHA256Digest(), SHA256Digest());
+      signer.init(
+        true,
+        ParametersWithSaltConfiguration(
+          PrivateKeyParameter<RSAPrivateKey>(privateKey),
+          _createSecureRandom(),
+          32,
+        ),
+      );
 
       final signature = signer.generateSignature(messageBytes);
       return base64.encode(signature.bytes);
@@ -414,15 +422,21 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
 
-      final messageBytes = utf8.encode(message);
+      final messageBytes = Uint8List.fromList(utf8.encode(message));
       final signatureBytes = base64.decode(signature);
 
-      // Create RSA verifier with PSS and SHA-256
-      final verifier = RSASigner(SHA256Digest(), '0609608648016503040201');
-      verifier.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
+      final verifier = PSSSigner(RSAEngine(), SHA256Digest(), SHA256Digest());
+      verifier.init(
+        false,
+        ParametersWithSaltConfiguration(
+          PublicKeyParameter<RSAPublicKey>(publicKey),
+          _createSecureRandom(),
+          32,
+        ),
+      );
 
-      final rsaSignature = RSASignature(signatureBytes);
-      return verifier.verifySignature(messageBytes, rsaSignature);
+      final pssSignature = PSSSignature(signatureBytes);
+      return verifier.verifySignature(messageBytes, pssSignature);
     } catch (e) {
       print('Verification error: $e');
       return false;

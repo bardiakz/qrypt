@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -267,6 +269,164 @@ void main() {
         ),
       );
       expect(decryptQrypt.deCompressedText.isEmpty, isTrue);
+    });
+  });
+
+  group('RSASSA-PSS Direct Sign & Verify & Negative Controls', () {
+    test('sign and verify roundtrip across multiple payload lengths', () async {
+      final rsa = RSAKeyService();
+      final keyPair = await rsa.generateKeyPair('pss_direct_test_pair');
+
+      final testMessages = <String, String>{
+        'Empty message': '',
+        'Single character': 'A',
+        'Medium message': 'The quick brown fox jumps over the lazy dog',
+        'Large message': 'Repeating data payload: ' * 100,
+      };
+
+      for (final entry in testMessages.entries) {
+        final message = entry.value;
+        final signature = await rsa.signWithPrivateKey(message, keyPair.privateKey);
+        expect(signature, isNotEmpty);
+
+        final isValid = await rsa.verifyWithPublicKey(
+          message,
+          signature,
+          keyPair.publicKey,
+        );
+        expect(isValid, isTrue, reason: 'Failed for ${entry.key}');
+
+        // Negative Control 1: Tampered message fails verification
+        final tamperedMessage = '${message}_tampered';
+        final isTamperedValid = await rsa.verifyWithPublicKey(
+          tamperedMessage,
+          signature,
+          keyPair.publicKey,
+        );
+        expect(isTamperedValid, isFalse, reason: 'Tampered message should fail for ${entry.key}');
+
+        // Negative Control 2: Tampered signature fails verification
+        final sigBytes = base64.decode(signature);
+        sigBytes[sigBytes.length ~/ 2] ^= 0xFF;
+        final tamperedSignature = base64.encode(sigBytes);
+        final isTamperedSigValid = await rsa.verifyWithPublicKey(
+          message,
+          tamperedSignature,
+          keyPair.publicKey,
+        );
+        expect(isTamperedSigValid, isFalse, reason: 'Tampered signature should fail for ${entry.key}');
+      }
+    });
+
+    test('verifies failure on corrupted signature or invalid PEM gracefully', () async {
+      final rsa = RSAKeyService();
+      final keyPair = await rsa.generateKeyPair('pss_corrupt_test_pair');
+
+      final isValidCorruptSig = await rsa.verifyWithPublicKey(
+        'test message',
+        'not_a_valid_base64_signature!',
+        keyPair.publicKey,
+      );
+      expect(isValidCorruptSig, isFalse);
+
+      final isValidBadKey = await rsa.verifyWithPublicKey(
+        'test message',
+        base64.encode(Uint8List(256)),
+        'not_a_valid_pem',
+      );
+      expect(isValidBadKey, isFalse);
+    });
+  });
+
+  group('OpenSSL 3 Bidirectional RSASSA-PSS Interoperability', () {
+    bool isOpenSslAvailable() {
+      try {
+        final result = Process.runSync('openssl', ['version']);
+        return result.exitCode == 0;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    test('PointyCastle and OpenSSL 3 verify each other bidirectionally with negative controls', () async {
+      if (!isOpenSslAvailable()) {
+        return; // Skipped dynamically when openssl binary is not present on PATH
+      }
+
+      final tempDir = Directory.systemTemp.createTempSync('openssl_pss_test');
+      try {
+        final rsa = RSAKeyService();
+        final keyPair = await rsa.generateKeyPair('openssl_interop_key');
+
+        final testMessage = 'OpenSSL 3 RSASSA-PSS interop verification payload';
+        final testMessageBytes = utf8.encode(testMessage);
+
+        // 1. Qrypt signs with PointyCastle PSS -> OpenSSL 3 verifies
+        final qryptSignatureBase64 = await rsa.signWithPrivateKey(
+          testMessage,
+          keyPair.privateKey,
+        );
+        final qryptSigBytes = base64.decode(qryptSignatureBase64);
+
+        final msgFile = File('${tempDir.path}/msg.bin')..writeAsBytesSync(testMessageBytes);
+        final sigFile = File('${tempDir.path}/sig.bin')..writeAsBytesSync(qryptSigBytes);
+        final pubKeyFile = File('${tempDir.path}/pub.pem')..writeAsStringSync(keyPair.publicKey);
+
+        final opensslVerify = Process.runSync('openssl', [
+          'dgst',
+          '-sha256',
+          '-sigopt', 'rsa_padding_mode:pss',
+          '-sigopt', 'rsa_pss_saltlen:32',
+          '-sigopt', 'rsa_mgf1_md:sha256',
+          '-verify', pubKeyFile.path,
+          '-signature', sigFile.path,
+          msgFile.path,
+        ]);
+        expect(opensslVerify.exitCode, equals(0), reason: 'OpenSSL failed to verify Qrypt PSS signature');
+
+        // Negative Control with OpenSSL: Tampered message rejected
+        final tamperedMsgFile = File('${tempDir.path}/tampered_msg.bin')
+          ..writeAsBytesSync(Uint8List.fromList(List.from(testMessageBytes)..[0] ^= 0xFF));
+        final opensslTamperedVerify = Process.runSync('openssl', [
+          'dgst',
+          '-sha256',
+          '-sigopt', 'rsa_padding_mode:pss',
+          '-sigopt', 'rsa_pss_saltlen:32',
+          '-sigopt', 'rsa_mgf1_md:sha256',
+          '-verify', pubKeyFile.path,
+          '-signature', sigFile.path,
+          tamperedMsgFile.path,
+        ]);
+        expect(opensslTamperedVerify.exitCode, isNot(equals(0)));
+
+        // 2. OpenSSL signs with PSS -> Qrypt verifies with PointyCastle
+        final privKeyFile = File('${tempDir.path}/priv.pem')..writeAsStringSync(keyPair.privateKey);
+        final opensslSigFile = File('${tempDir.path}/openssl_sig.bin');
+
+        final opensslSign = Process.runSync('openssl', [
+          'dgst',
+          '-sha256',
+          '-sigopt', 'rsa_padding_mode:pss',
+          '-sigopt', 'rsa_pss_saltlen:32',
+          '-sigopt', 'rsa_mgf1_md:sha256',
+          '-sign', privKeyFile.path,
+          '-out', opensslSigFile.path,
+          msgFile.path,
+        ]);
+        expect(opensslSign.exitCode, equals(0), reason: 'OpenSSL failed to sign with PSS');
+
+        final opensslSigBytes = opensslSigFile.readAsBytesSync();
+        final opensslSigBase64 = base64.encode(opensslSigBytes);
+
+        final qryptVerifyResult = await rsa.verifyWithPublicKey(
+          testMessage,
+          opensslSigBase64,
+          keyPair.publicKey,
+        );
+        expect(qryptVerifyResult, isTrue, reason: 'Qrypt failed to verify OpenSSL PSS signature');
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
     });
   });
 }

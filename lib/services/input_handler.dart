@@ -613,7 +613,7 @@ class InputHandler {
 
           if (!isValid) {
             throw const FormatException(
-              'RSA-PSS signature verification failed. Message may have been altered or forged.',
+              'RSA-PSS signature verification failed. Message may have been altered or forged (or was signed with an older version of Qrypt).',
             );
           }
 
@@ -1238,42 +1238,48 @@ class InputHandler {
   }
 
   Qrypt handleDeCompression(Qrypt qrypt) {
-    switch (qrypt.getCompressionMethod()) {
-      case CompressionMethod.none:
-        try {
-          qrypt.text = utf8.decode(qrypt.deCompressedText);
-        } catch (e) {
-          if (kDebugMode) {
-            print('UTF8 decode error in decompression: $e');
+    try {
+      switch (qrypt.getCompressionMethod()) {
+        case CompressionMethod.none:
+          try {
+            qrypt.text = utf8.decode(qrypt.deCompressedText);
+          } catch (e) {
+            if (kDebugMode) {
+              print('UTF8 decode error in decompression: $e');
+            }
+            qrypt.text = ''; // Fallback to empty on error
           }
-          qrypt.text = ''; // Fallback to empty on error
-        }
-        return qrypt;
-      case CompressionMethod.gZip:
-        qrypt.deCompressedText = Compression.gZipDeCompress(
-          qrypt.deCompressedText,
-        );
-        qrypt.text = utf8.decode(qrypt.deCompressedText);
-        return qrypt;
+          return qrypt;
+        case CompressionMethod.gZip:
+          qrypt.deCompressedText = Compression.gZipDeCompress(
+            qrypt.deCompressedText,
+          );
+          qrypt.text = utf8.decode(qrypt.deCompressedText);
+          return qrypt;
 
-      case CompressionMethod.lZ4:
-        qrypt.deCompressedText = Compression.lz4DeCompress(
-          qrypt.deCompressedText,
-        );
-        qrypt.text = utf8.decode(qrypt.deCompressedText);
-        return qrypt;
-      case CompressionMethod.brotli:
-        qrypt.deCompressedText = Compression.brotliDeCompress(
-          qrypt.deCompressedText,
-        );
-        qrypt.text = utf8.decode(qrypt.deCompressedText);
-        return qrypt;
-      case CompressionMethod.zstd:
-        qrypt.deCompressedText = Compression.zstdDeCompress(
-          qrypt.deCompressedText,
-        );
-        qrypt.text = utf8.decode(qrypt.deCompressedText);
-        return qrypt;
+        case CompressionMethod.lZ4:
+          qrypt.deCompressedText = Compression.lz4DeCompress(
+            qrypt.deCompressedText,
+          );
+          qrypt.text = utf8.decode(qrypt.deCompressedText);
+          return qrypt;
+        case CompressionMethod.brotli:
+          qrypt.deCompressedText = Compression.brotliDeCompress(
+            qrypt.deCompressedText,
+          );
+          qrypt.text = utf8.decode(qrypt.deCompressedText);
+          return qrypt;
+        case CompressionMethod.zstd:
+          qrypt.deCompressedText = Compression.zstdDeCompress(
+            qrypt.deCompressedText,
+          );
+          qrypt.text = utf8.decode(qrypt.deCompressedText);
+          return qrypt;
+      }
+    } on DecompressionBombException catch (e) {
+      throw FormatException(
+        'Decompression aborted: Payload exceeds safety limit of ${(e.maxBytes / (1024 * 1024)).toStringAsFixed(0)} MB.',
+      );
     }
   }
 
