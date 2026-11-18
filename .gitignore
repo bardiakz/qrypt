@@ -56,3 +56,7 @@ liboqs-0.16.0_old/
 ENV_REMOVAL_EVALUATION.md
 
 tasks/
+
+# Security audit reports
+*audit*
+*audit*.md
