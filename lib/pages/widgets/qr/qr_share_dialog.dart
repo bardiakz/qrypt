@@ -46,11 +46,12 @@ Future<void> showQrShareDialog({
 /// Features:
 /// - Type-safe payload restriction via [QrPayloadKind].
 /// - Light/Dark mode isolated high-contrast container for reliable camera reading.
+/// - Dynamic in-dialog zoom/enlarge toggle and full-screen pinch-to-zoom interactive viewer.
 /// - Catches QR library input-too-long errors and displays "Too large for a QR code. Use Copy.".
 /// - Scan-reliability advisory banner for payloads above 1,200 characters.
 /// - Explicit security advisory for obfuscation maps.
 /// - One-tap copy to clipboard.
-class QrShareDialog extends StatelessWidget {
+class QrShareDialog extends StatefulWidget {
   final String title;
   final String data;
   final QrPayloadKind kind;
@@ -72,19 +73,33 @@ class QrShareDialog extends StatelessWidget {
   static const int scanReliabilityThreshold = 1200;
 
   @override
+  State<QrShareDialog> createState() => _QrShareDialogState();
+}
+
+class _QrShareDialogState extends State<QrShareDialog> {
+  bool _isEnlarged = false;
+
+  @override
   Widget build(BuildContext context) {
-    final effectivePrimary = primaryColor ?? Theme.of(context).primaryColor;
+    final effectivePrimary =
+        widget.primaryColor ?? Theme.of(context).primaryColor;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final qrSize = min(240.0, min(screenWidth * 0.65, screenHeight * 0.35));
+
+    final standardQrSize =
+        min(240.0, min(screenWidth * 0.65, screenHeight * 0.35));
+    final enlargedQrSize =
+        min(420.0, min(screenWidth * 0.82, screenHeight * 0.52));
+    final qrSize = _isEnlarged ? enlargedQrSize : standardQrSize;
+    final dialogWidth = _isEnlarged ? min(screenWidth * 0.92, 520.0) : 340.0;
 
     QrCode? validQrCode;
     bool isTooLarge = false;
 
-    if (data.isNotEmpty) {
+    if (widget.data.isNotEmpty) {
       try {
         final qr = QrCode.fromData(
-          data: data,
+          data: widget.data,
           errorCorrectLevel: QrErrorCorrectLevel.M,
         );
         // Evaluating QrImage(qr) eagerly forces generation and verification
@@ -98,11 +113,12 @@ class QrShareDialog extends StatelessWidget {
       }
     }
 
-    final bool isDense =
-        !isTooLarge && validQrCode != null && data.length > scanReliabilityThreshold;
+    final bool isDense = !isTooLarge &&
+        validQrCode != null &&
+        widget.data.length > QrShareDialog.scanReliabilityThreshold;
 
     return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      titlePadding: const EdgeInsets.fromLTRB(20, 16, 12, 10),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       actionsPadding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       title: Row(
@@ -111,22 +127,33 @@ class QrShareDialog extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              title,
+              widget.title,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (!isTooLarge && validQrCode != null) ...[
+            IconButton(
+              icon: Icon(_isEnlarged ? Icons.zoom_out : Icons.zoom_in),
+              tooltip: _isEnlarged ? 'Reduce size' : 'Enlarge QR code',
+              onPressed: () {
+                setState(() {
+                  _isEnlarged = !_isEnlarged;
+                });
+              },
+            ),
+          ],
         ],
       ),
       content: SizedBox(
-        width: 340,
+        width: dialogWidth,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (subtitle != null && subtitle!.isNotEmpty) ...[
+              if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
                 Text(
-                  subtitle!,
+                  widget.subtitle!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -136,7 +163,7 @@ class QrShareDialog extends StatelessWidget {
               ],
 
               // Obfuscation map security note
-              if (kind == QrPayloadKind.obfuscationMap) ...[
+              if (widget.kind == QrPayloadKind.obfuscationMap) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(
@@ -173,7 +200,7 @@ class QrShareDialog extends StatelessWidget {
                 ),
               ],
 
-              if (data.isEmpty) ...[
+              if (widget.data.isEmpty) ...[
                 Container(
                   height: 180,
                   alignment: Alignment.center,
@@ -207,7 +234,7 @@ class QrShareDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Payload length (${data.length} characters) exceeds the maximum QR code storage capacity.',
+                        'Payload length (${widget.data.length} characters) exceeds the maximum QR code storage capacity.',
                         style: const TextStyle(fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
@@ -215,47 +242,82 @@ class QrShareDialog extends StatelessWidget {
                   ),
                 ),
               ] else ...[
-                // High-contrast canvas for QR code reader isolation
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: qrSize,
-                    height: qrSize,
-                    child: QrImageView.withQr(
-                      qr: validQrCode,
-                      size: qrSize,
-                      gapless: true,
-                      backgroundColor: Colors.white,
-                      eyeStyle: const QrEyeStyle(
-                        eyeShape: QrEyeShape.square,
-                        color: Colors.black,
-                      ),
-                      dataModuleStyle: const QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: Colors.black,
-                      ),
-                      errorStateBuilder: (cxt, err) {
-                        return const Center(
-                          child: Text(
-                            'Too large for a QR code. Use Copy.',
-                            style: TextStyle(color: Colors.red, fontSize: 12),
-                            textAlign: TextAlign.center,
+                // High-contrast canvas for QR code reader isolation with tap-to-zoom support
+                GestureDetector(
+                  onTap: () => _openInteractiveZoomDialog(context, validQrCode!),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Tooltip(
+                      message: 'Tap to inspect or pinch-zoom in fullscreen',
+                      child: Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: SizedBox(
+                              width: qrSize,
+                              height: qrSize,
+                              child: QrImageView.withQr(
+                                qr: validQrCode,
+                                size: qrSize,
+                                gapless: true,
+                                backgroundColor: Colors.white,
+                                eyeStyle: const QrEyeStyle(
+                                  eyeShape: QrEyeShape.square,
+                                  color: Colors.black,
+                                ),
+                                dataModuleStyle: const QrDataModuleStyle(
+                                  dataModuleShape: QrDataModuleShape.square,
+                                  color: Colors.black,
+                                ),
+                                errorStateBuilder: (cxt, err) {
+                                  return const Center(
+                                    child: Text(
+                                      'Too large for a QR code. Use Copy.',
+                                      style: TextStyle(color: Colors.red, fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        );
-                      },
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(
+                                Icons.open_in_full,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap QR code to zoom in fullscreen',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                 ),
               ],
 
@@ -263,7 +325,7 @@ class QrShareDialog extends StatelessWidget {
 
               // Character count indicator
               Text(
-                '${data.length} characters',
+                '${widget.data.length} characters',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
 
@@ -302,14 +364,14 @@ class QrShareDialog extends StatelessWidget {
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.copy, size: 16),
                   label: const Text('Copy to Clipboard'),
-                  onPressed: data.isEmpty
+                  onPressed: widget.data.isEmpty
                       ? null
                       : () {
-                          Clipboard.setData(ClipboardData(text: data));
+                          Clipboard.setData(ClipboardData(text: widget.data));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                copySuccessMessage ?? 'Copied to clipboard',
+                                widget.copySuccessMessage ?? 'Copied to clipboard',
                               ),
                             ),
                           );
@@ -329,8 +391,155 @@ class QrShareDialog extends StatelessWidget {
     );
   }
 
+  void _openInteractiveZoomDialog(
+    BuildContext context,
+    QrCode qrCode,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final screenWidth = MediaQuery.of(dialogContext).size.width;
+        final screenHeight = MediaQuery.of(dialogContext).size.height;
+        final maxQrSize =
+            min(520.0, min(screenWidth * 0.88, screenHeight * 0.65));
+        final TransformationController transformController =
+            TransformationController();
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.black87),
+                              tooltip: 'Close',
+                              onPressed: () => Navigator.of(dialogContext).pop(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            color: Colors.white,
+                            width: maxQrSize,
+                            height: maxQrSize,
+                            child: InteractiveViewer(
+                              transformationController: transformController,
+                              minScale: 1.0,
+                              maxScale: 5.0,
+                              boundaryMargin: const EdgeInsets.all(40),
+                              child: Center(
+                                child: QrImageView.withQr(
+                                  qr: qrCode,
+                                  size: maxQrSize,
+                                  gapless: true,
+                                  backgroundColor: Colors.white,
+                                  eyeStyle: const QrEyeStyle(
+                                    eyeShape: QrEyeShape.square,
+                                    color: Colors.black,
+                                  ),
+                                  dataModuleStyle: const QrDataModuleStyle(
+                                    dataModuleShape: QrDataModuleShape.square,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.zoom_out, color: Colors.black87),
+                              tooltip: 'Zoom Out',
+                              onPressed: () {
+                                final currentScale = transformController.value.getMaxScaleOnAxis();
+                                if (currentScale > 1.0) {
+                                  final newScale = max(1.0, currentScale - 0.5);
+                                  transformController.value = Matrix4.diagonal3Values(newScale, newScale, 1.0);
+                                  setDialogState(() {});
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.restore, color: Colors.black87),
+                              tooltip: 'Reset Zoom',
+                              onPressed: () {
+                                transformController.value = Matrix4.identity();
+                                setDialogState(() {});
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.zoom_in, color: Colors.black87),
+                              tooltip: 'Zoom In',
+                              onPressed: () {
+                                final currentScale = transformController.value.getMaxScaleOnAxis();
+                                if (currentScale < 5.0) {
+                                  final newScale = min(5.0, currentScale + 0.5);
+                                  transformController.value = Matrix4.diagonal3Values(newScale, newScale, 1.0);
+                                  setDialogState(() {});
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Pinch or use buttons to zoom & pan',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   IconData _getKindIcon() {
-    switch (kind) {
+    switch (widget.kind) {
       case QrPayloadKind.publicKey:
         return Icons.vpn_key_outlined;
       case QrPayloadKind.ciphertext:

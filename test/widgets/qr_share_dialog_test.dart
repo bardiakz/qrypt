@@ -231,5 +231,88 @@ void main() {
 
       expect(find.byType(QrShareDialog), findsNothing);
     });
+
+    testWidgets('in-dialog zoom toggle expands and reduces QR code view', (
+      WidgetTester tester,
+    ) async {
+      const payload = 'qrypt:test:zoom:toggle:payload';
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: QrShareDialog(
+              title: 'Zoomable QR',
+              data: payload,
+              kind: QrPayloadKind.publicKey,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initially shows zoom_in icon
+      expect(find.byIcon(Icons.zoom_in), findsOneWidget);
+      expect(find.byIcon(Icons.zoom_out), findsNothing);
+
+      // Tap zoom_in button to enlarge
+      await tester.tap(find.byIcon(Icons.zoom_in));
+      await tester.pumpAndSettle();
+
+      // Now shows zoom_out icon
+      expect(find.byIcon(Icons.zoom_out), findsOneWidget);
+      expect(find.byIcon(Icons.zoom_in), findsNothing);
+
+      // Tap zoom_out button to reduce back to standard size
+      await tester.tap(find.byIcon(Icons.zoom_out));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.zoom_in), findsOneWidget);
+      expect(find.byIcon(Icons.zoom_out), findsNothing);
+    });
+
+    testWidgets('tapping QR container opens interactive fullscreen zoom viewer with zoom controls', (
+      WidgetTester tester,
+    ) async {
+      const payload = 'qrypt:test:fullscreen:zoom:payload';
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: QrShareDialog(
+              title: 'Interactive Zoom QR',
+              data: payload,
+              kind: QrPayloadKind.ciphertext,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tap QR code to zoom in fullscreen'), findsOneWidget);
+      expect(find.byIcon(Icons.open_in_full), findsOneWidget);
+
+      // Tap the QR container to open interactive zoom dialog
+      await tester.tap(find.byIcon(Icons.open_in_full));
+      await tester.pumpAndSettle();
+
+      // Interactive viewer dialog should be open
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      expect(find.text('Pinch or use buttons to zoom & pan'), findsOneWidget);
+      expect(find.byTooltip('Zoom In'), findsOneWidget);
+      expect(find.byTooltip('Zoom Out'), findsOneWidget);
+      expect(find.byTooltip('Reset Zoom'), findsOneWidget);
+
+      // Test Zoom In button
+      await tester.tap(find.byTooltip('Zoom In'));
+      await tester.pumpAndSettle();
+
+      // Test Reset Zoom button
+      await tester.tap(find.byTooltip('Reset Zoom'));
+      await tester.pumpAndSettle();
+
+      // Close the fullscreen zoom dialog
+      await tester.tap(find.byTooltip('Close').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(InteractiveViewer), findsNothing);
+    });
   });
 }
