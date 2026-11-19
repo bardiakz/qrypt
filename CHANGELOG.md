@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.5.0] - 2026-11-18
+## [5.6.0] - 2026-11-19
 
 ### Security
 - **Odd-Nibble Hex Validation (SEC-08)**:
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Guarded CWD fallback in `Compression.setNativeLibPaths()` and `OqsLoader` with debug/test mode checks, preventing DLL/SO hijacking in release distributions.
 - **RSASSA-PSS Migration (SEC-06)**:
   - Migrated `SignMethod.rsaPss` from legacy EMSA-PKCS1-v1_5 to genuine RSASSA-PSS (SHA-256 with 32-byte salt, MGF1-SHA256, and secure entropy via Fortuna).
-  - *Backward Compatibility Notice*: Digital signatures created in versions &le; 5.4.1 used PKCS#1 v1.5 and will not verify under 5.5.0+. Verification error messages explicitly advise that the signature may have originated from an earlier Qrypt release.
+  - *Backward Compatibility Notice*: Digital signatures created in versions &le; 5.4.1 used PKCS#1 v1.5 and will not verify under 5.6.0+. Verification error messages explicitly advise that the signature may have originated from an earlier Qrypt release.
 - **Streaming Decompression Bomb Protection (SEC-07)**:
   - Added a strict 25 MB safety expansion ceiling across all four decompressors (`GZip`, `LZ4`, `Brotli`, `Zstandard`) via `_decodeBounded` and zero-copy `BoundedByteSink`. Payloads exceeding 25 MB abort immediately with a clear `FormatException`, preventing Out-of-Memory crashes and UI freezing.
 - **PKCS#8 RSA Private Key Serialization Fix**:
@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced `ref.refresh()` calls with `ref.invalidate()` across key management and selection dialogs to avoid unhandled return value warnings.
 - **Color Opacity Modernization**:
   - Updated deprecated `Color.withOpacity(...)` calls to modern `Color.withValues(alpha: ...)`.
+
+### Fixed
+- **QR Code Matrix Capacity Validation for Oversized Payloads**:
+  - Eagerly evaluates QR code matrix generation via `QrImage(qr)` to catch `InputTooLongException` before rendering. Prevents red-screen UI crashes when sharing oversized keys (such as ML-DSA-65 verification keys exceeding the 18,672-bit Version 40 Level M capacity limit) and displays a clean fallback card ("Too large for a QR code. Use Copy.") while suppressing misleading density warnings.
 
 ---
 
