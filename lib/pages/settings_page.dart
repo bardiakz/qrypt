@@ -310,10 +310,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _showGenerateRandomMapDialog(BuildContext context) async {
-    final nameController = TextEditingController(text: 'My Custom Map');
+    final messenger = ScaffoldMessenger.of(context);
+    final existingProfiles = CustomMapStorageService.instance.profiles;
+
+    String defaultNameForPool(String pool) {
+      final baseName = switch (pool) {
+        'en-words' => 'English Words Map',
+        'fa-words' => 'Persian Words Map',
+        'latin' => 'Latin Chars Map',
+        'persian' => 'Persian Chars Map',
+        'cyrillic' => 'Cyrillic Chars Map',
+        'greek' => 'Greek Chars Map',
+        'hebrew' => 'Hebrew Chars Map',
+        'armenian' => 'Armenian Chars Map',
+        'georgian' => 'Georgian Chars Map',
+        'hiragana' => 'Hiragana Chars Map',
+        _ => 'Custom Map',
+      };
+      int count = 1;
+      while (existingProfiles.any((p) => p.name == '$baseName $count')) {
+        count++;
+      }
+      return '$baseName $count';
+    }
+
     String selectedPool = 'en-words';
+    final nameController = TextEditingController(text: defaultNameForPool(selectedPool));
     String? errorText;
     bool isGenerating = false;
+    bool isCustomName = false;
 
     final poolOptions = const [
       ('en-words', 'English Words (282 words)'),
@@ -323,13 +348,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ('cyrillic', 'Cyrillic Characters (40 chars)'),
       ('greek', 'Greek Characters (24 chars)'),
       ('hebrew', 'Hebrew Characters (27 chars)'),
+      ('armenian', 'Armenian Characters (38 chars)'),
+      ('georgian', 'Georgian Characters (33 chars)'),
+      ('hiragana', 'Hiragana Characters (58 chars)'),
     ];
 
     await showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               title: const Text('Generate Random Map'),
               content: SizedBox(
@@ -345,6 +373,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameController,
+                      onChanged: (val) {
+                        isCustomName = val.trim().isNotEmpty;
+                      },
                       decoration: const InputDecoration(
                         labelText: 'Map Name',
                         border: OutlineInputBorder(),
@@ -365,7 +396,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) {
-                          setState(() => selectedPool = val);
+                          setDialogState(() {
+                            selectedPool = val;
+                            if (!isCustomName) {
+                              nameController.text = defaultNameForPool(val);
+                            }
+                          });
                         }
                       },
                     ),
@@ -374,7 +410,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Text(
                         errorText!,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                          color: Theme.of(dialogContext).colorScheme.error,
                           fontSize: 12,
                         ),
                       ),
@@ -386,29 +422,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 TextButton(
                   onPressed: isGenerating
                       ? null
-                      : () => Navigator.of(context).pop(),
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: isGenerating
                       ? null
                       : () async {
-                          setState(() {
+                          setDialogState(() {
                             isGenerating = true;
                             errorText = null;
                           });
                           try {
                             final map = V2MapGenerator.generate(selectedPool);
                             final name = nameController.text.trim().isEmpty
-                                ? 'My Custom Map'
+                                ? defaultNameForPool(selectedPool)
                                 : nameController.text.trim();
                             await CustomMapStorageService.instance.saveMap(
                               name: name,
                               map: map,
                             );
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                              messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     'Custom map "$name" generated and saved',
@@ -417,13 +453,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               );
                             }
                           } catch (e) {
-                            setState(() {
-                              isGenerating = false;
-                              errorText = e.toString().replaceFirst(
-                                'Exception: ',
-                                '',
-                              );
-                            });
+                            if (dialogContext.mounted) {
+                              setDialogState(() {
+                                isGenerating = false;
+                                errorText = e.toString()
+                                    .replaceFirst('Exception: ', '')
+                                    .replaceFirst('Bad state: ', '');
+                              });
+                            }
                           }
                         },
                   child: isGenerating
@@ -463,15 +500,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _showImportMapDialog(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
     final controller = TextEditingController();
     String? errorText;
     bool isImporting = false;
 
     await showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
               title: const Text('Import Custom Map'),
               content: SizedBox(
@@ -511,7 +549,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       Text(
                         errorText!,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                          color: Theme.of(dialogContext).colorScheme.error,
                           fontSize: 12,
                         ),
                       ),
@@ -523,14 +561,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 TextButton(
                   onPressed: isImporting
                       ? null
-                      : () => Navigator.of(context).pop(),
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: isImporting
                       ? null
                       : () async {
-                          setState(() {
+                          setDialogState(() {
                             isImporting = true;
                             errorText = null;
                           });
@@ -543,9 +581,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 'No valid maps found to import',
                               );
                             }
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                              messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     'Successfully imported ${imported.length} custom map(s)',
@@ -554,13 +592,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               );
                             }
                           } catch (e) {
-                            setState(() {
-                              isImporting = false;
-                              errorText = e.toString().replaceFirst(
-                                'Exception: ',
-                                '',
-                              );
-                            });
+                            if (dialogContext.mounted) {
+                              setDialogState(() {
+                                isImporting = false;
+                                errorText = e.toString()
+                                    .replaceFirst('Exception: ', '')
+                                    .replaceFirst('Bad state: ', '');
+                              });
+                            }
                           }
                         },
                   child: isImporting

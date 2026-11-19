@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-11-19
+
+### Added
+- **Multi-Size Post-Quantum ML-KEM Support (NIST FIPS 203)**:
+  - Added user selection for ML-KEM parameter sets across all standard security categories: `ML-KEM-512` (Category 1), `ML-KEM-768` (Category 3, Recommended), and `ML-KEM-1024` (Category 5).
+  - Adaptive encapsulation and decapsulation pipelines in `KemKeyService` that detect key lengths automatically without altering UX flow.
+  - Fail-fast parameter size validation on decapsulation preventing cryptographic format crashes when decrypting with mismatched key sizes.
+  - Parameter set badges displayed on ML-KEM key cards and dropdown selectors.
+- **Interactive QR Code Zoom & Fullscreen Viewer**:
+  - In-dialog size toggle expanding modal width up to 520px and scaling QR matrix canvas up to 420px (~3.3x module area expansion) to dramatically enhance scan reliability for dense post-quantum keys.
+  - Fullscreen pinch-to-zoom interactive viewer using `InteractiveViewer` with smooth pan, touch gestures, and desktop keyboard/mouse control buttons (Zoom In, Zoom Out, Reset Zoom).
+- **Expanded Custom Obfuscation Pools**:
+  - Added Armenian, Georgian, and Hiragana character pools to the custom map generator dialog.
+
+### Fixed
+- **Custom Map Generator Lifecycle & Crash Fixes**:
+  - Resolved unhandled `FlutterError` exceptions during map generation and import by properly referencing the parent `ScaffoldMessenger` and verifying widget tree mounting before calling `pop()` or updating dialog state.
+  - Implemented `operator ==` and `hashCode` on `CustomObfuscationProfile` based on profile ID, eliminating Flutter assertion crashes in `DropdownButtonFormField` when refreshing or reloading saved custom maps.
+  - Implemented smart, pool-aware default map naming (e.g., `"English Words Map 1"`, `"Persian Words Map 1"`) to prevent duplicate naming ambiguity.
+  - Synced selected custom map provider safely when profiles are deleted or updated.
+
 ## [5.6.0] - 2026-11-19
 
 ### Security

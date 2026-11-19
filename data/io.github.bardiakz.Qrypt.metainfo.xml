@@ -45,6 +45,17 @@
     </screenshots>
     <launchable type="desktop-id">io.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
+        <release version="5.7.0" date="2026-11-19">
+            <description>
+                <p>Post-quantum cryptographic expansion, QR code viewing improvements, and custom map stability:</p>
+                <ul>
+                    <li>Added multi-size ML-KEM support across all NIST FIPS 203 sizes (512, 768, 1024) with parameter badges.</li>
+                    <li>Added QR code enlargement toggle and fullscreen interactive pinch-to-zoom viewer.</li>
+                    <li>Fixed crash issues in custom map generation and dropdown profile selection.</li>
+                    <li>Added pool-aware default naming and expanded character pool selections for custom obfuscation maps.</li>
+                </ul>
+            </description>
+        </release>
         <release version="5.6.0" date="2026-11-19">
             <description>
                 <p>Security hardening, cryptographic modernization, and desktop enhancements:</p>

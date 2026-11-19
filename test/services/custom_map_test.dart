@@ -158,6 +158,30 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test('CustomObfuscationProfile equality and hashCode are based on id', () {
+      final map = V2MapGenerator.generate('latin');
+      final p1 = CustomObfuscationProfile(
+        id: 'fixed-id-123',
+        name: 'Map A',
+        map: map,
+      );
+      final p2 = CustomObfuscationProfile(
+        id: 'fixed-id-123',
+        name: 'Map B',
+        map: map,
+      );
+      final p3 = CustomObfuscationProfile(
+        id: 'different-id-456',
+        name: 'Map A',
+        map: map,
+      );
+
+      expect(p1 == p2, isTrue);
+      expect(p1.hashCode, equals(p2.hashCode));
+      expect(p1 == p3, isFalse);
+      expect({p1, p2}.length, equals(1));
+    });
   });
 
   group('Custom Tag Index & Matching (Option 1A)', () {

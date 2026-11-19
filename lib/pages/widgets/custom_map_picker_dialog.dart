@@ -66,12 +66,13 @@ Future<CustomObfuscationProfile?> showCustomMapPickerDialog(
                                 Navigator.of(ctx).pop(profile);
                               }
                             } catch (e) {
-                              setImportState(() {
-                                error = e.toString().replaceFirst(
-                                  'Exception: ',
-                                  '',
-                                );
-                              });
+                              if (ctx.mounted) {
+                                setImportState(() {
+                                  error = e.toString()
+                                      .replaceFirst('Exception: ', '')
+                                      .replaceFirst('Bad state: ', '');
+                                });
+                              }
                             }
                           },
                           child: const Text('Import & Use'),

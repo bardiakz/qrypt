@@ -211,7 +211,7 @@ class CustomMapDropdownButtonForm extends ConsumerWidget {
         ? profiles.firstWhere((p) => p.id == selectedProfile.id)
         : profiles.first;
 
-    if (selectedProfile == null && profiles.isNotEmpty) {
+    if (selectedProfile != effectiveProfile && profiles.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(selectedCustomMapProvider.notifier).state = effectiveProfile;
       });

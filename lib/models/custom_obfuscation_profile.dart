@@ -128,4 +128,12 @@ class CustomObfuscationProfile {
       return null;
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CustomObfuscationProfile && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
 }
