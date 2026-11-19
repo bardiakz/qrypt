@@ -97,19 +97,27 @@ class _QrShareDialogState extends State<QrShareDialog> {
     bool isTooLarge = false;
 
     if (widget.data.isNotEmpty) {
-      try {
-        final qr = QrCode.fromData(
-          data: widget.data,
-          errorCorrectLevel: QrErrorCorrectLevel.M,
-        );
-        // Evaluating QrImage(qr) eagerly forces generation and verification
-        // of QR matrix data. If data exceeds QR capacity for Level M,
-        // this throws InputTooLongException before rendering.
-        QrImage(qr);
-        validQrCode = qr;
-      } catch (_) {
+      // First try Error Correction Level M (15% recovery for robust scanning).
+      // If the payload exceeds Level M capacity (such as an ML-DSA-65 public key at 2,604 chars),
+      // dynamically fallback to Level L (7% recovery, max 2,953 bytes) which can fit payloads up to Version 40.
+      for (final level in [QrErrorCorrectLevel.M, QrErrorCorrectLevel.L]) {
+        try {
+          final qr = QrCode.fromData(
+            data: widget.data,
+            errorCorrectLevel: level,
+          );
+          // Evaluating QrImage(qr) eagerly forces generation and verification
+          // of QR matrix data. If data exceeds QR capacity for this level,
+          // this throws InputTooLongException before rendering.
+          QrImage(qr);
+          validQrCode = qr;
+          break;
+        } catch (_) {
+          // If this level fails, try next level or mark as too large
+        }
+      }
+      if (validQrCode == null) {
         isTooLarge = true;
-        validQrCode = null;
       }
     }
 
