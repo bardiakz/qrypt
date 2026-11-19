@@ -189,6 +189,7 @@ class RSAKeyManagementDialog extends ConsumerWidget {
                         context: context,
                         title: 'RSA Public Key: ${keyPair.name}',
                         data: keyPair.publicKey,
+                        kind: QrPayloadKind.publicKey,
                         subtitle: 'Share this public key with senders',
                         primaryColor: primaryColor,
                       );
@@ -199,29 +200,9 @@ class RSAKeyManagementDialog extends ConsumerWidget {
               const SizedBox(height: 8),
               SelectableText(keyPair.publicKey),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Private Key:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.qr_code_2, size: 20),
-                    tooltip: 'Show Private Key QR',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      showQrShareDialog(
-                        context: context,
-                        title: 'RSA Private Key: ${keyPair.name}',
-                        data: keyPair.privateKey,
-                        subtitle: 'Keep this private key secret',
-                        primaryColor: primaryColor,
-                        isSensitive: true,
-                      );
-                    },
-                  ),
-                ],
+              const Text(
+                'Private Key:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SelectableText(keyPair.privateKey),

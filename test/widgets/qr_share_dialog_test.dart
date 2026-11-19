@@ -18,6 +18,7 @@ void main() {
             body: QrShareDialog(
               title: 'Test QR Code',
               data: payload,
+              kind: QrPayloadKind.ciphertext,
               subtitle: 'Scan to test',
             ),
           ),
@@ -33,16 +34,16 @@ void main() {
       expect(find.text('Close'), findsOneWidget);
     });
 
-    testWidgets('renders sensitivity banner when isSensitive is true', (
+    testWidgets('displays obfuscation map security note when kind is obfuscationMap', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
             body: QrShareDialog(
-              title: 'AES Key QR',
-              data: '12345678901234567890123456789012',
-              isSensitive: true,
+              title: 'Obfuscation Map QR',
+              data: '{"name":"test","map":{}}',
+              kind: QrPayloadKind.obfuscationMap,
             ),
           ),
         ),
@@ -50,10 +51,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Sensitive credential. Only display to trusted recipients.'),
+        find.textContaining('Note: Anyone with this map can read/de-obfuscate messages encoded with it.'),
         findsOneWidget,
       );
-      expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline), findsOneWidget);
     });
 
     testWidgets('displays empty message and disables copy button when data is empty', (
@@ -65,6 +66,7 @@ void main() {
             body: QrShareDialog(
               title: 'Empty QR',
               data: '',
+              kind: QrPayloadKind.publicKey,
             ),
           ),
         ),
@@ -83,7 +85,7 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('displays oversized warning when data exceeds capacity (> 2900 chars)', (
+    testWidgets('displays "Too large for a QR code. Use Copy." when data exceeds capacity', (
       WidgetTester tester,
     ) async {
       final hugeData = 'A' * 3000;
@@ -93,6 +95,7 @@ void main() {
             body: QrShareDialog(
               title: 'Huge QR',
               data: hugeData,
+              kind: QrPayloadKind.ciphertext,
             ),
           ),
         ),
@@ -100,22 +103,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Content Too Large for QR (3000 characters)'),
+        find.text('Too large for a QR code. Use Copy.'),
         findsOneWidget,
       );
       expect(find.byType(QrImageView), findsNothing);
     });
 
-    testWidgets('displays dense QR warning when data is between 1401 and 2900 chars', (
+    testWidgets('displays dense QR warning when data is between 1201 and 2900 chars', (
       WidgetTester tester,
     ) async {
-      final denseData = 'B' * 1500;
+      final denseData = 'B' * 1300;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: QrShareDialog(
               title: 'Dense QR',
               data: denseData,
+              kind: QrPayloadKind.publicKey,
             ),
           ),
         ),
@@ -123,7 +127,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Dense QR code: hold scanner close'),
+        find.textContaining('Dense QR code (> 1,200 chars): hold scanner close and steady.'),
         findsOneWidget,
       );
       expect(find.byType(QrImageView), findsOneWidget);
@@ -149,6 +153,7 @@ void main() {
             body: QrShareDialog(
               title: 'Copy QR',
               data: testPayload,
+              kind: QrPayloadKind.ciphertext,
               copySuccessMessage: 'Custom copy message',
             ),
           ),
@@ -175,6 +180,7 @@ void main() {
                   context: context,
                   title: 'Helper QR Dialog',
                   data: 'helper-payload-123',
+                  kind: QrPayloadKind.publicKey,
                 ),
                 child: const Text('Open QR Dialog'),
               ),

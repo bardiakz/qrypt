@@ -1385,36 +1385,34 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             .length
                             .toString(),
                   actions: [
-                    buildActionButton(
-                      icon: Icons.qr_code_2,
-                      color: primaryColor,
-                      onTap: () {
-                        final outputText = isEncryptMode
-                            ? ref.watch(processedEncryptProvider).text
-                            : ref.watch(processedDecryptProvider).text;
-                        if (outputText.isNotEmpty) {
-                          showQrShareDialog(
-                            context: context,
-                            title: isEncryptMode
-                                ? 'Ciphertext QR Code'
-                                : 'Decrypted Output QR Code',
-                            data: outputText,
-                            subtitle: isEncryptMode
-                                ? 'Scan with another device to import ciphertext'
-                                : 'Scan to view decrypted content',
-                            primaryColor: primaryColor,
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('No output to display as QR code'),
-                            ),
-                          );
-                        }
-                      },
-                      semanticLabel: 'Share output as QR code',
-                      tooltip: 'Share as QR code',
-                    ),
+                    if (isEncryptMode)
+                      buildActionButton(
+                        icon: Icons.qr_code_2,
+                        color: primaryColor,
+                        onTap: () {
+                          final outputText =
+                              ref.watch(processedEncryptProvider).text;
+                          if (outputText.isNotEmpty) {
+                            showQrShareDialog(
+                              context: context,
+                              title: 'Ciphertext QR Code',
+                              data: outputText,
+                              kind: QrPayloadKind.ciphertext,
+                              subtitle:
+                                  'Scan with another device to import ciphertext',
+                              primaryColor: primaryColor,
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No output to display as QR code'),
+                              ),
+                            );
+                          }
+                        },
+                        semanticLabel: 'Share ciphertext as QR code',
+                        tooltip: 'Share ciphertext as QR code',
+                      ),
                     buildActionButton(
                       icon: Icons.content_copy,
                       color: primaryColor,

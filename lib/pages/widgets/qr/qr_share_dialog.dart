@@ -3,14 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// Shows a dialog displaying a QR code for air-gapped data sharing.
+/// The specific classification of data permitted to be shared via QR code.
+///
+/// Private keys and symmetric secrets MUST NEVER be rendered as QR codes without
+/// biometric or app lock gating, and are intentionally omitted from this enum.
+enum QrPayloadKind {
+  /// Public verification or encryption keys (RSA, ML-KEM, ML-DSA).
+  publicKey,
+
+  /// Encrypted ciphertext messages.
+  ciphertext,
+
+  /// Word-substitution obfuscation dictionary maps.
+  obfuscationMap,
+}
+
+/// Shows a modal dialog displaying a QR code for air-gapped data sharing.
 Future<void> showQrShareDialog({
   required BuildContext context,
   required String title,
   required String data,
+  required QrPayloadKind kind,
   String? subtitle,
   Color? primaryColor,
-  bool isSensitive = false,
   String? copySuccessMessage,
 }) {
   return showDialog<void>(
@@ -18,42 +33,43 @@ Future<void> showQrShareDialog({
     builder: (context) => QrShareDialog(
       title: title,
       data: data,
+      kind: kind,
       subtitle: subtitle,
       primaryColor: primaryColor,
-      isSensitive: isSensitive,
       copySuccessMessage: copySuccessMessage,
     ),
   );
 }
 
-/// A reusable modal dialog that renders data as a scannable QR code.
+/// A reusable modal dialog that renders non-sensitive payloads as a scannable QR code.
 ///
 /// Features:
+/// - Type-safe payload restriction via [QrPayloadKind].
 /// - Light/Dark mode isolated high-contrast container for reliable camera reading.
-/// - Character length counter and dense-payload advisory warnings.
+/// - Catches QR library input-too-long errors and displays "Too large for a QR code. Use Copy.".
+/// - Scan-reliability advisory banner for payloads above 1,200 characters.
+/// - Explicit security advisory for obfuscation maps.
 /// - One-tap copy to clipboard.
-/// - Optional sensitivity warning banner (for AES keys or private credentials).
 class QrShareDialog extends StatelessWidget {
   final String title;
   final String data;
+  final QrPayloadKind kind;
   final String? subtitle;
   final Color? primaryColor;
-  final bool isSensitive;
   final String? copySuccessMessage;
 
   const QrShareDialog({
     super.key,
     required this.title,
     required this.data,
+    required this.kind,
     this.subtitle,
     this.primaryColor,
-    this.isSensitive = false,
     this.copySuccessMessage,
   });
 
-  // Maximum standard QR capacity for alphanumeric/byte data
-  static const int maxQrCharCapacity = 2900;
-  static const int denseQrWarningThreshold = 1400;
+  /// Threshold above which camera scanning becomes difficult due to dense matrix modules.
+  static const int scanReliabilityThreshold = 1200;
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +77,22 @@ class QrShareDialog extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final qrSize = min(240.0, min(screenWidth * 0.65, screenHeight * 0.35));
-    final isTooLarge = data.length > maxQrCharCapacity;
-    final isDense = data.length > denseQrWarningThreshold && !isTooLarge;
+
+    // Pre-validate QR data to catch input-too-long and unsupported size errors
+    final validationResult = data.isEmpty
+        ? null
+        : QrValidator.validate(
+            data: data,
+            version: QrVersions.auto,
+            errorCorrectionLevel: QrErrorCorrectLevel.M,
+          );
+
+    final bool isTooLarge = data.length > 2900 ||
+        (validationResult != null &&
+            validationResult.status == QrValidationStatus.error);
+
+    final bool isDense =
+        data.length > scanReliabilityThreshold && !isTooLarge && data.isNotEmpty;
 
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -70,7 +100,7 @@ class QrShareDialog extends StatelessWidget {
       actionsPadding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       title: Row(
         children: [
-          Icon(Icons.qr_code_2, color: effectivePrimary, size: 26),
+          Icon(_getKindIcon(), color: effectivePrimary, size: 26),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -98,7 +128,8 @@ class QrShareDialog extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
 
-              if (isSensitive) ...[
+              // Obfuscation map security note
+              if (kind == QrPayloadKind.obfuscationMap) ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(
@@ -115,14 +146,14 @@ class QrShareDialog extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.shield_outlined,
+                        Icons.info_outline,
                         color: Colors.amber,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Sensitive credential. Only display to trusted recipients.',
+                          'Note: Anyone with this map can read/de-obfuscate messages encoded with it.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.amber[900],
@@ -158,18 +189,19 @@ class QrShareDialog extends StatelessWidget {
                     children: [
                       const Icon(Icons.warning_amber, color: Colors.red, size: 36),
                       const SizedBox(height: 8),
-                      Text(
-                        'Content Too Large for QR (${data.length} characters)',
-                        style: const TextStyle(
+                      const Text(
+                        'Too large for a QR code. Use Copy.',
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
+                          fontSize: 14,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Standard QR codes cannot reliably store this volume of data. Please copy the text to clipboard directly.',
-                        style: TextStyle(fontSize: 12),
+                      Text(
+                        'Payload length (${data.length} characters) exceeds the maximum QR code storage capacity.',
+                        style: const TextStyle(fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -209,11 +241,10 @@ class QrShareDialog extends StatelessWidget {
                         color: Colors.black,
                       ),
                       errorStateBuilder: (cxt, err) {
-                        return Center(
+                        return const Center(
                           child: Text(
-                            'Failed to render QR code: ${err.toString()}',
-                            style:
-                                const TextStyle(color: Colors.red, fontSize: 12),
+                            'Too large for a QR code. Use Copy.',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
                             textAlign: TextAlign.center,
                           ),
                         );
@@ -249,7 +280,7 @@ class QrShareDialog extends StatelessWidget {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          'Dense QR code: hold scanner close',
+                          'Dense QR code (> 1,200 chars): hold scanner close and steady.',
                           style: TextStyle(fontSize: 11, color: Colors.orange[800]),
                         ),
                       ),
@@ -291,5 +322,16 @@ class QrShareDialog extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  IconData _getKindIcon() {
+    switch (kind) {
+      case QrPayloadKind.publicKey:
+        return Icons.vpn_key_outlined;
+      case QrPayloadKind.ciphertext:
+        return Icons.lock_outline;
+      case QrPayloadKind.obfuscationMap:
+        return Icons.translate_outlined;
+    }
   }
 }

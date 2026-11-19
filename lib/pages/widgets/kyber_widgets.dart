@@ -6,7 +6,6 @@ import '../../models/aes_key.dart';
 import '../../resources/constants.dart';
 import '../../resources/global_resources.dart';
 import 'aes/create_aes_key_dialog.dart';
-import 'qr/qr_share_dialog.dart';
 
 enum SharedSecretFormat { base64, hex }
 
@@ -303,26 +302,9 @@ class _MLKemSharedSecretCardState extends State<MLKemSharedSecretCard> {
           ),
           const SizedBox(height: 8),
 
-          // Action row: Copy, QR Code & "Save as AES Key"
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          // Action row: Copy & "Save as AES Key"
+          Row(
             children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.qr_code_2, size: 16),
-                label: const Text('QR Code'),
-                onPressed: () {
-                  showQrShareDialog(
-                    context: context,
-                    title: 'ML-KEM Shared Secret',
-                    data: secret,
-                    subtitle:
-                        'Shared 256-bit secret key for symmetric encryption',
-                    primaryColor: widget.primaryColor,
-                    isSensitive: true,
-                  );
-                },
-              ),
               OutlinedButton.icon(
                 icon: const Icon(Icons.copy, size: 16),
                 label: const Text('Copy Key'),
@@ -330,6 +312,7 @@ class _MLKemSharedSecretCardState extends State<MLKemSharedSecretCard> {
                   copyToClipboard(secret, context);
                 },
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 icon: const Icon(Icons.bookmark_add, size: 16),
                 label: const Text('Save as AES Key'),

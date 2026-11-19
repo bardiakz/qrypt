@@ -191,6 +191,7 @@ class KemKeyManagementDialog extends ConsumerWidget {
                         context: context,
                         title: 'ML-KEM Public Key: ${keyPair.name}',
                         data: base64Encode(keyPair.kemKeyPair.publicKey),
+                        kind: QrPayloadKind.publicKey,
                         subtitle: 'Share this public key for encapsulation',
                         primaryColor: primaryColor,
                       );
@@ -201,29 +202,9 @@ class KemKeyManagementDialog extends ConsumerWidget {
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.kemKeyPair.publicKey)),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Secret Key:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.qr_code_2, size: 20),
-                    tooltip: 'Show Secret Key QR',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      showQrShareDialog(
-                        context: context,
-                        title: 'ML-KEM Secret Key: ${keyPair.name}',
-                        data: base64Encode(keyPair.kemKeyPair.secretKey),
-                        subtitle: 'Keep this decapsulation key secret',
-                        primaryColor: primaryColor,
-                        isSensitive: true,
-                      );
-                    },
-                  ),
-                ],
+              const Text(
+                'Secret Key:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.kemKeyPair.secretKey)),

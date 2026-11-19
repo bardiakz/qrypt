@@ -455,6 +455,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       context: context,
       title: 'Share: ${profile.name}',
       data: shareJson,
+      kind: QrPayloadKind.obfuscationMap,
       subtitle:
           'Recipients must import this map to decrypt messages obfuscated with it.',
       copySuccessMessage: 'Copied "${profile.name}" JSON to clipboard',

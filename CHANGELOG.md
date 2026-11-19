@@ -23,10 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Corrected public exponent encoding in `_encodePrivateKeyToPem` (was previously serializing the private exponent $d$ in the public exponent position due to PointyCastle inheritance properties). Exported private keys are now strictly standard-compliant with OpenSSL and external cryptographic tools.
 
 ### Added
-- **Air-Gapped QR Code Sharing**:
-  - Added a dedicated QR code export action in the Output section header on `EncryptionPage` to share ciphertexts or decrypted text directly to mobile devices without network connectivity.
-  - Added QR code sharing across all cryptographic key dialogs: AES symmetric keys, RSA public/private keys, ML-KEM (Kyber) public keys and negotiated shared secrets, and ML-DSA (Dilithium) verification keys.
-  - Unified all QR code displays under a contrast-isolated, auto-sizing `QrShareDialog` with payload density advisories and oversized payload protections.
+- **Air-Gapped QR Code Sharing (Public Keys & Ciphertexts Only)**:
+  - Added QR code sharing strictly for public keys (RSA public keys, ML-KEM encapsulation keys, and ML-DSA verification keys) and encrypt-mode ciphertexts.
+  - Omitted QR code display for private/secret credentials (RSA private keys, ML-KEM secret keys, ML-DSA secret keys, AES symmetric keys, and negotiated shared secrets) as a defensive measure against optical exfiltration until multiplatform biometric/app lock gating is available.
+  - Restricted main screen QR export to encrypt-mode ciphertext only, preventing visual exposure of decrypted plaintext.
+  - Implemented type-safe `QrPayloadKind` (`publicKey`, `ciphertext`, `obfuscationMap`) in `QrShareDialog` with automatic size limits ("Too large for a QR code. Use Copy."), density warnings (> 1,200 chars), and obfuscation map security advisories.
 - **Desktop Keyboard Shortcuts**:
   - `Ctrl+Enter` / `Cmd+Enter`: Trigger encryption or decryption processing.
   - `Ctrl+M` / `Cmd+M`: Quickly toggle between Encrypt and Decrypt modes.

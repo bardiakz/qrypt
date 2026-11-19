@@ -203,6 +203,7 @@ class MlDsaKeyManagementDialog extends ConsumerWidget {
                         context: context,
                         title: 'ML-DSA Public Key: ${keyPair.name}',
                         data: base64Encode(keyPair.publicKey),
+                        kind: QrPayloadKind.publicKey,
                         subtitle: 'Share this verification key with recipients',
                         primaryColor: primaryColor,
                       );
@@ -213,29 +214,9 @@ class MlDsaKeyManagementDialog extends ConsumerWidget {
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.publicKey)),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Secret Key:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.qr_code_2, size: 20),
-                    tooltip: 'Show Secret Key QR',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      showQrShareDialog(
-                        context: context,
-                        title: 'ML-DSA Secret Key: ${keyPair.name}',
-                        data: base64Encode(keyPair.secretKey),
-                        subtitle: 'Keep this signing key secret',
-                        primaryColor: primaryColor,
-                        isSensitive: true,
-                      );
-                    },
-                  ),
-                ],
+              const Text(
+                'Secret Key:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SelectableText(base64Encode(keyPair.secretKey)),
