@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/kem_key_pair.dart';
+import '../../../models/kyber_models.dart';
 import '../../../providers/kem_providers.dart';
 import '../../../resources/constants.dart';
 import 'create_kem_key_dialog.dart';
@@ -101,7 +102,7 @@ class _KemKeySelectionDialogState extends ConsumerState<KemKeySelectionDialog> {
                                     ),
                                   ),
                                   Text(
-                                    'Created: ${_formatDate(keyPair.createdAt)}',
+                                    '${keyPair.algorithm ?? MLKemKeySizeExtension.fromPublicKeyLength(keyPair.publicKey.length)?.displayName ?? "ML-KEM-768"} • Created: ${_formatDate(keyPair.createdAt)}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],

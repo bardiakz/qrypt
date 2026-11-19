@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
+import 'package:qrypt/models/kyber_models.dart';
 
 import '../../../providers/kem_providers.dart';
 import '../qr/qr_share_dialog.dart';
@@ -51,11 +52,14 @@ class KemKeyManagementDialog extends ConsumerWidget {
                     itemCount: keyPairs.length,
                     itemBuilder: (context, index) {
                       final keyPair = keyPairs[index];
+                      final alg = keyPair.algorithm ??
+                          MLKemKeySizeExtension.fromPublicKeyLength(keyPair.publicKey.length)?.displayName ??
+                          'ML-KEM-768';
                       return Card(
                         child: ListTile(
                           title: Text(keyPair.name),
                           subtitle: Text(
-                            'Created: ${keyPair.createdAt.toString().split('.')[0]}',
+                            '$alg • Created: ${keyPair.createdAt.toString().split('.')[0]}',
                           ),
                           trailing: PopupMenuButton(
                             itemBuilder: (context) => [

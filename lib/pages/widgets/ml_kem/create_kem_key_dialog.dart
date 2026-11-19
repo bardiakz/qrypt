@@ -6,6 +6,7 @@ import 'package:oqs/oqs.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../models/kem_key_pair.dart';
+import '../../../models/kyber_models.dart';
 import '../../../providers/kem_providers.dart';
 
 class CreateKemKeyDialog extends ConsumerStatefulWidget {
@@ -23,6 +24,7 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
   final _privateKeyController = TextEditingController();
   bool _isGenerating = false;
   bool _useManualInput = false;
+  MLKemKeySize _selectedKeySize = MLKemKeySize.kem768;
 
   @override
   void dispose() {
@@ -47,6 +49,31 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
                 hintText: 'Enter a name for this key pair',
               ),
             ),
+            if (!_useManualInput) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<MLKemKeySize>(
+                initialValue: _selectedKeySize,
+                decoration: const InputDecoration(
+                  labelText: 'Key Size',
+                  helperText: 'ML-KEM-768 is recommended for general post-quantum security',
+                ),
+                items: MLKemKeySize.values.map((size) {
+                  return DropdownMenuItem<MLKemKeySize>(
+                    value: size,
+                    child: Text(
+                      '${size.displayName}${size == MLKemKeySize.kem768 ? ' (Recommended)' : ''}',
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedKeySize = value;
+                    });
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -139,17 +166,24 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
           return;
         }
 
+        final pubBytes = base64Decode(_publicKeyController.text.trim());
+        final secBytes = base64Decode(_privateKeyController.text.trim());
+        final detectedSize = MLKemKeySizeExtension.fromPublicKeyLength(pubBytes.length) ??
+            MLKemKeySizeExtension.fromSecretKeyLength(secBytes.length);
+        final detectedAlg = detectedSize?.displayName ?? 'ML-KEM-768';
+
         KEMKeyPair kp = KEMKeyPair(
-          publicKey: base64Decode(_publicKeyController.text.trim()),
-          secretKey: base64Decode(_privateKeyController.text.trim()),
+          publicKey: pubBytes,
+          secretKey: secBytes,
         );
-        if (await service.validateKeyPair(kp)) {
+        final isValid = await service.validateKeyPair(kp, algorithm: detectedAlg);
+        if (!isValid) {
           setState(() {
             _isGenerating = false;
           });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Invalid key pair')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid key pair - keys do not work together')),
+          );
           return;
         }
 
@@ -158,13 +192,17 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
           name: _nameController.text.trim(),
           kemKeyPair: kp,
           createdAt: DateTime.now(),
+          algorithm: detectedAlg,
         );
 
         // Save manually created key pair
         await service.saveKeyPair(keyPair);
       } else {
-        // For generation, generateKeyPair() already saves it internally
-        keyPair = await service.generateKeyPair(_nameController.text.trim());
+        // For generation, generateKeyPair() saves it internally with the chosen algorithm
+        keyPair = await service.generateKeyPair(
+          _nameController.text.trim(),
+          algorithm: _selectedKeySize.displayName,
+        );
       }
 
       // Invalidate the provider to update the UI
@@ -174,7 +212,7 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Key pair "${keyPair.name}" created successfully'),
+            content: Text('Key pair "${keyPair.name}" (${keyPair.algorithm ?? _selectedKeySize.displayName}) created successfully'),
           ),
         );
       }

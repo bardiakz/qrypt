@@ -8,6 +8,7 @@ import 'package:qrypt/models/aes_key.dart';
 import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
+import 'package:qrypt/models/kyber_models.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
 import 'package:qrypt/resources/global_resources.dart';
@@ -60,6 +61,32 @@ void main() {
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
       expect(senderSharedSecretHex.length, equals(64));
+    });
+
+    test('KemKeyService generates and validates ML-KEM-512, ML-KEM-768, and ML-KEM-1024', () async {
+      for (final size in MLKemKeySize.values) {
+        final keyPair = await kemService.generateKeyPair(
+          'Key_${size.displayName}',
+          algorithm: size.displayName,
+        );
+        expect(keyPair.algorithm, equals(size.displayName));
+
+        final isValid = await kemService.validateKeyPair(keyPair.kemKeyPair);
+        expect(isValid, isTrue);
+
+        final expectedSizes = kemService.getAlgorithmInfo();
+        // Check size according to NIST spec
+        if (size == MLKemKeySize.kem512) {
+          expect(keyPair.publicKey.length, equals(800));
+          expect(keyPair.secretKey.length, equals(1632));
+        } else if (size == MLKemKeySize.kem768) {
+          expect(keyPair.publicKey.length, equals(1184));
+          expect(keyPair.secretKey.length, equals(2400));
+        } else if (size == MLKemKeySize.kem1024) {
+          expect(keyPair.publicKey.length, equals(1568));
+          expect(keyPair.secretKey.length, equals(3168));
+        }
+      }
     });
 
     test('validateAesKey accepts 44-char Base64 and 64-char Hex 256-bit keys', () {
@@ -186,5 +213,70 @@ void main() {
         expect(aesDecrypted.text, equals(message));
       });
     }
+
+    test('ML-KEM multi-size roundtrip and auto-detection (512, 768, 1024)', () async {
+      for (final size in MLKemKeySize.values) {
+        // 1. Recipient generates keys of specific size
+        final recipientKeys = await kemService.generateKeyPair(
+          'Bob_${size.displayName}',
+          algorithm: size.displayName,
+        );
+        final recipientPubKeyBase64 = base64.encode(recipientKeys.publicKey);
+
+        // 2. Sender encapsulates using recipient public key (auto-detects size)
+        final senderQ = Qrypt.withKem(
+          text: '',
+          obfuscation: ObfuscationMethod.none,
+          sign: SignMethod.none,
+          useTag: true,
+          kemReceiverPublicKey: recipientPubKeyBase64,
+        );
+
+        final processedSender = await ih.handleProcess(senderQ);
+
+        expect(processedSender.kemSharedSecret, isNotNull);
+        expect(processedSender.kemSharedSecret!.length, equals(32));
+        expect(processedSender.ciphertext, isNotNull);
+
+        // Verify NIST ciphertext sizes
+        if (size == MLKemKeySize.kem512) {
+          expect(processedSender.ciphertext!.length, equals(768));
+        } else if (size == MLKemKeySize.kem768) {
+          expect(processedSender.ciphertext!.length, equals(1088));
+        } else if (size == MLKemKeySize.kem1024) {
+          expect(processedSender.ciphertext!.length, equals(1568));
+        }
+
+        // 3. Recipient decapsulates with matching keypair
+        final receiverQ = Qrypt.autoDecrypt(text: processedSender.text);
+        receiverQ.kemKeyPair = recipientKeys;
+
+        final processedReceiver = await ih.handleDeProcess(null, receiverQ, true);
+        expect(processedReceiver.kemSharedSecret, equals(processedSender.kemSharedSecret));
+      }
+    });
+
+    test('ML-KEM decapsulation fails fast on parameter size mismatch', () async {
+      // Create 512 ciphertext
+      final keys512 = await kemService.generateKeyPair('Key512', algorithm: 'ML-KEM-512');
+      final senderQ = Qrypt.withKem(
+        text: '',
+        obfuscation: ObfuscationMethod.none,
+        sign: SignMethod.none,
+        useTag: true,
+        kemReceiverPublicKey: base64.encode(keys512.publicKey),
+      );
+      final processedSender = await ih.handleProcess(senderQ);
+
+      // Attempt to decapsulate 512 ciphertext using 768 key
+      final keys768 = await kemService.generateKeyPair('Key768', algorithm: 'ML-KEM-768');
+      final receiverQ = Qrypt.autoDecrypt(text: processedSender.text);
+      receiverQ.kemKeyPair = keys768;
+
+      expect(
+        () => ih.handleDeProcess(null, receiverQ, true),
+        throwsA(isA<Exception>()),
+      );
+    });
   });
 }

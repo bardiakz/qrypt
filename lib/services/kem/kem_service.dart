@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:oqs/oqs.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
+import 'package:qrypt/models/kyber_models.dart';
 import 'dart:convert';
 
 import 'kem_key_storage_service.dart';
@@ -76,17 +77,29 @@ class KemKeyService {
 
   bool _isGenerating = false;
 
-  /// Generates a new ML-KEM key pair with the specified name
+  /// Generates a new ML-KEM key pair with the specified name and algorithm
   Future<QryptKEMKeyPair> generateKeyPair(
     String name, {
     String? description,
+    String? algorithm,
   }) async {
     if (_isGenerating) {
       throw Exception('Key generation already in progress');
     }
 
-    if (_kem == null) {
-      throw Exception('KEM not initialized');
+    final targetAlgorithm = algorithm ?? _algorithm;
+    KEM? kemInstance;
+    bool needsDispose = false;
+
+    if (targetAlgorithm == _algorithm && _kem != null) {
+      kemInstance = _kem;
+    } else {
+      kemInstance = KEM.create(targetAlgorithm);
+      needsDispose = true;
+    }
+
+    if (kemInstance == null) {
+      throw Exception('KEM not initialized for algorithm $targetAlgorithm');
     }
 
     try {
@@ -98,14 +111,14 @@ class KemKeyService {
       }
 
       // Generate the KEM key pair using OQS
-      final kemKeyPair = _kem!.generateKeyPair();
+      final kemKeyPair = kemInstance.generateKeyPair();
 
       // Create QryptKEMKeyPair with metadata
       final qryptKeyPair = QryptKEMKeyPair.create(
         name: name,
         kemKeyPair: kemKeyPair,
         description: description,
-        algorithm: _algorithm,
+        algorithm: targetAlgorithm,
       );
 
       await saveKeyPair(qryptKeyPair);
@@ -115,6 +128,9 @@ class KemKeyService {
       rethrow;
     } finally {
       _isGenerating = false;
+      if (needsDispose) {
+        kemInstance.dispose();
+      }
     }
   }
 
@@ -157,43 +173,79 @@ class KemKeyService {
     }
   }
 
-  /// Validates that a KEM key pair works by testing encapsulation/decapsulation
-  Future<bool> validateKeyPair(KEMKeyPair keyPair) async {
-    if (_kem == null) return false;
+  /// Validates that a KEM key pair works by testing encapsulation/decapsulation.
+  /// Automatically detects or adapts to ML-KEM-512, ML-KEM-768, or ML-KEM-1024.
+  Future<bool> validateKeyPair(KEMKeyPair keyPair, {String? algorithm}) async {
+    final targetAlgorithm = algorithm ??
+        MLKemKeySizeExtension.fromPublicKeyLength(keyPair.publicKey.length)?.displayName ??
+        _algorithm;
+
+    KEM? kemInstance;
+    bool needsDispose = false;
+
+    if (targetAlgorithm == _algorithm && _kem != null) {
+      kemInstance = _kem;
+    } else {
+      kemInstance = KEM.create(targetAlgorithm);
+      needsDispose = true;
+    }
+
+    if (kemInstance == null) return false;
 
     try {
       // Test encapsulation with the public key
-      // Based on your main() example, encapsulate returns an object with .ciphertext and .sharedSecret
-      final KEMEncapsulationResult encapsulationResult = _kem!.encapsulate(
+      final KEMEncapsulationResult encapsulationResult = kemInstance.encapsulate(
         keyPair.publicKey,
       );
 
       // Test decapsulation with the secret key
-      final decapsulatedSecret = _kem!.decapsulate(
+      final decapsulatedSecret = kemInstance.decapsulate(
         encapsulationResult.ciphertext,
         keyPair.secretKey,
       );
 
-      // Verify the shared secrets match (using your _listsEqual function)
+      // Verify the shared secrets match
       return _listsEqual(encapsulationResult.sharedSecret, decapsulatedSecret);
     } catch (e) {
       debugPrint('Key validation error: $e');
       return false;
+    } finally {
+      if (needsDispose) {
+        kemInstance.dispose();
+      }
     }
   }
 
-  /// Encapsulates a shared secret using a public key
-  /// Returns the result from the OQS encapsulate method directly
+  /// Encapsulates a shared secret using a public key.
+  /// Auto-detects the matching ML-KEM algorithm from public key length (800, 1184, 1568 bytes).
   dynamic encapsulateWithPublicKey(Uint8List publicKey) {
-    if (_kem == null) {
-      throw Exception('KEM not initialized');
+    final targetAlgorithm =
+        MLKemKeySizeExtension.fromPublicKeyLength(publicKey.length)?.displayName ??
+        _algorithm;
+
+    KEM? kemInstance;
+    bool needsDispose = false;
+
+    if (targetAlgorithm == _algorithm && _kem != null) {
+      kemInstance = _kem;
+    } else {
+      kemInstance = KEM.create(targetAlgorithm);
+      needsDispose = true;
+    }
+
+    if (kemInstance == null) {
+      throw Exception('KEM not initialized for algorithm $targetAlgorithm');
     }
 
     try {
-      return _kem!.encapsulate(publicKey);
+      return kemInstance.encapsulate(publicKey);
     } catch (e) {
       debugPrint('Encapsulation error: $e');
       rethrow;
+    } finally {
+      if (needsDispose) {
+        kemInstance.dispose();
+      }
     }
   }
 
@@ -211,20 +263,41 @@ class KemKeyService {
     }
   }
 
-  /// Decapsulates a shared secret using a secret key
+  /// Decapsulates a shared secret using a secret key.
+  /// Auto-detects the matching ML-KEM algorithm from secret key length (1632, 2400, 3168 bytes)
+  /// or ciphertext length (768, 1088, 1568 bytes).
   Uint8List decapsulateWithSecretKey(
     Uint8List ciphertext,
     Uint8List secretKey,
   ) {
-    if (_kem == null) {
-      throw Exception('KEM not initialized');
+    final targetAlgorithm =
+        MLKemKeySizeExtension.fromSecretKeyLength(secretKey.length)?.displayName ??
+        MLKemKeySizeExtension.fromCiphertextLength(ciphertext.length)?.displayName ??
+        _algorithm;
+
+    KEM? kemInstance;
+    bool needsDispose = false;
+
+    if (targetAlgorithm == _algorithm && _kem != null) {
+      kemInstance = _kem;
+    } else {
+      kemInstance = KEM.create(targetAlgorithm);
+      needsDispose = true;
+    }
+
+    if (kemInstance == null) {
+      throw Exception('KEM not initialized for algorithm $targetAlgorithm');
     }
 
     try {
-      return _kem!.decapsulate(ciphertext, secretKey);
+      return kemInstance.decapsulate(ciphertext, secretKey);
     } catch (e) {
       debugPrint('Decapsulation error: $e');
       rethrow;
+    } finally {
+      if (needsDispose) {
+        kemInstance.dispose();
+      }
     }
   }
 

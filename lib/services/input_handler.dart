@@ -259,6 +259,15 @@ class InputHandler {
           throw FormatException('Invalid Base64 format for ML-KEM public key: $e');
         }
 
+        if (recipientPublicKeyBytes.length != 800 &&
+            recipientPublicKeyBytes.length != 1184 &&
+            recipientPublicKeyBytes.length != 1568) {
+          throw FormatException(
+            'Invalid ML-KEM public key length (${recipientPublicKeyBytes.length} bytes). '
+            'Expected 800 (ML-KEM-512), 1184 (ML-KEM-768), or 1568 (ML-KEM-1024) bytes.',
+          );
+        }
+
         final encResult = kem.encapsulateWithPublicKey(recipientPublicKeyBytes);
         qrypt.ciphertext = encResult.ciphertext;
         qrypt.kemSharedSecret = encResult.sharedSecret;
@@ -1215,6 +1224,18 @@ class InputHandler {
             } catch (e) {
               throw FormatException('Invalid Base64 format in ML-KEM decapsulation: $e');
             }
+          }
+
+          final skLength = qrypt.kemKeyPair!.secretKey.length;
+          final ctLength = ciphertextBytes.length;
+          final bool isMismatch = (ctLength == 768 && skLength != 1632) ||
+              (ctLength == 1088 && skLength != 2400) ||
+              (ctLength == 1568 && skLength != 3168);
+          if (isMismatch) {
+            throw FormatException(
+              'Key mismatch: Selected key "${qrypt.kemKeyPair!.name}" (${qrypt.kemKeyPair!.algorithm ?? "$skLength-byte key"}) '
+              'does not match the ciphertext parameter set ($ctLength bytes).',
+            );
           }
 
           final KemKeyService kem = KemKeyService();
