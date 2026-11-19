@@ -78,21 +78,28 @@ class QrShareDialog extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final qrSize = min(240.0, min(screenWidth * 0.65, screenHeight * 0.35));
 
-    // Pre-validate QR data to catch input-too-long and unsupported size errors
-    final validationResult = data.isEmpty
-        ? null
-        : QrValidator.validate(
-            data: data,
-            version: QrVersions.auto,
-            errorCorrectionLevel: QrErrorCorrectLevel.M,
-          );
+    QrCode? validQrCode;
+    bool isTooLarge = false;
 
-    final bool isTooLarge = data.length > 2900 ||
-        (validationResult != null &&
-            validationResult.status == QrValidationStatus.error);
+    if (data.isNotEmpty) {
+      try {
+        final qr = QrCode.fromData(
+          data: data,
+          errorCorrectLevel: QrErrorCorrectLevel.M,
+        );
+        // Evaluating QrImage(qr) eagerly forces generation and verification
+        // of QR matrix data. If data exceeds QR capacity for Level M,
+        // this throws InputTooLongException before rendering.
+        QrImage(qr);
+        validQrCode = qr;
+      } catch (_) {
+        isTooLarge = true;
+        validQrCode = null;
+      }
+    }
 
     final bool isDense =
-        data.length > scanReliabilityThreshold && !isTooLarge && data.isNotEmpty;
+        !isTooLarge && validQrCode != null && data.length > scanReliabilityThreshold;
 
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -175,7 +182,7 @@ class QrShareDialog extends StatelessWidget {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-              ] else if (isTooLarge) ...[
+              ] else if (isTooLarge || validQrCode == null) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -225,11 +232,9 @@ class QrShareDialog extends StatelessWidget {
                   child: SizedBox(
                     width: qrSize,
                     height: qrSize,
-                    child: QrImageView(
-                      data: data,
-                      version: QrVersions.auto,
+                    child: QrImageView.withQr(
+                      qr: validQrCode,
                       size: qrSize,
-                      errorCorrectionLevel: QrErrorCorrectLevel.M,
                       gapless: true,
                       backgroundColor: Colors.white,
                       eyeStyle: const QrEyeStyle(

@@ -109,6 +109,37 @@ void main() {
       expect(find.byType(QrImageView), findsNothing);
     });
 
+    testWidgets('displays "Too large for a QR code. Use Copy." for 2604-char ML-DSA-65 public key without crashing or showing dense warning', (
+      WidgetTester tester,
+    ) async {
+      // 2604 chars is the exact size of an ML-DSA-65 Base64 public key (20,852 bits > 18,672 bits Level M limit).
+      final mlDsaPublicKey = 'A' * 2604;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: QrShareDialog(
+              title: 'ML-DSA Public Key: ds1',
+              subtitle: 'Share this verification key with recipients',
+              data: mlDsaPublicKey,
+              kind: QrPayloadKind.publicKey,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // No crash/red screen; displays fallback card cleanly
+      expect(
+        find.text('Too large for a QR code. Use Copy.'),
+        findsOneWidget,
+      );
+      expect(find.byType(QrImageView), findsNothing);
+      expect(find.text('2604 characters'), findsOneWidget);
+      // Dense warning must NOT be shown when QR code cannot be rendered
+      expect(find.textContaining('Dense QR code'), findsNothing);
+      expect(find.text('Copy to Clipboard'), findsOneWidget);
+    });
+
     testWidgets('displays dense QR warning when data is between 1201 and 2900 chars', (
       WidgetTester tester,
     ) async {
