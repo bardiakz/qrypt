@@ -75,9 +75,14 @@ class Compression {
     final conversionSink = decoder.startChunkedConversion(boundedSink);
     bool isClosed = false;
     try {
-      conversionSink.add(data);
-      isClosed = true;
-      conversionSink.close();
+      if (conversionSink is ByteConversionSink) {
+        conversionSink.addSlice(data, 0, data.length, true);
+        isClosed = true;
+      } else {
+        conversionSink.add(data);
+        isClosed = true;
+        conversionSink.close();
+      }
       return boundedSink.takeBytes();
     } finally {
       if (!isClosed) {
@@ -105,17 +110,20 @@ class Compression {
       execDir,
     ];
 
-    final String expectedLib = Platform.isWindows
-        ? 'eslz4-win64.dll'
+    final List<String> expectedLibs = Platform.isWindows
+        ? const ['eslz4-win64.dll', 'esbrotli-win64.dll', 'eszstd-win64.dll']
         : Platform.isMacOS
-            ? 'eslz4-mac64.dylib'
-            : 'eslz4-linux64.so';
+            ? const ['eslz4-mac64.dylib', 'esbrotli-mac64.dylib', 'eszstd-mac64.dylib']
+            : const ['eslz4-linux64.so', 'esbrotli-linux64.so', 'eszstd-linux64.so'];
 
     final String basePath = candidatePaths.firstWhere(
-      (dir) => File(path.join(dir, expectedLib)).existsSync(),
+      (dir) => expectedLibs.every((lib) => File(path.join(dir, lib)).existsSync()),
       orElse: () => candidatePaths.firstWhere(
-        (dir) => Directory(dir).existsSync(),
-        orElse: () => candidatePaths.first,
+        (dir) => File(path.join(dir, expectedLibs.first)).existsSync(),
+        orElse: () => candidatePaths.firstWhere(
+          (dir) => Directory(dir).existsSync(),
+          orElse: () => candidatePaths.first,
+        ),
       ),
     );
 

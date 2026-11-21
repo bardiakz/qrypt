@@ -310,176 +310,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _showGenerateRandomMapDialog(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final existingProfiles = CustomMapStorageService.instance.profiles;
-
-    String defaultNameForPool(String pool) {
-      final baseName = switch (pool) {
-        'en-words' => 'English Words Map',
-        'fa-words' => 'Persian Words Map',
-        'latin' => 'Latin Chars Map',
-        'persian' => 'Persian Chars Map',
-        'cyrillic' => 'Cyrillic Chars Map',
-        'greek' => 'Greek Chars Map',
-        'hebrew' => 'Hebrew Chars Map',
-        'armenian' => 'Armenian Chars Map',
-        'georgian' => 'Georgian Chars Map',
-        'hiragana' => 'Hiragana Chars Map',
-        _ => 'Custom Map',
-      };
-      int count = 1;
-      while (existingProfiles.any((p) => p.name == '$baseName $count')) {
-        count++;
-      }
-      return '$baseName $count';
-    }
-
-    String selectedPool = 'en-words';
-    final nameController = TextEditingController(text: defaultNameForPool(selectedPool));
-    String? errorText;
-    bool isGenerating = false;
-    bool isCustomName = false;
-
-    final poolOptions = const [
-      ('en-words', 'English Words (282 words)'),
-      ('fa-words', 'Persian Words (220 words)'),
-      ('latin', 'Latin Characters (26 chars)'),
-      ('persian', 'Persian Characters (32 chars)'),
-      ('cyrillic', 'Cyrillic Characters (40 chars)'),
-      ('greek', 'Greek Characters (24 chars)'),
-      ('hebrew', 'Hebrew Characters (27 chars)'),
-      ('armenian', 'Armenian Characters (38 chars)'),
-      ('georgian', 'Georgian Characters (33 chars)'),
-      ('hiragana', 'Hiragana Characters (58 chars)'),
-    ];
-
-    await showDialog(
+    final profile = await showDialog<CustomObfuscationProfile>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
-              title: const Text('Generate Random Map'),
-              content: SizedBox(
-                width: 440,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Generates a fresh, mathematically validated 17-key map using cryptographically secure randomness.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nameController,
-                      onChanged: (val) {
-                        isCustomName = val.trim().isNotEmpty;
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'Map Name',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: selectedPool,
-                      decoration: const InputDecoration(
-                        labelText: 'Character / Word Pool',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: poolOptions.map((opt) {
-                        return DropdownMenuItem(
-                          value: opt.$1,
-                          child: Text(opt.$2),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() {
-                            selectedPool = val;
-                            if (!isCustomName) {
-                              nameController.text = defaultNameForPool(val);
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    if (errorText != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        errorText!,
-                        style: TextStyle(
-                          color: Theme.of(dialogContext).colorScheme.error,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isGenerating
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: isGenerating
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            isGenerating = true;
-                            errorText = null;
-                          });
-                          try {
-                            final map = V2MapGenerator.generate(selectedPool);
-                            final name = nameController.text.trim().isEmpty
-                                ? defaultNameForPool(selectedPool)
-                                : nameController.text.trim();
-                            await CustomMapStorageService.instance.saveMap(
-                              name: name,
-                              map: map,
-                            );
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop();
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Custom map "$name" generated and saved',
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (dialogContext.mounted) {
-                              setDialogState(() {
-                                isGenerating = false;
-                                errorText = e.toString()
-                                    .replaceFirst('Exception: ', '')
-                                    .replaceFirst('Bad state: ', '');
-                              });
-                            }
-                          }
-                        },
-                  child: isGenerating
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Generate & Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => const _GenerateRandomMapDialog(),
     );
-
-    nameController.dispose();
-    if (mounted) setState(() {});
+    if (profile != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Custom map "${profile.name}" generated and saved'),
+        ),
+      );
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _showShareMapDialog(
@@ -500,125 +342,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _showImportMapDialog(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final controller = TextEditingController();
-    String? errorText;
-    bool isImporting = false;
-
-    await showDialog(
+    final imported = await showDialog<List<CustomObfuscationProfile>>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
-              title: const Text('Import Custom Map'),
-              content: SizedBox(
-                width: 440,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Paste the JSON map or bundle below to import it into your saved maps.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: controller,
-                      maxLines: 6,
-                      decoration: const InputDecoration(
-                        hintText: '{"v":1,"n":"...","m":[...]}',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        icon: const Icon(Icons.paste, size: 16),
-                        label: const Text('Paste from Clipboard'),
-                        onPressed: () async {
-                          final data = await Clipboard.getData('text/plain');
-                          if (data != null && data.text != null) {
-                            controller.text = data.text!;
-                          }
-                        },
-                      ),
-                    ),
-                    if (errorText != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        errorText!,
-                        style: TextStyle(
-                          color: Theme.of(dialogContext).colorScheme.error,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isImporting
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: isImporting
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            isImporting = true;
-                            errorText = null;
-                          });
-                          try {
-                            final imported = await CustomMapStorageService
-                                .instance
-                                .importAllMaps(controller.text.trim());
-                            if (imported.isEmpty) {
-                              throw const FormatException(
-                                'No valid maps found to import',
-                              );
-                            }
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop();
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Successfully imported ${imported.length} custom map(s)',
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (dialogContext.mounted) {
-                              setDialogState(() {
-                                isImporting = false;
-                                errorText = e.toString()
-                                    .replaceFirst('Exception: ', '')
-                                    .replaceFirst('Bad state: ', '');
-                              });
-                            }
-                          }
-                        },
-                  child: isImporting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Import'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => const _ImportCustomMapDialog(),
     );
-
-    controller.dispose();
-    if (mounted) setState(() {});
+    if (imported != null && imported.isNotEmpty && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Successfully imported ${imported.length} custom map(s)'),
+        ),
+      );
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _exportAllMaps(BuildContext context) async {
@@ -864,5 +600,308 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ).showSnackBar(SnackBar(content: Text('Error opening URL: $e')));
       }
     }
+  }
+}
+
+class _GenerateRandomMapDialog extends StatefulWidget {
+  const _GenerateRandomMapDialog();
+
+  @override
+  State<_GenerateRandomMapDialog> createState() =>
+      _GenerateRandomMapDialogState();
+}
+
+class _GenerateRandomMapDialogState extends State<_GenerateRandomMapDialog> {
+  static const _poolOptions = [
+    ('en-words', 'English Words (282 words)'),
+    ('fa-words', 'Persian Words (220 words)'),
+    ('latin', 'Latin Characters (26 chars)'),
+    ('persian', 'Persian Characters (32 chars)'),
+    ('cyrillic', 'Cyrillic Characters (40 chars)'),
+    ('greek', 'Greek Characters (24 chars)'),
+    ('hebrew', 'Hebrew Characters (27 chars)'),
+    ('armenian', 'Armenian Characters (38 chars)'),
+    ('georgian', 'Georgian Characters (33 chars)'),
+    ('hiragana', 'Hiragana Characters (58 chars)'),
+  ];
+
+  late final TextEditingController _nameController;
+  String _selectedPool = 'en-words';
+  String? _errorText;
+  bool _isGenerating = false;
+  bool _isCustomName = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: _defaultNameForPool(_selectedPool),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  String _defaultNameForPool(String pool) {
+    final existingProfiles = CustomMapStorageService.instance.profiles;
+    final baseName = switch (pool) {
+      'en-words' => 'English Words Map',
+      'fa-words' => 'Persian Words Map',
+      'latin' => 'Latin Chars Map',
+      'persian' => 'Persian Chars Map',
+      'cyrillic' => 'Cyrillic Chars Map',
+      'greek' => 'Greek Chars Map',
+      'hebrew' => 'Hebrew Chars Map',
+      'armenian' => 'Armenian Chars Map',
+      'georgian' => 'Georgian Chars Map',
+      'hiragana' => 'Hiragana Chars Map',
+      _ => 'Custom Map',
+    };
+    int count = 1;
+    while (existingProfiles.any((p) => p.name == '$baseName $count')) {
+      count++;
+    }
+    return '$baseName $count';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Generate Random Map'),
+      content: SizedBox(
+        width: 440,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Generates a fresh, mathematically validated 17-key map using cryptographically secure randomness.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _nameController,
+              onChanged: (val) {
+                _isCustomName = val.trim().isNotEmpty;
+              },
+              decoration: const InputDecoration(
+                labelText: 'Map Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedPool,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Character / Word Pool',
+                border: OutlineInputBorder(),
+              ),
+              items: _poolOptions.map((opt) {
+                return DropdownMenuItem<String>(
+                  value: opt.$1,
+                  child: Text(
+                    opt.$2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _selectedPool = val;
+                    if (!_isCustomName) {
+                      _nameController.text = _defaultNameForPool(val);
+                    }
+                  });
+                }
+              },
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorText!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isGenerating ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isGenerating
+              ? null
+              : () async {
+                  setState(() {
+                    _isGenerating = true;
+                    _errorText = null;
+                  });
+                  try {
+                    final map = V2MapGenerator.generate(_selectedPool);
+                    final name = _nameController.text.trim().isEmpty
+                        ? _defaultNameForPool(_selectedPool)
+                        : _nameController.text.trim();
+                    final profile =
+                        await CustomMapStorageService.instance.saveMap(
+                      name: name,
+                      map: map,
+                    );
+                    if (mounted) {
+                      Navigator.of(context).pop(profile);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isGenerating = false;
+                        _errorText = e
+                            .toString()
+                            .replaceFirst('Exception: ', '')
+                            .replaceFirst('Bad state: ', '');
+                      });
+                    }
+                  }
+                },
+          child: _isGenerating
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Generate & Save'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ImportCustomMapDialog extends StatefulWidget {
+  const _ImportCustomMapDialog();
+
+  @override
+  State<_ImportCustomMapDialog> createState() => _ImportCustomMapDialogState();
+}
+
+class _ImportCustomMapDialogState extends State<_ImportCustomMapDialog> {
+  late final TextEditingController _controller;
+  String? _errorText;
+  bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Import Custom Map'),
+      content: SizedBox(
+        width: 440,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Paste the JSON map or bundle below to import it into your saved maps.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                hintText: '{"v":1,"n":"...","m":[...]}',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.paste, size: 16),
+                label: const Text('Paste from Clipboard'),
+                onPressed: () async {
+                  final data = await Clipboard.getData('text/plain');
+                  if (data != null && data.text != null) {
+                    _controller.text = data.text!;
+                  }
+                },
+              ),
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _errorText!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isImporting ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isImporting
+              ? null
+              : () async {
+                  setState(() {
+                    _isImporting = true;
+                    _errorText = null;
+                  });
+                  try {
+                    final imported = await CustomMapStorageService.instance
+                        .importAllMaps(_controller.text.trim());
+                    if (imported.isEmpty) {
+                      throw const FormatException(
+                        'No valid maps found to import',
+                      );
+                    }
+                    if (mounted) {
+                      Navigator.of(context).pop(imported);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isImporting = false;
+                        _errorText = e
+                            .toString()
+                            .replaceFirst('Exception: ', '')
+                            .replaceFirst('Bad state: ', '');
+                      });
+                    }
+                  }
+                },
+          child: _isImporting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Import'),
+        ),
+      ],
+    );
   }
 }

@@ -23,6 +23,18 @@ void main() {
   });
 
   group('Compression & Decompression Hardening', () {
+    test('exact uncompressed meta-block streams with trailing 0x03 byte decode cleanly', () {
+      final sample14 = Uint8List.fromList(
+        [139, 4, 128, 104, 101, 105, 32, 102, 105, 120, 101, 100, 63, 3],
+      );
+      expect(utf8.decode(Compression.brotliDeCompress(sample14)), 'hei fixed?');
+
+      final sample15 = Uint8List.fromList(
+        [11, 5, 128, 98, 114, 111, 116, 108, 105, 32, 116, 101, 115, 116, 3],
+      );
+      expect(utf8.decode(Compression.brotliDeCompress(sample15)), 'brotli test');
+    });
+
     test('truncated brotli data throws FormatException', () {
       final validData = [
         139,

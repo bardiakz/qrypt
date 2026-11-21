@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.1] - 2026-11-21
+
+### Fixed
+- **Linux Desktop Brotli Symbol Collision**:
+  - Rebuilt `native_libs/esbrotli-linux64.so` as a unified forwarding library linked to `libbrotlidec.so.1`, `libbrotlienc.so.1`, and `libbrotlicommon.so.1`. This eliminates ELF symbol preemption and struct layout divergence with GTK3/FreeType on Linux, resolving the `FormatException: Failure to finish decoding` error during live-app decompression.
+- **Streaming Decompression Bounded Decoding**:
+  - Updated `_decodeBounded` in `lib/services/compression.dart` to use `conversionSink.addSlice(..., isLast: true)` without redundant double-close for `ByteConversionSink`.
+  - Placed `isClosed = true` safely after `addSlice` to ensure mid-stream exceptions (`DecompressionBombException`) correctly trigger native handle cleanup in `finally`.
+  - Hardened `Compression.setNativeLibPaths()` to require all three dynamic libraries (`eslz4`, `esbrotli`, `eszstd`) in candidate directories.
+- **Decompression vs UTF-8 Error Scope Separation**:
+  - Separated decompression and UTF-8 decoding into distinct try/catch blocks in `InputHandler.handleDeCompression`. Added contextual diagnostics distinguishing authenticated AEAD (AES-GCM) decoder failures from corrupted payload or key mismatches.
+- **Custom Map Dialog Lifecycle & Overflow**:
+  - Extracted `_GenerateRandomMapDialog`, `_ImportCustomMapDialog`, and `_ImportMapForPickerDialog` to dedicated `StatefulWidget`s, properly disposing controllers to fix `_dependents.isEmpty: is not true` and controller disposal assertions on route dismiss.
+  - Added `isExpanded: true` and text truncation to `DropdownButtonFormField` in `settings_page.dart` to eliminate horizontal `RenderFlex` overflows on long character pool names (e.g., `Hiragana Characters (58 chars)`).
+- **Decryption Input Sanitization**:
+  - Sanitized input text in `EncryptionPage._decrypt` with `.trim()` across both manual and tagged modes to prevent clipboard trailing whitespace and newlines from shifting token boundaries.
+
 ## [5.7.0] - 2026-11-19
 
 ### Added

@@ -1776,7 +1776,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     if (ref.read(isProcessingProvider)) return;
 
     // Input validation
-    if (_decryptTextController.text.trim().isEmpty) {
+    final cleanDecryptText = _decryptTextController.text.trim();
+    if (cleanDecryptText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter text to decrypt')),
       );
@@ -1826,7 +1827,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
       if (!autoDetectTag) {
         final manualQrypt = Qrypt.withTag(
-          text: _decryptTextController.text,
+          text: cleanDecryptText,
           encryption: selectedEncryption,
           obfuscation: selectedObfuscation,
           compression: selectedCompression,
@@ -1903,7 +1904,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           });
         }
       } else {
-        final autoQrypt = Qrypt.autoDecrypt(text: _decryptTextController.text);
+        final autoQrypt = Qrypt.autoDecrypt(text: cleanDecryptText);
         if (decryptKeyToUse.isNotEmpty) {
           autoQrypt.customKey = decryptKeyToUse;
           autoQrypt.useCustomKey = true;

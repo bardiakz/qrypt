@@ -1259,49 +1259,61 @@ class InputHandler {
   }
 
   Qrypt handleDeCompression(Qrypt qrypt) {
-    try {
-      switch (qrypt.getCompressionMethod()) {
-        case CompressionMethod.none:
-          try {
-            qrypt.text = utf8.decode(qrypt.deCompressedText);
-          } catch (e) {
-            if (kDebugMode) {
-              print('UTF8 decode error in decompression: $e');
-            }
-            qrypt.text = ''; // Fallback to empty on error
-          }
-          return qrypt;
-        case CompressionMethod.gZip:
-          qrypt.deCompressedText = Compression.gZipDeCompress(
-            qrypt.deCompressedText,
-          );
-          qrypt.text = utf8.decode(qrypt.deCompressedText);
-          return qrypt;
+    final compMethod = qrypt.getCompressionMethod();
+    final List<int> rawBytes;
 
-        case CompressionMethod.lZ4:
-          qrypt.deCompressedText = Compression.lz4DeCompress(
-            qrypt.deCompressedText,
-          );
-          qrypt.text = utf8.decode(qrypt.deCompressedText);
-          return qrypt;
-        case CompressionMethod.brotli:
-          qrypt.deCompressedText = Compression.brotliDeCompress(
-            qrypt.deCompressedText,
-          );
-          qrypt.text = utf8.decode(qrypt.deCompressedText);
-          return qrypt;
-        case CompressionMethod.zstd:
-          qrypt.deCompressedText = Compression.zstdDeCompress(
-            qrypt.deCompressedText,
-          );
-          qrypt.text = utf8.decode(qrypt.deCompressedText);
-          return qrypt;
-      }
+    try {
+      rawBytes = switch (compMethod) {
+        CompressionMethod.none => qrypt.deCompressedText,
+        CompressionMethod.gZip =>
+          Compression.gZipDeCompress(qrypt.deCompressedText),
+        CompressionMethod.lZ4 =>
+          Compression.lz4DeCompress(qrypt.deCompressedText),
+        CompressionMethod.brotli =>
+          Compression.brotliDeCompress(qrypt.deCompressedText),
+        CompressionMethod.zstd =>
+          Compression.zstdDeCompress(qrypt.deCompressedText),
+      };
     } on DecompressionBombException catch (e) {
       throw FormatException(
-        'Decompression aborted: Payload exceeds safety limit of ${(e.maxBytes / (1024 * 1024)).toStringAsFixed(0)} MB.',
+        'Decompression aborted: Payload exceeds safety limit of '
+        '${(e.maxBytes / (1024 * 1024)).toStringAsFixed(0)} MB.',
+      );
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          'Decompression failed (${compMethod.name}, '
+          '${qrypt.deCompressedText.length} input bytes): ${e.message}',
+        );
+      }
+      final isAuthenticated =
+          qrypt.getEncryptionMethod() == EncryptionMethod.aesGcm;
+      final hint = isAuthenticated
+          ? 'AES-GCM authentication succeeded, so the stream failed inside the ${compMethod.name} decoder.'
+          : 'The payload may be truncated, corrupted, or decrypted with the wrong key.';
+      throw FormatException(
+        'Decompression (${compMethod.name}) failed: ${e.message}. $hint',
       );
     }
+
+    qrypt.deCompressedText =
+        rawBytes is Uint8List ? rawBytes : Uint8List.fromList(rawBytes);
+
+    try {
+      qrypt.text = utf8.decode(qrypt.deCompressedText);
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        debugPrint('UTF-8 decode failed after ${compMethod.name} decompression: $e');
+      }
+      if (compMethod == CompressionMethod.none) {
+        qrypt.text = '';
+      } else {
+        throw FormatException(
+          'Decompressed bytes are not valid UTF-8: ${e.message}',
+        );
+      }
+    }
+    return qrypt;
   }
 
   Future<Qrypt> handleProcess(Qrypt qrypt) async {

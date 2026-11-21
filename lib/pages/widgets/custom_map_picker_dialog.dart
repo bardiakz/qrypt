@@ -22,66 +22,9 @@ Future<CustomObfuscationProfile?> showCustomMapPickerDialog(
           final profiles = storage.profiles;
 
           Future<void> openImportDialog() async {
-            final controller = TextEditingController();
-            String? error;
-
             final imported = await showDialog<CustomObfuscationProfile>(
               context: context,
-              builder: (ctx) {
-                return StatefulBuilder(
-                  builder: (ctx, setImportState) {
-                    return AlertDialog(
-                      title: const Text('Import Custom Map'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Paste the JSON representation of the custom map below.',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: controller,
-                            maxLines: 5,
-                            decoration: InputDecoration(
-                              hintText: '{"v":1,"n":"...","m":[...]}',
-                              border: const OutlineInputBorder(),
-                              errorText: error,
-                            ),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              final profile = await storage.importMap(
-                                controller.text.trim(),
-                              );
-                              if (ctx.mounted) {
-                                Navigator.of(ctx).pop(profile);
-                              }
-                            } catch (e) {
-                              if (ctx.mounted) {
-                                setImportState(() {
-                                  error = e.toString()
-                                      .replaceFirst('Exception: ', '')
-                                      .replaceFirst('Bad state: ', '');
-                                });
-                              }
-                            }
-                          },
-                          child: const Text('Import & Use'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+              builder: (ctx) => const _ImportMapForPickerDialog(),
             );
 
             if (imported != null) {
@@ -154,4 +97,96 @@ Future<CustomObfuscationProfile?> showCustomMapPickerDialog(
       );
     },
   );
+}
+
+class _ImportMapForPickerDialog extends StatefulWidget {
+  const _ImportMapForPickerDialog();
+
+  @override
+  State<_ImportMapForPickerDialog> createState() =>
+      _ImportMapForPickerDialogState();
+}
+
+class _ImportMapForPickerDialogState extends State<_ImportMapForPickerDialog> {
+  late final TextEditingController _controller;
+  String? _error;
+  bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Import Custom Map'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Paste the JSON representation of the custom map below.',
+            style: TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            maxLines: 5,
+            decoration: InputDecoration(
+              hintText: '{"v":1,"n":"...","m":[...]}',
+              border: const OutlineInputBorder(),
+              errorText: _error,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isImporting ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isImporting
+              ? null
+              : () async {
+                  setState(() {
+                    _isImporting = true;
+                    _error = null;
+                  });
+                  try {
+                    final profile = await CustomMapStorageService.instance
+                        .importMap(_controller.text.trim());
+                    if (mounted) {
+                      Navigator.of(context).pop(profile);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      setState(() {
+                        _isImporting = false;
+                        _error = e
+                            .toString()
+                            .replaceFirst('Exception: ', '')
+                            .replaceFirst('Bad state: ', '');
+                      });
+                    }
+                  }
+                },
+          child: _isImporting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Import & Use'),
+        ),
+      ],
+    );
+  }
 }
