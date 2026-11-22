@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.7.1] - 2026-11-21
 
 ### Fixed
-- **Linux Desktop Brotli Symbol Collision**:
-  - Rebuilt `native_libs/esbrotli-linux64.so` as a unified forwarding library linked to `libbrotlidec.so.1`, `libbrotlienc.so.1`, and `libbrotlicommon.so.1`. This eliminates ELF symbol preemption and struct layout divergence with GTK3/FreeType on Linux, resolving the `FormatException: Failure to finish decoding` error during live-app decompression.
+- **Linux Desktop Native Codec Isolation & Symbol Collision (`-Wl,-Bsymbolic`)**:
+  - Rebuilt Google Brotli `v1.2.1` statically into `native_libs/esbrotli-linux64.so` with `-Wl,-Bsymbolic`, eliminating ELF symbol preemption and struct layout divergence with host GTK3/FreeType libraries (`/lib64/libbrotlidec.so.1`).
+  - Rebuilt LZ4 `v1.9.4` (`eslz4-linux64.so`) and Zstandard `v1.5.6` (`eszstd-linux64.so`) statically with `-Wl,-Bsymbolic` to preemptively prevent collision risks on distros linking `liblz4.so.1` or `libzstd.so.1` via Mesa drivers, `libsystemd`, `gdk-pixbuf` (`libtiff`), or `libsecret`.
+  - Audited all native libraries: all `.so` binaries now declare `DT_SYMBOLIC`, depend only on `libc.so.6`/`libm.so.6`, and maintain a low GLIBC version floor (GLIBC 2.14 / 2.29).
+- **Desktop GTK Integration Testing**:
+  - Added `integration_test/desktop_codecs_test.dart` running in the real Linux desktop GTK runner (`flutter test integration_test -d linux`) verifying live end-to-end roundtrips for Brotli, LZ4, Zstd, ML-KEM, and ML-DSA.
 - **Streaming Decompression Bounded Decoding**:
   - Updated `_decodeBounded` in `lib/services/compression.dart` to use `conversionSink.addSlice(..., isLast: true)` without redundant double-close for `ByteConversionSink`.
   - Placed `isClosed = true` safely after `addSlice` to ensure mid-stream exceptions (`DecompressionBombException`) correctly trigger native handle cleanup in `finally`.
