@@ -1,4 +1,4 @@
-import 'package:oqs/oqs.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 

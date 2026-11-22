@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:oqs/oqs.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 
 void main() {
   final kem = KEM.create('ML-KEM-768');

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../models/ml_dsa_key_pair.dart';
 import '../../../providers/ml_dsa_providers.dart';
-import 'package:oqs/src/signature.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 
 class CreateMlDsaKeyDialog extends ConsumerStatefulWidget {
   final Color primaryColor;

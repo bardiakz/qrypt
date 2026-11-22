@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/pages/encryption_page.dart';
@@ -13,9 +11,7 @@ import 'package:qrypt/services/tag_manager.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Obfuscate.setAllMaps();
-  if (!(Platform.isAndroid || Platform.isIOS)) {
-    Compression.setNativeLibPaths();
-  }
+  Compression.setNativeLibPaths();
   TagManager.initializeTags();
   await CustomMapStorageService.instance.initialize();
   // if (kDebugMode) {

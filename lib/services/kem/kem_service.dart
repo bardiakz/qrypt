@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:oqs/oqs.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/models/kyber_models.dart';
 import 'dart:convert';

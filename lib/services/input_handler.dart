@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:oqs/oqs.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/exceptions.dart';
 import 'package:qrypt/models/kem_key_pair.dart';

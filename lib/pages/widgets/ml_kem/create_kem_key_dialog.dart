@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oqs/oqs.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../models/kem_key_pair.dart';

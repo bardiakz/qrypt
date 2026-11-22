@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:oqs/src/signature.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'package:uuid/uuid.dart';
 
 class QryptMLDSAKeyPair {

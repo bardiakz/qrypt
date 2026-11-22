@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:qrypt/models/ml_dsa_key_pair.dart';
 import 'dart:convert';
-import 'package:oqs/src/signature.dart';
+import 'package:qrypt/services/oqs_bridge.dart';
 import 'ml_dsa_key_storage_service.dart';
 
 class MlDsaKeyService {
