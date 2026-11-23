@@ -78,7 +78,7 @@ class ObfuscationMapRepository {
     }
 
     final profileId = _profileIdForMethod(method);
-    final profiles = await _readCustomProfiles();
+    final profiles = await _readCustomProfilesStrict();
 
     final updated = ObfuscationProfile(
       id: profileId,
@@ -113,7 +113,7 @@ class ObfuscationMapRepository {
     _assertSupportedMethod(method);
 
     final profileId = _profileIdForMethod(method);
-    final profiles = await _readCustomProfiles();
+    final profiles = await _readCustomProfilesStrict();
     final filtered = profiles.where((p) => p.id != profileId).toList();
 
     await _writeCustomProfiles(filtered);
@@ -182,30 +182,40 @@ class ObfuscationMapRepository {
     }
   }
 
+  Future<List<ObfuscationProfile>> _readCustomProfilesStrict() async {
+    final raw = await _storage.read(key: _customProfilesKey);
+    if (raw == null || raw.trim().isEmpty) {
+      return <ObfuscationProfile>[];
+    }
+
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) {
+      throw const FormatException(
+        'Stored custom obfuscation profiles payload is not a JSON list',
+      );
+    }
+
+    final profiles = <ObfuscationProfile>[];
+    for (final item in decoded) {
+      if (item is Map<String, dynamic>) {
+        profiles.add(ObfuscationProfile.fromJson(item));
+      } else if (item is Map) {
+        profiles.add(
+          ObfuscationProfile.fromJson(Map<String, dynamic>.from(item)),
+        );
+      } else {
+        throw const FormatException(
+          'Stored custom obfuscation profile entry is not a JSON object',
+        );
+      }
+    }
+
+    return profiles;
+  }
+
   Future<List<ObfuscationProfile>> _readCustomProfiles() async {
     try {
-      final raw = await _storage.read(key: _customProfilesKey);
-      if (raw == null || raw.trim().isEmpty) {
-        return <ObfuscationProfile>[];
-      }
-
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) {
-        return <ObfuscationProfile>[];
-      }
-
-      final profiles = <ObfuscationProfile>[];
-      for (final item in decoded) {
-        if (item is Map<String, dynamic>) {
-          profiles.add(ObfuscationProfile.fromJson(item));
-        } else if (item is Map) {
-          profiles.add(
-            ObfuscationProfile.fromJson(Map<String, dynamic>.from(item)),
-          );
-        }
-      }
-
-      return profiles;
+      return await _readCustomProfilesStrict();
     } catch (e) {
       debugPrint('Failed to read custom obfuscation profiles: $e');
       return <ObfuscationProfile>[];

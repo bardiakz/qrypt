@@ -4,17 +4,37 @@ import 'dart:convert';
 import '../../models/rsa_key_pair.dart';
 
 class RSAKeyStorageService {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'rsa_key_pairs';
+
+  const RSAKeyStorageService({
+    FlutterSecureStorage storage = const FlutterSecureStorage(),
+  }) : _storage = storage;
+
+  /// Strictly reads stored RSA key pairs, throwing on storage or JSON errors
+  /// instead of returning an empty list (prevents silent keystore wipes).
+  Future<List<RSAKeyPair>> _readKeyPairsStrict() async {
+    final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
+    if (keyPairsJson == null || keyPairsJson.trim().isEmpty) return [];
+
+    final decoded = jsonDecode(keyPairsJson);
+    if (decoded is! List) {
+      throw const FormatException(
+        'Stored RSA key pairs payload is not a JSON list',
+      );
+    }
+
+    return decoded
+        .map(
+          (json) => RSAKeyPair.fromJson(Map<String, dynamic>.from(json as Map)),
+        )
+        .toList();
+  }
 
   /// Retrieves all stored RSA key pairs
   Future<List<RSAKeyPair>> getKeyPairs() async {
     try {
-      final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
-      if (keyPairsJson == null) return [];
-
-      final List<dynamic> keyPairsList = jsonDecode(keyPairsJson);
-      return keyPairsList.map((json) => RSAKeyPair.fromJson(json)).toList();
+      return await _readKeyPairsStrict();
     } catch (e) {
       debugPrint('Error loading key pairs: $e');
       return [];
@@ -24,7 +44,7 @@ class RSAKeyStorageService {
   /// Saves a single RSA key pair to storage
   Future<void> saveKeyPair(RSAKeyPair keyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.add(keyPair);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -36,7 +56,7 @@ class RSAKeyStorageService {
   /// Deletes an RSA key pair by ID
   Future<void> deleteKeyPair(String id) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.removeWhere((kp) => kp.id == id);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -48,7 +68,7 @@ class RSAKeyStorageService {
   /// Updates an existing RSA key pair
   Future<void> updateKeyPair(RSAKeyPair updatedKeyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       final index = keyPairs.indexWhere((kp) => kp.id == updatedKeyPair.id);
 
       if (index != -1) {
@@ -138,7 +158,7 @@ class RSAKeyStorageService {
       return keyPairs;
     } catch (e) {
       if (kDebugMode) {
-        print('Error sorting key pairs: $e');
+        debugPrint('Error sorting key pairs: $e');
       }
       return [];
     }
@@ -150,7 +170,7 @@ class RSAKeyStorageService {
       await _storage.delete(key: _keyPairsKey);
     } catch (e) {
       if (kDebugMode) {
-        print('Error clearing key pairs: $e');
+        debugPrint('Error clearing key pairs: $e');
       }
       rethrow;
     }
@@ -159,11 +179,11 @@ class RSAKeyStorageService {
   /// Exports all key pairs as JSON string
   Future<String> exportKeyPairs() async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       return jsonEncode(keyPairs.map((kp) => kp.toJson()).toList());
     } catch (e) {
       if (kDebugMode) {
-        print('Error exporting key pairs: $e');
+        debugPrint('Error exporting key pairs: $e');
       }
       rethrow;
     }
@@ -177,14 +197,17 @@ class RSAKeyStorageService {
     try {
       final List<dynamic> importedList = jsonDecode(keyPairsJson);
       final importedKeyPairs = importedList
-          .map((json) => RSAKeyPair.fromJson(json))
+          .map(
+            (json) =>
+                RSAKeyPair.fromJson(Map<String, dynamic>.from(json as Map)),
+          )
           .toList();
 
       List<RSAKeyPair> finalKeyPairs;
       if (replaceExisting) {
         finalKeyPairs = importedKeyPairs;
       } else {
-        final existingKeyPairs = await getKeyPairs();
+        final existingKeyPairs = await _readKeyPairsStrict();
         finalKeyPairs = [...existingKeyPairs, ...importedKeyPairs];
       }
 

@@ -16,12 +16,13 @@ class CustomMapStorageService {
 
   List<CustomObfuscationProfile> _cachedProfiles = [];
   bool _initialized = false;
+  bool _loadFailed = false;
 
   List<CustomObfuscationProfile> get profiles =>
       List.unmodifiable(_cachedProfiles);
 
   Future<List<CustomObfuscationProfile>> initialize() async {
-    if (_initialized) return profiles;
+    if (_initialized && !_loadFailed) return profiles;
     return await loadAll();
   }
 
@@ -33,6 +34,7 @@ class CustomMapStorageService {
       if (raw == null || raw.trim().isEmpty) {
         _cachedProfiles = [];
         _initialized = true;
+        _loadFailed = false;
         TagManager.updateCustomTags(_cachedProfiles);
         return profiles;
       }
@@ -41,6 +43,7 @@ class CustomMapStorageService {
       if (decoded is! List) {
         _cachedProfiles = [];
         _initialized = true;
+        _loadFailed = true;
         TagManager.updateCustomTags(_cachedProfiles);
         return profiles;
       }
@@ -57,12 +60,14 @@ class CustomMapStorageService {
 
       _cachedProfiles = list;
       _initialized = true;
+      _loadFailed = false;
       TagManager.updateCustomTags(_cachedProfiles);
       return profiles;
     } catch (e) {
       debugPrint('Error loading custom obfuscation profiles: $e');
       _cachedProfiles = [];
       _initialized = true;
+      _loadFailed = true;
       TagManager.updateCustomTags(_cachedProfiles);
       return profiles;
     }
@@ -77,6 +82,11 @@ class CustomMapStorageService {
     bool skipCollisionCheck = false,
   }) async {
     await initialize();
+    if (_loadFailed) {
+      throw StateError(
+        'Cannot save custom map because existing stored maps could not be loaded safely.',
+      );
+    }
 
     // 1. Full v2 validation on save/import
     final problems = ObfuscationService.validateV2Map(map);
@@ -120,6 +130,11 @@ class CustomMapStorageService {
   /// Deletes a saved custom map by ID.
   Future<void> deleteMap(String id) async {
     await initialize();
+    if (_loadFailed) {
+      throw StateError(
+        'Cannot delete custom map because existing stored maps could not be loaded safely.',
+      );
+    }
     final updated = _cachedProfiles.where((p) => p.id != id).toList();
     await _persist(updated);
     _cachedProfiles = updated;

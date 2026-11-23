@@ -15,16 +15,26 @@ class AesKeyStorageService {
     FlutterSecureStorage storage = const FlutterSecureStorage(),
   }) : _storage = storage;
 
+  /// Strictly reads all stored AES keys, throwing on storage or JSON errors
+  /// instead of returning an empty list (prevents silent keystore wipes).
+  Future<List<AESKey>> _readKeysStrict() async {
+    final String? keysJson = await _storage.read(key: _keysKey);
+    if (keysJson == null || keysJson.trim().isEmpty) return [];
+
+    final decoded = jsonDecode(keysJson);
+    if (decoded is! List) {
+      throw const FormatException('Stored AES keys payload is not a JSON list');
+    }
+
+    return decoded
+        .map((json) => AESKey.fromJson(Map<String, dynamic>.from(json as Map)))
+        .toList();
+  }
+
   /// Retrieves all stored AES keys
   Future<List<AESKey>> getKeys() async {
     try {
-      final String? keysJson = await _storage.read(key: _keysKey);
-      if (keysJson == null) return [];
-
-      final List<dynamic> keysList = jsonDecode(keysJson);
-      return keysList
-          .map((json) => AESKey.fromJson(json as Map<String, dynamic>))
-          .toList();
+      return await _readKeysStrict();
     } catch (e) {
       debugPrint('Error loading AES keys: $e');
       return [];
@@ -34,7 +44,7 @@ class AesKeyStorageService {
   /// Saves a single AES key to storage with write-then-read verification
   Future<void> saveKey(AESKey key) async {
     try {
-      final keys = await getKeys();
+      final keys = await _readKeysStrict();
       // Replace if existing with same id, else add
       final index = keys.indexWhere((k) => k.id == key.id);
       if (index != -1) {
@@ -45,7 +55,7 @@ class AesKeyStorageService {
       await _saveKeysList(keys);
 
       // Write-then-read verification invariant
-      final verifiedKeys = await getKeys();
+      final verifiedKeys = await _readKeysStrict();
       if (!verifiedKeys.any((k) => k.id == key.id && k.key == key.key)) {
         throw StateError(
           'Secure storage write verification failed for AES key "${key.name}"',
@@ -60,7 +70,7 @@ class AesKeyStorageService {
   /// Deletes an AES key by ID
   Future<void> deleteKey(String id) async {
     try {
-      final keys = await getKeys();
+      final keys = await _readKeysStrict();
       keys.removeWhere((k) => k.id == id);
       await _saveKeysList(keys);
 
@@ -77,7 +87,7 @@ class AesKeyStorageService {
   /// Updates an existing AES key
   Future<void> updateKey(AESKey updatedKey) async {
     try {
-      final keys = await getKeys();
+      final keys = await _readKeysStrict();
       final index = keys.indexWhere((k) => k.id == updatedKey.id);
 
       if (index != -1) {

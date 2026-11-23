@@ -18,6 +18,40 @@ class MlDsaKeyService {
     _initializeSignature();
   }
 
+  static const List<String> supportedParameterSets = [
+    'ML-DSA-44',
+    'ML-DSA-65',
+    'ML-DSA-87',
+  ];
+
+  /// Detects the ML-DSA parameter set from a raw public key's byte length.
+  static String? algorithmFromPublicKeyLength(int length) {
+    switch (length) {
+      case 1312:
+        return 'ML-DSA-44';
+      case 1952:
+        return 'ML-DSA-65';
+      case 2592:
+        return 'ML-DSA-87';
+      default:
+        return null;
+    }
+  }
+
+  /// Detects the ML-DSA parameter set from a raw secret key's byte length.
+  static String? algorithmFromSecretKeyLength(int length) {
+    switch (length) {
+      case 2560:
+        return 'ML-DSA-44';
+      case 4032:
+        return 'ML-DSA-65';
+      case 4896:
+        return 'ML-DSA-87';
+      default:
+        return null;
+    }
+  }
+
   /// Initialize the Signature instance
   void _initializeSignature() {
     _signature = Signature.create(_algorithm);
@@ -160,6 +194,12 @@ class MlDsaKeyService {
   Future<bool> validateKeyPair(SignatureKeyPair keyPair) async {
     if (_signature == null) return false;
 
+    // Pre-validate exact key byte lengths before calling into native liboqs
+    if (keyPair.publicKey.length != _signature!.publicKeyLength ||
+        keyPair.secretKey.length != _signature!.secretKeyLength) {
+      return false;
+    }
+
     try {
       // Test message
       final testMessage = Uint8List.fromList('test message'.codeUnits);
@@ -176,7 +216,9 @@ class MlDsaKeyService {
 
       return isValid;
     } catch (e) {
-      debugPrint('Key validation error: $e');
+      if (kDebugMode) {
+        debugPrint('Key validation error: $e');
+      }
       return false;
     }
   }
@@ -187,10 +229,19 @@ class MlDsaKeyService {
       throw Exception('ML-DSA Signature not initialized');
     }
 
+    if (secretKey.length != _signature!.secretKeyLength) {
+      throw FormatException(
+        'Invalid ML-DSA secret key length (${secretKey.length} bytes) for $_algorithm; '
+        'expected ${_signature!.secretKeyLength} bytes.',
+      );
+    }
+
     try {
       return _signature!.sign(message, secretKey);
     } catch (e) {
-      debugPrint('Signing error: $e');
+      if (kDebugMode) {
+        debugPrint('Signing error: $e');
+      }
       rethrow;
     }
   }
@@ -205,9 +256,22 @@ class MlDsaKeyService {
       if (keyPair == null) {
         throw Exception('Key pair not found');
       }
-      return signMessage(message, keyPair.secretKey);
+      if (keyPair.algorithm == _algorithm) {
+        return signMessage(message, keyPair.secretKey);
+      }
+      final scoped = MlDsaKeyService(
+        storageService: _storageService,
+        algorithm: keyPair.algorithm,
+      );
+      try {
+        return scoped.signMessage(message, keyPair.secretKey);
+      } finally {
+        scoped.dispose();
+      }
     } catch (e) {
-      debugPrint('Signing with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Signing with stored key error: $e');
+      }
       rethrow;
     }
   }
@@ -222,10 +286,19 @@ class MlDsaKeyService {
       throw Exception('ML-DSA Signature not initialized');
     }
 
+    if (publicKey.length != _signature!.publicKeyLength) {
+      throw FormatException(
+        'Invalid ML-DSA public key length (${publicKey.length} bytes) for $_algorithm; '
+        'expected ${_signature!.publicKeyLength} bytes.',
+      );
+    }
+
     try {
       return _signature!.verify(message, signature, publicKey);
     } catch (e) {
-      debugPrint('Verification error: $e');
+      if (kDebugMode) {
+        debugPrint('Verification error: $e');
+      }
       rethrow;
     }
   }
@@ -241,9 +314,22 @@ class MlDsaKeyService {
       if (keyPair == null) {
         throw Exception('Key pair not found');
       }
-      return verifySignature(message, signature, keyPair.publicKey);
+      if (keyPair.algorithm == _algorithm) {
+        return verifySignature(message, signature, keyPair.publicKey);
+      }
+      final scoped = MlDsaKeyService(
+        storageService: _storageService,
+        algorithm: keyPair.algorithm,
+      );
+      try {
+        return scoped.verifySignature(message, signature, keyPair.publicKey);
+      } finally {
+        scoped.dispose();
+      }
     } catch (e) {
-      debugPrint('Verification with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Verification with stored key error: $e');
+      }
       rethrow;
     }
   }

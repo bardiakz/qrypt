@@ -1,4 +1,5 @@
 import 'package:qrypt/services/oqs_bridge.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 
@@ -91,11 +92,7 @@ class QryptKEMKeyPair {
 
   String get displayName => name.isNotEmpty ? name : 'Key Pair $id';
 
-  static String _generateId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final random = (timestamp * 31) % 1000000;
-    return 'kem_${timestamp}_$random';
-  }
+  static String _generateId() => const Uuid().v4();
 
   @override
   String toString() {

@@ -4,19 +4,39 @@ import 'dart:convert';
 import 'package:qrypt/models/ml_dsa_key_pair.dart';
 
 class MlDsaKeyStorageService {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'mldsa_key_pairs';
+
+  const MlDsaKeyStorageService({
+    FlutterSecureStorage storage = const FlutterSecureStorage(),
+  }) : _storage = storage;
+
+  /// Strictly reads stored ML-DSA key pairs, throwing on storage or JSON errors
+  /// instead of returning an empty list (prevents silent keystore wipes).
+  Future<List<QryptMLDSAKeyPair>> _readKeyPairsStrict() async {
+    final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
+    if (keyPairsJson == null || keyPairsJson.trim().isEmpty) return [];
+
+    final decoded = jsonDecode(keyPairsJson);
+    if (decoded is! List) {
+      throw const FormatException(
+        'Stored ML-DSA key pairs payload is not a JSON list',
+      );
+    }
+
+    return decoded
+        .map(
+          (json) => QryptMLDSAKeyPair.fromJson(
+            Map<String, dynamic>.from(json as Map),
+          ),
+        )
+        .toList();
+  }
 
   /// Retrieves all stored ML-DSA key pairs
   Future<List<QryptMLDSAKeyPair>> getKeyPairs() async {
     try {
-      final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
-      if (keyPairsJson == null) return [];
-
-      final List<dynamic> keyPairsList = jsonDecode(keyPairsJson);
-      return keyPairsList
-          .map((json) => QryptMLDSAKeyPair.fromJson(json))
-          .toList();
+      return await _readKeyPairsStrict();
     } catch (e) {
       debugPrint('Error loading ML-DSA key pairs: $e');
       return [];
@@ -26,7 +46,7 @@ class MlDsaKeyStorageService {
   /// Saves a single ML-DSA key pair to storage
   Future<void> saveKeyPair(QryptMLDSAKeyPair keyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.add(keyPair);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -38,7 +58,7 @@ class MlDsaKeyStorageService {
   /// Deletes a ML-DSA key pair by ID
   Future<void> deleteKeyPair(String id) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.removeWhere((kp) => kp.id == id);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -50,7 +70,7 @@ class MlDsaKeyStorageService {
   /// Updates an existing ML-DSA key pair
   Future<void> updateKeyPair(QryptMLDSAKeyPair updatedKeyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       final index = keyPairs.indexWhere((kp) => kp.id == updatedKeyPair.id);
 
       if (index != -1) {

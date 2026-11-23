@@ -759,6 +759,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                               EncryptionMethod.aesGcm;
                           ref.read(selectedObfuscationProvider.notifier).state =
                               ObfuscationService.defaultMethod;
+                          ref.read(selectedSignProvider.notifier).state =
+                              SignMethod.none;
                           ref.read(useTagProvider.notifier).state = true;
                         }
                       },
@@ -1735,7 +1737,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
           encryption: EncryptionMethod.aesGcm,
           obfuscation: ObfuscationService.defaultMethod,
           compression: CompressionMethod.gZip,
-          sign: ref.read(selectedSignProvider),
+          sign: SignMethod.none,
           useTag: true,
         );
         q.customKey = aesKeyToUse;
@@ -1862,9 +1864,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
         if (selectedEncryption == EncryptionMethod.rsa ||
             selectedEncryption == EncryptionMethod.rsaSign) {
-          manualQrypt.rsaKeyPair = ref.read(
-            selectedRSADecryptKeyPairProvider,
-          )!;
+          final selectedRsaKey = ref.read(selectedRSADecryptKeyPairProvider);
+          if (selectedRsaKey == null) {
+            throw Exception('Please select an RSA key pair for decryption');
+          }
+          manualQrypt.rsaKeyPair = selectedRsaKey;
         }
 
         if (selectedEncryption == EncryptionMethod.rsaSign) {
@@ -1882,9 +1886,19 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         }
 
         if (ref.read(selectedSignProvider) == SignMethod.mlDsa) {
-          manualQrypt.dsaVerifyPublicKey = base64Decode(
-            ref.read(verifyMlDsaPublicKeyProvider),
-          );
+          final rawVerifyKey = ref.read(verifyMlDsaPublicKeyProvider).trim();
+          if (rawVerifyKey.isEmpty) {
+            throw Exception(
+              'Please enter the sender\'s ML-DSA public key for verification',
+            );
+          }
+          try {
+            manualQrypt.dsaVerifyPublicKey = base64Decode(rawVerifyKey);
+          } on FormatException {
+            throw const FormatException(
+              'Invalid Base64 format for ML-DSA verification public key',
+            );
+          }
         }
 
         ref.read(inputQryptProvider.notifier).state = manualQrypt;

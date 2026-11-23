@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../models/ml_dsa_key_pair.dart';
 import '../../../providers/ml_dsa_providers.dart';
+import '../../../services/ml_dsa/ml_dsa_key_service.dart';
 import 'package:qrypt/services/oqs_bridge.dart';
 
 class CreateMlDsaKeyDialog extends ConsumerStatefulWidget {
@@ -22,7 +23,7 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
   final _privateKeyController = TextEditingController();
   bool _isGenerating = false;
   bool _useManualInput = false;
-  String _selectedAlgorithm = 'ML-DSA-44';
+  String _selectedAlgorithm = 'ML-DSA-65';
 
   // Available ML-DSA algorithms
   final List<String> _algorithms = ['ML-DSA-44', 'ML-DSA-65', 'ML-DSA-87'];
@@ -168,17 +169,16 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
       _isGenerating = true;
     });
 
+    MlDsaKeyService? scopedService;
     try {
-      final service = ref.read(mlDsaKeyServiceProvider);
+      scopedService = MlDsaKeyService(algorithm: _selectedAlgorithm);
       QryptMLDSAKeyPair keyPair;
-      SignatureKeyPair kp = SignatureKeyPair(
-        publicKey: base64Decode(_publicKeyController.text.trim()),
-        secretKey: base64Decode(_privateKeyController.text.trim()),
-      );
 
       if (_useManualInput) {
-        if (_publicKeyController.text.trim().isEmpty ||
-            _privateKeyController.text.trim().isEmpty) {
+        final rawPublicKey = _publicKeyController.text.trim();
+        final rawSecretKey = _privateKeyController.text.trim();
+
+        if (rawPublicKey.isEmpty || rawSecretKey.isEmpty) {
           setState(() {
             _isGenerating = false;
           });
@@ -187,6 +187,41 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
               content: Text('Please enter both public and Secret keys'),
             ),
           );
+          return;
+        }
+
+        final SignatureKeyPair kp;
+        try {
+          kp = SignatureKeyPair(
+            publicKey: base64Decode(rawPublicKey),
+            secretKey: base64Decode(rawSecretKey),
+          );
+        } on FormatException {
+          setState(() {
+            _isGenerating = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Keys must be valid Base64-encoded strings'),
+            ),
+          );
+          return;
+        }
+
+        // Validate the key pair before saving
+        if (!await scopedService.validateKeyPair(kp)) {
+          setState(() {
+            _isGenerating = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Invalid $_selectedAlgorithm key pair — keys do not match or have wrong length',
+                ),
+              ),
+            );
+          }
           return;
         }
 
@@ -200,24 +235,12 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
           createdAt: DateTime.now(),
         );
 
-        // Validate the key pair before saving
-        if (await service.validateKeyPair(kp)) {
-          setState(() {
-            _isGenerating = false;
-          });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Invalid key pair')));
-          return;
-        }
-
         // Save manually created key pair
-        await service.saveKeyPair(keyPair);
+        await scopedService.saveKeyPair(keyPair);
       } else {
         // For generation, generateKeyPair() already saves it internally
-        keyPair = await service.generateKeyPair(
+        keyPair = await scopedService.generateKeyPair(
           _nameController.text.trim(),
-          description: _selectedAlgorithm,
         );
       }
 
@@ -239,6 +262,7 @@ class _CreateMlDsaKeyDialogState extends ConsumerState<CreateMlDsaKeyDialog> {
         );
       }
     } finally {
+      scopedService?.dispose();
       if (mounted) {
         setState(() {
           _isGenerating = false;

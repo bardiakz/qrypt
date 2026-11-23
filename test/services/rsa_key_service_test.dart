@@ -249,4 +249,51 @@ void main() {
       },
     );
   });
+
+  group('RSA PEM Normalization & Minimum Key Size Enforcement', () {
+    test('normalizePem normalizes valid public and private PEMs with CRLF', () {
+      final crlfPublic = generatedKeyPair.publicKey.replaceAll('\n', '\r\n');
+      final normalizedPublic = rsaService.normalizePem('  $crlfPublic  ');
+      expect(normalizedPublic, startsWith('-----BEGIN PUBLIC KEY-----\n'));
+      expect(normalizedPublic, endsWith('\n-----END PUBLIC KEY-----'));
+      expect(normalizedPublic.contains('\r'), isFalse);
+
+      final normalizedPrivate = rsaService.normalizePem(
+        generatedKeyPair.privateKey,
+      );
+      expect(normalizedPrivate, startsWith('-----BEGIN PRIVATE KEY-----\n'));
+      expect(normalizedPrivate, endsWith('\n-----END PRIVATE KEY-----'));
+    });
+
+    test('normalizePem rejects missing headers/footers and empty or invalid base64', () {
+      expect(
+        () => rsaService.normalizePem('not a pem at all'),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => rsaService.normalizePem(
+          '-----BEGIN PUBLIC KEY-----\n-----END PUBLIC KEY-----',
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => rsaService.normalizePem(
+          '-----BEGIN PUBLIC KEY-----\n%%%INVALID_BASE64%%%\n-----END PUBLIC KEY-----',
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('generateKeyPair rejects keySize below 2048 bits', () async {
+      expect(RSAKeyService.minKeyBits, equals(2048));
+      await expectLater(
+        () => rsaService.generateKeyPair('Weak Key', keySize: 1024),
+        throwsA(isA<ArgumentError>()),
+      );
+      await expectLater(
+        () => rsaService.generateKeyPair('Tiny Key', keySize: 512),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
 }

@@ -5,19 +5,38 @@ import 'dart:convert';
 import '../../models/kem_key_pair.dart';
 
 class KemKeyStorageService {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'kem_key_pairs';
+
+  const KemKeyStorageService({
+    FlutterSecureStorage storage = const FlutterSecureStorage(),
+  }) : _storage = storage;
+
+  /// Strictly reads stored KEM key pairs, throwing on storage or JSON errors
+  /// instead of returning an empty list (prevents silent keystore wipes).
+  Future<List<QryptKEMKeyPair>> _readKeyPairsStrict() async {
+    final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
+    if (keyPairsJson == null || keyPairsJson.trim().isEmpty) return [];
+
+    final decoded = jsonDecode(keyPairsJson);
+    if (decoded is! List) {
+      throw const FormatException(
+        'Stored KEM key pairs payload is not a JSON list',
+      );
+    }
+
+    return decoded
+        .map(
+          (json) =>
+              QryptKEMKeyPair.fromJson(Map<String, dynamic>.from(json as Map)),
+        )
+        .toList();
+  }
 
   /// Retrieves all stored KEM key pairs
   Future<List<QryptKEMKeyPair>> getKeyPairs() async {
     try {
-      final String? keyPairsJson = await _storage.read(key: _keyPairsKey);
-      if (keyPairsJson == null) return [];
-
-      final List<dynamic> keyPairsList = jsonDecode(keyPairsJson);
-      return keyPairsList
-          .map((json) => QryptKEMKeyPair.fromJson(json))
-          .toList();
+      return await _readKeyPairsStrict();
     } catch (e) {
       debugPrint('Error loading key pairs: $e');
       return [];
@@ -27,7 +46,7 @@ class KemKeyStorageService {
   /// Saves a single KEM key pair to storage
   Future<void> saveKeyPair(QryptKEMKeyPair keyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.add(keyPair);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -39,7 +58,7 @@ class KemKeyStorageService {
   /// Deletes a KEM key pair by ID
   Future<void> deleteKeyPair(String id) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       keyPairs.removeWhere((kp) => kp.id == id);
       await _saveKeyPairsList(keyPairs);
     } catch (e) {
@@ -51,7 +70,7 @@ class KemKeyStorageService {
   /// Updates an existing KEM key pair
   Future<void> updateKeyPair(QryptKEMKeyPair updatedKeyPair) async {
     try {
-      final keyPairs = await getKeyPairs();
+      final keyPairs = await _readKeyPairsStrict();
       final index = keyPairs.indexWhere((kp) => kp.id == updatedKeyPair.id);
 
       if (index != -1) {

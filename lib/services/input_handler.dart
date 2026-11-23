@@ -132,13 +132,22 @@ class InputHandler {
 
           final rsaKeyService = RSAKeyService();
 
-          // RSA-OAEP-SHA256 max plaintext = (keyBits / 8) - 2*32 - 2
-          // (modulus bytes minus 2× hash length minus 2)
+          // RSA-OAEP-SHA256 max raw plaintext = (keyBits / 8) - 2*32 - 2
+          // Because compressedText is Base64-encoded before OAEP encryption
+          // (4 ASCII chars per 3 input bytes, rounded up), the maximum
+          // compressed payload size that fits in maxOaepBytes is
+          // (maxOaepBytes ~/ 4) * 3.
           final keyBits = rsaKeyService.getKeySize(qrypt.rsaReceiverPublicKey);
-          final maxBytes = (keyBits ~/ 8) - 66;
-          if (qrypt.compressedText.length > maxBytes) {
+          if (keyBits < RSAKeyService.minKeyBits) {
+            throw FormatException(
+              'RSA public key size ($keyBits bits) is below the minimum required ${RSAKeyService.minKeyBits} bits.',
+            );
+          }
+          final maxOaepBytes = (keyBits ~/ 8) - 66;
+          final maxCompressedBytes = (maxOaepBytes ~/ 4) * 3;
+          if (qrypt.compressedText.length > maxCompressedBytes) {
             throw RsaPayloadTooLargeException(
-              maxBytes: maxBytes,
+              maxBytes: maxCompressedBytes,
               actualBytes: qrypt.compressedText.length,
             );
           }
@@ -377,7 +386,19 @@ class InputHandler {
 
         return qrypt;
       case SignMethod.mlDsa:
-        MlDsaKeyService dsa = MlDsaKeyService();
+        if (qrypt.dsaKeyPair == null || qrypt.dsaKeyPair!.secretKey.isEmpty) {
+          throw Exception('No valid ML-DSA key pair provided for signing');
+        }
+
+        final secretKey = qrypt.dsaKeyPair!.secretKey;
+        final detectedSignAlgorithm =
+            MlDsaKeyService.algorithmFromSecretKeyLength(secretKey.length);
+        if (detectedSignAlgorithm == null) {
+          throw FormatException(
+            'Invalid ML-DSA secret key length (${secretKey.length} bytes). '
+            'Expected 2560 (ML-DSA-44), 4032 (ML-DSA-65), or 4896 (ML-DSA-87) bytes.',
+          );
+        }
 
         // Determine the format based on obfuscation method
         bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
@@ -431,11 +452,16 @@ class InputHandler {
           }
         }
 
-        // Sign the original message
-        Uint8List signature = dsa.signMessage(
-          originalMessage,
-          qrypt.dsaKeyPair!.secretKey,
+        // Sign the original message using the key's exact ML-DSA parameter set
+        final MlDsaKeyService dsa = MlDsaKeyService(
+          algorithm: detectedSignAlgorithm,
         );
+        final Uint8List signature;
+        try {
+          signature = dsa.signMessage(originalMessage, secretKey);
+        } finally {
+          dsa.dispose();
+        }
 
         // Create signed package
         Map<String, String> signedPackage = {
@@ -525,7 +551,7 @@ class InputHandler {
     return qrypt;
   }
 
-  Future<Qrypt> handleVerify(Qrypt qrypt, BuildContext context) async {
+  Future<Qrypt> handleVerify(Qrypt qrypt, [BuildContext? context]) async {
     switch (qrypt.getSignMethod()) {
       case SignMethod.none:
         return qrypt;
@@ -626,12 +652,14 @@ class InputHandler {
             );
           }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('RSA signature verification successful ✓'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (context != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('RSA signature verification successful ✓'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
           if (kDebugMode) {
             print('RSA signature verification successful ✓');
           }
@@ -650,12 +678,14 @@ class InputHandler {
             }
           }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error during RSA verification: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error during RSA verification: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           if (kDebugMode) {
             print('Error during RSA verification: $e');
           }
@@ -664,8 +694,7 @@ class InputHandler {
 
         return qrypt;
       case SignMethod.mlDsa:
-        MlDsaKeyService dsa = MlDsaKeyService();
-
+        MlDsaKeyService? dsa;
         try {
           // CHECK: Ensure public key is available before verification
           if (qrypt.dsaVerifyPublicKey == null ||
@@ -674,6 +703,17 @@ class InputHandler {
               'ML-DSA public key is required for signature verification.',
             );
           }
+
+          final verifyPubKey = qrypt.dsaVerifyPublicKey!;
+          final detectedVerifyAlgorithm =
+              MlDsaKeyService.algorithmFromPublicKeyLength(verifyPubKey.length);
+          if (detectedVerifyAlgorithm == null) {
+            throw FormatException(
+              'Invalid ML-DSA public key length (${verifyPubKey.length} bytes). '
+              'Expected 1312 (ML-DSA-44), 1952 (ML-DSA-65), or 2592 (ML-DSA-87) bytes.',
+            );
+          }
+          dsa = MlDsaKeyService(algorithm: detectedVerifyAlgorithm);
 
           // Determine format and decode accordingly
           bool usesMappedObfuscation = qrypt.getObfuscationMethod().isHexMapped;
@@ -787,12 +827,14 @@ class InputHandler {
             );
           }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('DSA signature verification successful ✓'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (context != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('DSA signature verification successful ✓'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
           if (kDebugMode) {
             print('DSA signature verification successful ✓');
           }
@@ -834,16 +876,20 @@ class InputHandler {
             }
           }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error during DSA verification: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error during DSA verification: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           if (kDebugMode) {
             print('Error during DSA verification: $e');
           }
           throw Exception('DSA verification failed: $e');
+        } finally {
+          dsa?.dispose();
         }
 
         return qrypt;
@@ -1337,10 +1383,12 @@ class InputHandler {
     Color primaryColor = Colors.blue;
     if (!useTag) {
       qrypt = handleDeObfs(qrypt);
-      if (qrypt.getSignMethod() != SignMethod.none && context != null) {
+      if (qrypt.getSignMethod() != SignMethod.none) {
         qrypt = await handleVerify(qrypt, context);
       }
-      qrypt = await handleDecrypt(qrypt, context);
+      final decryptContext =
+          (context != null && context.mounted) ? context : null;
+      qrypt = await handleDecrypt(qrypt, decryptContext);
       qrypt = handleDeCompression(qrypt);
     } else {
       String? tag = TagManager.matchedTag(qrypt.text);
@@ -1439,6 +1487,10 @@ class InputHandler {
         }
       }
       if (qrypt.sign == SignMethod.mlDsa) {
+        final hasKey =
+            qrypt.dsaVerifyPublicKey != null &&
+            qrypt.dsaVerifyPublicKey!.isNotEmpty;
+        if (!hasKey) {
           if (context == null || !context.mounted) {
             throw Exception(
               'Decryption cancelled: No context to select ML-DSA key',
@@ -1456,65 +1508,72 @@ class InputHandler {
           }
           qrypt.dsaVerifyPublicKey = base64Decode(dsaSenderPublicKey);
         }
-        if (context != null && !context.mounted) return qrypt;
-        if (context != null) {
-          qrypt = await handleVerify(qrypt, context);
-        }
-        if (qrypt.encryption == EncryptionMethod.rsa ||
-            qrypt.encryption == EncryptionMethod.rsaSign) {
-          if (qrypt.rsaKeyPair.privateKey.isEmpty ||
-              qrypt.rsaKeyPair.privateKey == 'noPrivateKey') {
-            if (context == null) {
-              throw Exception(
-                'Decryption cancelled: No context to select RSA key',
-              );
-            }
-            final selectedKeyPair = await showRSAKeySelectionDialog(
-              context: context,
-              primaryColor: primaryColor,
-              title: 'Select Decryption Key',
-              message:
-                  'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
-              publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
-              onPublicKeySelected: (key) {
-                qrypt.rsaSenderPublicKey = key;
-              },
-            );
-            if (selectedKeyPair == null) {
-              throw Exception('Decryption cancelled: No key pair selected');
-            }
-            qrypt.rsaKeyPair = selectedKeyPair;
-          }
-        }
-        if (context != null && !context.mounted) return qrypt;
-        if (qrypt.encryption == EncryptionMethod.mlKem) {
-          if (qrypt.kemKeyPair == null ||
-              qrypt.kemKeyPair!.secretKey.isEmpty) {
-            if (context == null) {
-              throw Exception(
-                'Decryption cancelled: No context to select ML-KEM key',
-              );
-            }
-            final selectedKeyPair = await showKemKeySelectionDialog(
-              context: context,
-              primaryColor: primaryColor,
-              title: 'Select Decryption Key',
-              message:
-                  'This content was encrypted with ML-KEM. Please select the appropriate key pair for decapsulation.',
-              publicKeyRequired: false,
-            );
-            if (selectedKeyPair == null) {
-              throw Exception('Decryption cancelled: No key pair selected');
-            }
-            qrypt.kemKeyPair = selectedKeyPair;
-          }
-        }
-        if (context != null && !context.mounted) return qrypt;
-        qrypt = await handleDecrypt(qrypt, context);
-        qrypt = handleDeCompression(qrypt);
       }
-      return qrypt;
+      if (context != null && !context.mounted) {
+        throw Exception('Decryption cancelled: UI context no longer mounted');
+      }
+      if (qrypt.getSignMethod() != SignMethod.none) {
+        qrypt = await handleVerify(qrypt, context);
+      }
+      if (qrypt.encryption == EncryptionMethod.rsa ||
+          qrypt.encryption == EncryptionMethod.rsaSign) {
+        if (qrypt.rsaKeyPair.privateKey.isEmpty ||
+            qrypt.rsaKeyPair.privateKey == 'noPrivateKey') {
+          if (context == null || !context.mounted) {
+            throw Exception(
+              'Decryption cancelled: No context to select RSA key',
+            );
+          }
+          final selectedKeyPair = await showRSAKeySelectionDialog(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Select Decryption Key',
+            message:
+                'This content was encrypted with RSA. Please select the appropriate key pair for decryption.',
+            publicKeyRequired: qrypt.encryption == EncryptionMethod.rsaSign,
+            onPublicKeySelected: (key) {
+              qrypt.rsaSenderPublicKey = key;
+            },
+          );
+          if (selectedKeyPair == null) {
+            throw Exception('Decryption cancelled: No key pair selected');
+          }
+          qrypt.rsaKeyPair = selectedKeyPair;
+        }
+      }
+      if (context != null && !context.mounted) {
+        throw Exception('Decryption cancelled: UI context no longer mounted');
+      }
+      if (qrypt.encryption == EncryptionMethod.mlKem) {
+        if (qrypt.kemKeyPair == null ||
+            qrypt.kemKeyPair!.secretKey.isEmpty) {
+          if (context == null || !context.mounted) {
+            throw Exception(
+              'Decryption cancelled: No context to select ML-KEM key',
+            );
+          }
+          final selectedKeyPair = await showKemKeySelectionDialog(
+            context: context,
+            primaryColor: primaryColor,
+            title: 'Select Decryption Key',
+            message:
+                'This content was encrypted with ML-KEM. Please select the appropriate key pair for decapsulation.',
+            publicKeyRequired: false,
+          );
+          if (selectedKeyPair == null) {
+            throw Exception('Decryption cancelled: No key pair selected');
+          }
+          qrypt.kemKeyPair = selectedKeyPair;
+        }
+      }
+      if (context != null && !context.mounted) {
+        throw Exception('Decryption cancelled: UI context no longer mounted');
+      }
+      qrypt = await handleDecrypt(qrypt, context);
+      qrypt = handleDeCompression(qrypt);
     }
+    return qrypt;
+  }
 
   Future<Qrypt> handleKemProcess(Qrypt krypt, String publicKey) async {
     KemKeyService kem = KemKeyService();

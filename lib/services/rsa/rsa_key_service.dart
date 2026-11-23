@@ -18,11 +18,22 @@ import '../../models/rsa_key_pair.dart';
 import 'rsa_key_storage_service.dart';
 
 class RSAKeyService {
+  static const int minKeyBits = 2048;
+
   final RSAKeyStorageService _storageService;
 
   // Constructor with dependency injection for storage service
   RSAKeyService({RSAKeyStorageService? storageService})
     : _storageService = storageService ?? RSAKeyStorageService();
+
+  void _assertMinKeySize(RSAPublicKey publicKey) {
+    final bitLength = publicKey.modulus?.bitLength ?? 0;
+    if (bitLength < minKeyBits) {
+      throw ArgumentError(
+        'RSA key size ($bitLength bits) is below the minimum required $minKeyBits bits.',
+      );
+    }
+  }
 
   // Delegate storage operations to the storage service
   Future<List<RSAKeyPair>> getKeyPairs() => _storageService.getKeyPairs();
@@ -175,6 +186,11 @@ class RSAKeyService {
 
   /// Generates a new RSA key pair with the specified name and key size
   Future<RSAKeyPair> generateKeyPair(String name, {int keySize = 2048}) async {
+    if (keySize < minKeyBits) {
+      throw ArgumentError(
+        'RSA key size ($keySize bits) must be at least $minKeyBits bits.',
+      );
+    }
     if (_isGenerating) {
       throw Exception('Key generation already in progress');
     }
@@ -218,7 +234,9 @@ class RSAKeyService {
       return rsaKeyPair;
     } catch (e) {
       _isGenerating = false;
-      print('Error generating key pair: $e');
+      if (kDebugMode) {
+        debugPrint('Error generating key pair: $e');
+      }
       rethrow;
     } finally {
       _isGenerating = false;
@@ -237,6 +255,13 @@ class RSAKeyService {
         throw Exception('A key pair with the name "$name" already exists');
       }
 
+      final keyBits = getKeySize(publicKeyPem);
+      if (keyBits < minKeyBits) {
+        throw ArgumentError(
+          'RSA key size ($keyBits bits) is below the minimum required $minKeyBits bits.',
+        );
+      }
+
       if (!validateKeyPair(publicKeyPem, privateKeyPem)) {
         throw Exception('Invalid key pair - keys do not match');
       }
@@ -252,7 +277,9 @@ class RSAKeyService {
       await saveKeyPair(keyPair);
       return keyPair;
     } catch (e) {
-      print('Error importing key pair: $e');
+      if (kDebugMode) {
+        debugPrint('Error importing key pair: $e');
+      }
       rethrow;
     }
   }
@@ -263,6 +290,8 @@ class RSAKeyService {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
       final privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
+
+      _assertMinKeySize(publicKey);
 
       // Test encryption/decryption with OAEP to validate the key pair
       final plaintext = 'test message for validation';
@@ -281,7 +310,9 @@ class RSAKeyService {
       final decrypted = utf8.decode(decryptedBytes);
       return decrypted == plaintext;
     } catch (e) {
-      print('Key validation error: $e');
+      if (kDebugMode) {
+        debugPrint('Key validation error: $e');
+      }
       return false;
     }
   }
@@ -294,6 +325,7 @@ class RSAKeyService {
     try {
       final parser = RSAKeyParser();
       final publicKey = parser.parse(publicKeyPem) as RSAPublicKey;
+      _assertMinKeySize(publicKey);
 
       final plaintextBytes = utf8.encode(plaintext);
 
@@ -304,7 +336,9 @@ class RSAKeyService {
       final encryptedBytes = cipher.process(Uint8List.fromList(plaintextBytes));
       return base64.encode(encryptedBytes);
     } catch (e) {
-      print('Encryption error: $e');
+      if (kDebugMode) {
+        debugPrint('Encryption error: $e');
+      }
       rethrow;
     }
   }
@@ -321,7 +355,9 @@ class RSAKeyService {
       }
       return await encryptWithPublicKey(plaintext, keyPair.publicKey);
     } catch (e) {
-      print('Encryption with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Encryption with stored key error: $e');
+      }
       rethrow;
     }
   }
@@ -344,7 +380,9 @@ class RSAKeyService {
       final decryptedBytes = cipher.process(encryptedBytes);
       return utf8.decode(decryptedBytes);
     } catch (e) {
-      print('Decryption error: $e');
+      if (kDebugMode) {
+        debugPrint('Decryption error: $e');
+      }
       rethrow;
     }
   }
@@ -361,7 +399,9 @@ class RSAKeyService {
       }
       return await decryptWithPrivateKey(ciphertext, keyPair.privateKey);
     } catch (e) {
-      print('Decryption with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Decryption with stored key error: $e');
+      }
       rethrow;
     }
   }
@@ -407,7 +447,9 @@ class RSAKeyService {
       }
       return await signWithPrivateKey(message, keyPair.privateKey);
     } catch (e) {
-      print('Signing with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Signing with stored key error: $e');
+      }
       rethrow;
     }
   }
@@ -438,7 +480,9 @@ class RSAKeyService {
       final pssSignature = PSSSignature(signatureBytes);
       return verifier.verifySignature(messageBytes, pssSignature);
     } catch (e) {
-      print('Verification error: $e');
+      if (kDebugMode) {
+        debugPrint('Verification error: $e');
+      }
       return false;
     }
   }
@@ -456,7 +500,9 @@ class RSAKeyService {
       }
       return await verifyWithPublicKey(message, signature, keyPair.publicKey);
     } catch (e) {
-      print('Verification with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Verification with stored key error: $e');
+      }
       return false;
     }
   }
@@ -471,7 +517,9 @@ class RSAKeyService {
       final modulus = publicKey.n;
       return modulus?.bitLength ?? 0;
     } catch (e) {
-      print('Error getting key size: $e');
+      if (kDebugMode) {
+        debugPrint('Error getting key size: $e');
+      }
       rethrow;
     }
   }
@@ -485,7 +533,9 @@ class RSAKeyService {
       }
       return getKeySize(keyPair.publicKey);
     } catch (e) {
-      print('Error getting stored key size: $e');
+      if (kDebugMode) {
+        debugPrint('Error getting stored key size: $e');
+      }
       rethrow;
     }
   }
@@ -517,7 +567,9 @@ class RSAKeyService {
         'iv': iv.base64,
       };
     } catch (e) {
-      print('Large data encryption error: $e');
+      if (kDebugMode) {
+        debugPrint('Large data encryption error: $e');
+      }
       rethrow;
     }
   }
@@ -545,7 +597,9 @@ class RSAKeyService {
       final aesEncrypter = Encrypter(AES(aesKey));
       return aesEncrypter.decrypt(encryptedData, iv: iv);
     } catch (e) {
-      print('Large data decryption error: $e');
+      if (kDebugMode) {
+        debugPrint('Large data decryption error: $e');
+      }
       rethrow;
     }
   }
@@ -563,7 +617,7 @@ class RSAKeyService {
       return await encryptLargeData(plaintext, keyPair.publicKey);
     } catch (e) {
       if (kDebugMode) {
-        print('Large data encryption with stored key error: $e');
+        debugPrint('Large data encryption with stored key error: $e');
       }
       rethrow;
     }
@@ -581,7 +635,9 @@ class RSAKeyService {
       }
       return await decryptLargeData(encryptedPackage, keyPair.privateKey);
     } catch (e) {
-      print('Large data decryption with stored key error: $e');
+      if (kDebugMode) {
+        debugPrint('Large data decryption with stored key error: $e');
+      }
       rethrow;
     }
   }
@@ -595,11 +651,11 @@ class RSAKeyService {
       // Ensure PEM has correct header and footer
       if (!normalized.startsWith('-----BEGIN PUBLIC KEY-----\n') &&
           !normalized.startsWith('-----BEGIN PRIVATE KEY-----\n')) {
-        throw FormatException('Missing PEM header');
+        throw const FormatException('Missing PEM header');
       }
       if (!normalized.endsWith('\n-----END PUBLIC KEY-----') &&
           !normalized.endsWith('\n-----END PRIVATE KEY-----')) {
-        throw FormatException('Missing PEM footer');
+        throw const FormatException('Missing PEM footer');
       }
 
       // Extract base64 content and validate
@@ -608,16 +664,19 @@ class RSAKeyService {
           .where(
             (line) =>
                 !line.startsWith('-----BEGIN') &&
-                !line.endsWith('-----END-----'),
+                !line.startsWith('-----END'),
           )
           .join('');
-      if (!RegExp(r'^[A-Za-z0-9+/=]+$').hasMatch(base64Lines)) {
-        throw FormatException('Invalid base64 content in PEM');
+      if (base64Lines.isEmpty ||
+          !RegExp(r'^[A-Za-z0-9+/=]+$').hasMatch(base64Lines)) {
+        throw const FormatException('Invalid base64 content in PEM');
       }
 
       return normalized;
     } catch (e) {
-      print('PEM normalization error: $e');
+      if (kDebugMode) {
+        debugPrint('PEM normalization error: $e');
+      }
       rethrow;
     }
   }

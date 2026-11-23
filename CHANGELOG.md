@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.2] - 2026-11-22
+
+### Security
+- **ML-DSA Manual Import Validation & Multi-Parameter Set Support**:
+  - Fixed inverted `validateKeyPair` condition in `CreateMlDsaKeyDialog`, wired the selected parameter set (`ML-DSA-44`, `ML-DSA-65`, `ML-DSA-87`, defaulting to `ML-DSA-65`) into a scoped and properly disposed `MlDsaKeyService`, fixed `generateKeyPair` argument handling, and scoped manual Base64 decoding with explicit `FormatException` handling.
+  - Replaced hardcoded `ML-DSA-65` usage across `MlDsaKeyService` and `InputHandler` with automatic parameter-set detection from public/secret key byte lengths (`1312`/`2560`, `1952`/`4032`, `2592`/`4896`), exact pre-call length validation, per-key algorithm dispatch for stored keys, and deterministic native `dispose()` cleanup in `finally` blocks.
+- **Headless Signature Verification Fail-Closed**:
+  - Removed `context != null` gating around signature verification in both tagged and untagged `InputHandler.handleDeProcess` paths so signature verification always runs fail-closed regardless of UI context availability.
+  - Made `BuildContext?` optional in `handleVerify` (gating only snackbar UI notifications) and replaced silent early returns on unmounted contexts with explicit cancellation exceptions.
+- **RSA-OAEP Base64-Aware Payload Guard & 2048-Bit Floor**:
+  - Corrected `InputHandler`'s pre-encryption RSA payload limit to account for Base64 expansion inside OAEP-SHA256 (`141` bytes for 2048-bit, `237` for 3072-bit, `333` for 4096-bit) while preserving full v5.x wire compatibility.
+  - Enforced a minimum 2048-bit RSA modulus (`RSAKeyService.minKeyBits`) on key generation, import, validation, and encryption while keeping decryption and verification permissive for legacy keys.
+- **Prevent Silent Keystore Wipes on Read/Parse Errors**:
+  - Hardened AES, RSA, ML-KEM, ML-DSA, and custom obfuscation storage services (`AesKeyStorageService`, `RSAKeyStorageService`, `KemKeyStorageService`, `MlDsaKeyStorageService`, `ObfuscationMapRepository`, and `CustomMapStorageService`) to use strict read paths before mutating storage, failing closed instead of overwriting existing keys or profiles when transient keyring or JSON parse errors occur.
+- **Release Logging Hygiene & Dead Code Removal**:
+  - Removed unused `lib/services/pqc.dart` and guarded all remaining diagnostic logs in `lib/` behind `kDebugMode` / `debugPrint`.
+- **Unpredictable ML-KEM Key Identifiers**:
+  - Replaced predictable timestamp-based IDs in `QryptKEMKeyPair` with `Uuid().v4()`.
+
+### Fixed
+- **RSA PEM Normalization**:
+  - Fixed `RSAKeyService.normalizePem` footer filtering (`!line.startsWith('-----END')`) and added empty/invalid Base64 body rejection.
+- **Encryption Page Mode Alignment & Null Safety**:
+  - Aligned default-mode encryption to `SignMethod.none`, reset `selectedSignProvider` when switching to manual mode, replaced an unsafe `!` null-unwrap on RSA decrypt key selection with a clean null check, and validated manual ML-DSA verification key Base64 decoding.
+- **Idempotent Linux Desktop Integration Tests**:
+  - Updated `integration_test/desktop_codecs_test.dart` to use in-memory KEM/ML-DSA storage doubles and deterministic `dispose()` cleanup so desktop integration tests never mutate or collide with the host OS keyring.
+
 ## [5.7.1] - 2026-11-21
 
 ### Fixed
