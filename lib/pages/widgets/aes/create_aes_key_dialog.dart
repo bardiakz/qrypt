@@ -250,6 +250,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                                   onPressed: () => copyToClipboard(
                                     _generatedPreview,
                                     context,
+                                    isSensitive: true,
                                   ),
                                 ),
                                 IconButton(

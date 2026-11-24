@@ -6,6 +6,7 @@ import 'package:qrypt/models/kem_key_pair.dart';
 import 'package:qrypt/models/kyber_models.dart';
 
 import '../../../providers/kem_providers.dart';
+import '../../../resources/global_resources.dart';
 import '../qr/qr_share_dialog.dart';
 import 'create_kem_key_dialog.dart';
 
@@ -215,21 +216,39 @@ class KemKeyManagementDialog extends ConsumerWidget {
                       'Secret Key:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextButton.icon(
-                      icon: Icon(
-                        showSecretKey
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        size: 18,
-                      ),
-                      label: Text(
-                        showSecretKey ? 'Hide Secret Key' : 'Reveal Secret Key',
-                      ),
-                      onPressed: () {
-                        setDialogState(() {
-                          showSecretKey = !showSecretKey;
-                        });
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showSecretKey)
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 18),
+                            tooltip: 'Copy Secret Key',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => copyToClipboard(
+                              base64Encode(keyPair.kemKeyPair.secretKey),
+                              context,
+                              isSensitive: true,
+                            ),
+                          ),
+                        TextButton.icon(
+                          icon: Icon(
+                            showSecretKey
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            showSecretKey
+                                ? 'Hide Secret Key'
+                                : 'Reveal Secret Key',
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              showSecretKey = !showSecretKey;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

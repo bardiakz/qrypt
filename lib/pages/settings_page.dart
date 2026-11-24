@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
+import 'package:qrypt/services/clipboard_security_service.dart';
 import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
 import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
 import 'package:qrypt/services/screen_security_service.dart';
@@ -47,12 +49,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           _buildObfuscationMapSettings(context),
           const SizedBox(height: 24),
 
-          // Security Section (Android FLAG_SECURE toggle)
-          if (ScreenSecurityService.isSupported) ...[
-            _buildSectionHeader('Security'),
-            _buildSecuritySettings(context, ref),
-            const SizedBox(height: 24),
-          ],
+          // Security Section
+          _buildSectionHeader('Security'),
+          _buildSecuritySettings(context, ref),
+          const SizedBox(height: 24),
 
           // Data Management Section
           // _buildSectionHeader('Data Management'),
@@ -123,32 +123,79 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Widget _buildSecuritySettings(BuildContext context, WidgetRef ref) {
     final screenSecurityEnabled = ref.watch(screenSecurityProvider);
+    final sensitiveClipboardEnabled = ref.watch(
+      sensitiveClipboardProtectionProvider,
+    );
 
     return Card(
       child: Column(
         children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.security_outlined),
-            title: const Text('Block Screenshots & Screen Recording'),
-            subtitle: const Text(
-              'Prevents screenshots, screen recording, and recents-screen previews (Android FLAG_SECURE).',
+          if (ScreenSecurityService.isSupported) ...[
+            SwitchListTile(
+              secondary: const Icon(Icons.security_outlined),
+              title: const Text('Block Screenshots & Screen Recording'),
+              subtitle: const Text(
+                'Prevents screenshots, screen recording, and recents-screen previews (Android FLAG_SECURE).',
+              ),
+              value: screenSecurityEnabled,
+              onChanged: (bool value) async {
+                await ref
+                    .read(screenSecurityProvider.notifier)
+                    .setEnabled(value);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        value
+                            ? 'Screenshot & screen-recording protection enabled'
+                            : 'Screenshot & screen-recording protection disabled',
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
-            value: screenSecurityEnabled,
+            const Divider(height: 1),
+          ],
+          SwitchListTile(
+            secondary: const Icon(Icons.content_paste_off_outlined),
+            title: const Text('Protect Sensitive Clipboard'),
+            subtitle: Text(
+              ClipboardSecurityService.supportsAndroidSensitiveFlag
+                  ? 'Marks copied secret keys & decrypted plaintext as sensitive (Android 13+) and auto-clears after 60s. Ciphertexts and public keys are unaffected.'
+                  : 'Automatically clears copied secret keys & decrypted plaintext after 60s. Ciphertexts and public keys are unaffected.',
+            ),
+            value: sensitiveClipboardEnabled,
             onChanged: (bool value) async {
-              await ref.read(screenSecurityProvider.notifier).setEnabled(value);
+              await ref
+                  .read(sensitiveClipboardProtectionProvider.notifier)
+                  .setEnabled(value);
+              if (!value) {
+                ClipboardSecurityService.cancelPendingClear();
+              }
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       value
-                          ? 'Screenshot & screen-recording protection enabled'
-                          : 'Screenshot & screen-recording protection disabled',
+                          ? 'Sensitive clipboard protection enabled'
+                          : 'Sensitive clipboard protection disabled',
                     ),
                   ),
                 );
               }
             },
           ),
+          if (kIsWeb) ...[
+            const Divider(height: 1),
+            const ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('Web Browser Storage'),
+              subtitle: Text(
+                'Browser storage is not hardware-backed Keystore/Keychain storage. Use native desktop or mobile builds for sensitive keys.',
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -593,6 +640,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ref.invalidate(mlDsaKeyPairsProvider);
               ref.invalidate(aesKeysProvider);
               ref.invalidate(screenSecurityProvider);
+              ref.invalidate(sensitiveClipboardProtectionProvider);
+              ClipboardSecurityService.cancelPendingClear();
               if (ScreenSecurityService.isSupported) {
                 await ScreenSecurityService.setSecureScreen(true);
               }

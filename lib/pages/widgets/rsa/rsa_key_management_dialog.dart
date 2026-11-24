@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/rsa_key_pair.dart';
 import '../../../providers/rsa_providers.dart';
+import '../../../resources/global_resources.dart';
 import '../qr/qr_share_dialog.dart';
 import 'create_rsa_key_dialog.dart';
 
@@ -209,23 +210,39 @@ class RSAKeyManagementDialog extends ConsumerWidget {
                       'Private Key:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextButton.icon(
-                      icon: Icon(
-                        showPrivateKey
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        size: 18,
-                      ),
-                      label: Text(
-                        showPrivateKey
-                            ? 'Hide Private Key'
-                            : 'Reveal Private Key',
-                      ),
-                      onPressed: () {
-                        setDialogState(() {
-                          showPrivateKey = !showPrivateKey;
-                        });
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showPrivateKey)
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 18),
+                            tooltip: 'Copy Private Key',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => copyToClipboard(
+                              keyPair.privateKey,
+                              context,
+                              isSensitive: true,
+                            ),
+                          ),
+                        TextButton.icon(
+                          icon: Icon(
+                            showPrivateKey
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            showPrivateKey
+                                ? 'Hide Private Key'
+                                : 'Reveal Private Key',
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              showPrivateKey = !showPrivateKey;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

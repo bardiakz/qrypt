@@ -110,7 +110,7 @@ class OqsLoader {
       );
     } else if (foundRoot != null) {
       LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive(foundRoot);
-    } else {
+    } else if (kDebugMode || Platform.environment.containsKey('FLUTTER_TEST')) {
       LibOQSLoader.customPaths = LibraryPaths.fromReleaseArchive(
         'liboqs-0.16.0',
       );

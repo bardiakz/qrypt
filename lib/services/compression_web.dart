@@ -15,17 +15,32 @@ class Compression {
     return Uint8List.fromList(encoder.encode(data));
   }
 
-  /// Decompresses data using GZip with size guard on Flutter Web.
+  /// Decompresses data using GZip with streaming expansion limits on Flutter Web.
+  ///
+  /// Uses `package:archive`'s `maxOutputSize` (`LimitedOutputStream`) so
+  /// decompression bombs abort immediately during inflation rather than
+  /// decoding completely into memory before checking size.
   static List<int> gZipDeCompress(
     List<int> compressedData, {
     int maxBytes = defaultMaxDecompressedBytes,
   }) {
     if (compressedData.isEmpty) return <int>[];
-    final decoded = GZipDecoder().decodeBytes(compressedData);
-    if (decoded.length > maxBytes) {
-      throw DecompressionBombException(maxBytes, decoded.length);
+    if (maxBytes < 0) {
+      throw DecompressionBombException(maxBytes, 0);
     }
-    return decoded;
+    try {
+      final decoded = const GZipDecoder().decodeBytes(
+        compressedData,
+        maxOutputSize: maxBytes,
+        throwOnError: true,
+      );
+      if (decoded.length > maxBytes) {
+        throw DecompressionBombException(maxBytes, decoded.length);
+      }
+      return decoded;
+    } on ArchiveLimitException {
+      throw DecompressionBombException(maxBytes, maxBytes + 1);
+    }
   }
 
   static Uint8List lz4Compress(List<int> data) {

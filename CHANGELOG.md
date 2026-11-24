@@ -34,6 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unencrypted Output Warning & Shoulder-Surfing Protections**:
   - Added a clear warning banner in manual mode whenever `Encryption: None` is selected alongside an obfuscation method, clarifying that obfuscation does not provide cryptographic confidentiality (while preserving the existing Base64 fallback warning when both encryption and obfuscation are `None`).
   - Hid RSA private keys and ML-KEM/ML-DSA secret keys by default behind an explicit **Reveal Private/Secret Key** toggle in key export dialogs (keeping QR codes strictly limited to public keys), and obscured manual secret key inputs by default with visibility toggle buttons across AES, RSA, ML-KEM, and ML-DSA key creation dialogs.
+- **Configurable Sensitive Clipboard Protection**:
+  - Added `ClipboardSecurityService` and a **Settings → Security → Protect Sensitive Clipboard** toggle (enabled by default) scoped strictly to **secret keys** and **decrypted plaintext** (never ciphertexts, public keys, or obfuscation maps).
+  - Marks sensitive copies with Android `ClipDescription.EXTRA_IS_SENSITIVE` (Android 13+ / compat extra on older Android) and schedules a 60-second auto-clear timer that clears the clipboard only if it still holds the copied secret.
+- **Flutter Web Hardening & Desktop Native Loader Cleanup**:
+  - Upgraded `Compression.gZipDeCompress` on Flutter Web (`lib/services/compression_web.dart`) to use streaming `maxOutputSize` inflation via `package:archive`, aborting decompression bombs immediately during decoding rather than buffering the full output in memory first.
+  - Added a dismissible Flutter Web storage notice clarifying that browser storage is not hardware-backed Keystore/Keychain storage.
+  - Gated the final relative `'liboqs-0.16.0'` fallback in `lib/services/oqs_loader_io.dart` behind `kDebugMode || FLUTTER_TEST` so release desktop builds strictly load native libraries relative to `Platform.resolvedExecutable`.
 - **Release Logging Hygiene & Dead Code Removal**:
   - Removed unused `lib/services/pqc.dart` and guarded all remaining diagnostic logs in `lib/` behind `kDebugMode` / `debugPrint`.
 - **Unpredictable ML-KEM Key Identifiers**:

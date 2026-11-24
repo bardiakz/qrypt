@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qrypt/models/ml_dsa_key_pair.dart';
 import '../../../providers/ml_dsa_providers.dart';
+import '../../../resources/global_resources.dart';
 import '../qr/qr_share_dialog.dart';
 import 'create_ml_dsa_key_dialog.dart';
 
@@ -224,21 +225,39 @@ class MlDsaKeyManagementDialog extends ConsumerWidget {
                       'Secret Key:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextButton.icon(
-                      icon: Icon(
-                        showSecretKey
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        size: 18,
-                      ),
-                      label: Text(
-                        showSecretKey ? 'Hide Secret Key' : 'Reveal Secret Key',
-                      ),
-                      onPressed: () {
-                        setDialogState(() {
-                          showSecretKey = !showSecretKey;
-                        });
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showSecretKey)
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 18),
+                            tooltip: 'Copy Secret Key',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => copyToClipboard(
+                              base64Encode(keyPair.secretKey),
+                              context,
+                              isSensitive: true,
+                            ),
+                          ),
+                        TextButton.icon(
+                          icon: Icon(
+                            showSecretKey
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            showSecretKey
+                                ? 'Hide Secret Key'
+                                : 'Reveal Secret Key',
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              showSecretKey = !showSecretKey;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -309,7 +309,7 @@ class _MLKemSharedSecretCardState extends State<MLKemSharedSecretCard> {
                 icon: const Icon(Icons.copy, size: 16),
                 label: const Text('Copy Key'),
                 onPressed: () {
-                  copyToClipboard(secret, context);
+                  copyToClipboard(secret, context, isSensitive: true);
                 },
               ),
               const SizedBox(width: 8),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qrypt/services/clipboard_security_service.dart';
 import 'constants.dart';
 
 Color getTextFieldBackgroundColor(BuildContext context) {
@@ -114,13 +115,23 @@ String generateRandomAesKey({int length = 32}) {
   return base64.encode(bytes);
 }
 
-void copyToClipboard(String text, BuildContext context) async {
+Future<void> copyToClipboard(
+  String text,
+  BuildContext context, {
+  bool isSensitive = false,
+}) async {
   try {
-    await Clipboard.setData(ClipboardData(text: text));
+    final result = await ClipboardSecurityService.copyText(
+      text,
+      isSensitive: isSensitive,
+    );
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
+      final message = result.autoClearScheduled
+          ? 'Copied to clipboard (auto-clears in ${result.clearAfter?.inSeconds ?? 60}s)'
+          : 'Copied to clipboard!';
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
     }
   } catch (e) {
     if (context.mounted) {

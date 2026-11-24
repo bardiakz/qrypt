@@ -86,8 +86,11 @@ class AESKeyManagementDialog extends ConsumerWidget {
                                     IconButton(
                                       icon: const Icon(Icons.copy, size: 20),
                                       tooltip: 'Copy key',
-                                      onPressed: () =>
-                                          copyToClipboard(key.key, context),
+                                      onPressed: () => copyToClipboard(
+                                        key.key,
+                                        context,
+                                        isSensitive: true,
+                                      ),
                                     ),
                                     IconButton(
                                       icon: const Icon(

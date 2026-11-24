@@ -34,6 +34,7 @@ import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
 import 'widgets/disclaimer_dialog.dart';
 import 'widgets/qr/qr_share_dialog.dart';
+import 'widgets/web_storage_notice_banner.dart';
 import '../services/settings/settings_storage_service.dart';
 
 class EncryptionPage extends ConsumerStatefulWidget {
@@ -424,7 +425,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         ? ref.read(processedEncryptProvider).text
         : ref.read(processedDecryptProvider).text;
     if (outputText.isNotEmpty) {
-      copyToClipboard(outputText, context);
+      copyToClipboard(outputText, context, isSensitive: !isEncryptMode);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No output to copy')),
@@ -648,6 +649,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                     ],
                   ),
                 ),
+
+                const WebStorageNoticeBanner(),
 
                 // ML-KEM Info Container (only show in ML-KEM mode)
                 if (isMLKemMode) ...[
@@ -1430,7 +1433,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             ? ref.watch(processedEncryptProvider).text
                             : ref.watch(processedDecryptProvider).text;
                         if (outputText.isNotEmpty) {
-                          copyToClipboard(outputText, context);
+                          copyToClipboard(
+                            outputText,
+                            context,
+                            isSensitive: !isEncryptMode,
+                          );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

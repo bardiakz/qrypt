@@ -18,6 +18,8 @@ class SettingsStorageService {
   static const String _defaultSignKey = 'default_sign_method';
   static const String _disclaimerAcceptedKey = 'disclaimer_accepted_v1';
   static const String _screenSecurityKey = 'android_flag_secure_enabled';
+  static const String _sensitiveClipboardProtectionKey =
+      'sensitive_clipboard_protection_enabled';
 
   /// Whether Android screenshot/screen-recording protection (`FLAG_SECURE`)
   /// is enabled. Defaults to `true` (secure by default) until toggled off.
@@ -35,6 +37,30 @@ class SettingsStorageService {
     try {
       await _storage.write(
         key: _screenSecurityKey,
+        value: enabled ? 'true' : 'false',
+      );
+    } catch (_) {}
+  }
+
+  /// Whether sensitive clipboard protection (Android 13+ `EXTRA_IS_SENSITIVE`
+  /// and 60s auto-clear for copied secret keys and decrypted plaintext) is
+  /// enabled. Defaults to `true` until toggled off in Settings.
+  static Future<bool> isSensitiveClipboardProtectionEnabled() async {
+    try {
+      final value = await _storage.read(key: _sensitiveClipboardProtectionKey);
+      if (value == null) return true;
+      return value != 'false';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  static Future<void> setSensitiveClipboardProtectionEnabled(
+    bool enabled,
+  ) async {
+    try {
+      await _storage.write(
+        key: _sensitiveClipboardProtectionKey,
         value: enabled ? 'true' : 'false',
       );
     } catch (_) {}
@@ -234,3 +260,36 @@ class ScreenSecurityNotifier extends Notifier<bool> {
 final screenSecurityProvider = NotifierProvider<ScreenSecurityNotifier, bool>(
   ScreenSecurityNotifier.new,
 );
+
+/// Manages sensitive clipboard protection state (default ON).
+class SensitiveClipboardProtectionNotifier extends Notifier<bool> {
+  bool _userUpdated = false;
+
+  @override
+  bool build() {
+    _userUpdated = false;
+    _load();
+    return true;
+  }
+
+  Future<void> _load() async {
+    final enabled =
+        await SettingsStorageService.isSensitiveClipboardProtectionEnabled();
+    if (!_userUpdated && ref.mounted) {
+      state = enabled;
+    }
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    _userUpdated = true;
+    state = enabled;
+    await SettingsStorageService.setSensitiveClipboardProtectionEnabled(
+      enabled,
+    );
+  }
+}
+
+final sensitiveClipboardProtectionProvider =
+    NotifierProvider<SensitiveClipboardProtectionNotifier, bool>(
+      SensitiveClipboardProtectionNotifier.new,
+    );
