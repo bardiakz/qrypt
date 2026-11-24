@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../models/aes_key.dart';
 import '../../resources/global_resources.dart';
+import '../secure_storage_config.dart';
 
 class AesKeyStorageService {
   final FlutterSecureStorage _storage;
@@ -12,7 +13,7 @@ class AesKeyStorageService {
   static const String _lastUsedKeyIdKey = 'aes_last_used_key_id';
 
   const AesKeyStorageService({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = qryptSecureStorage,
   }) : _storage = storage;
 
   /// Strictly reads all stored AES keys, throwing on storage or JSON errors

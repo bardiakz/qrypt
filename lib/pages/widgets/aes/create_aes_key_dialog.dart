@@ -27,6 +27,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
   final _keyController = TextEditingController();
   int _selectedLength = 32;
   bool _useManualInput = false;
+  bool _obscureSecretKey = true;
   String _generatedPreview = '';
 
   @override
@@ -101,15 +102,32 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                         children: [
                           TextField(
                             controller: _keyController,
+                            obscureText: _obscureSecretKey,
                             decoration: InputDecoration(
                               labelText: 'AES Secret Key',
-                              hintText: '16, 24, 32 chars (or 44 Base64 / 64 Hex)',
+                              hintText:
+                                  '16/24/32 chars, or 24/44 Base64, 48/64 Hex',
                               errorText: _keyController.text.isEmpty
                                   ? null
                                   : validateAesKey(_keyController.text),
                               suffixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      _obscureSecretKey
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                    ),
+                                    tooltip: _obscureSecretKey
+                                        ? 'Show secret key'
+                                        : 'Hide secret key',
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscureSecretKey = !_obscureSecretKey;
+                                      });
+                                    },
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.paste),
                                     tooltip: 'Paste from clipboard',
@@ -131,7 +149,7 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Enter 16 (128-bit), 24 (192-bit), 32 chars (256-bit), or 44-char Base64 / 64-char Hex.',
+                            'Enter raw 16/24/32-byte text, 24-char Base64 (128-bit), 48-char Hex (192-bit), or 44-char Base64 / 64-char Hex (256-bit).',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -159,15 +177,15 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                             selectedItemBuilder: (BuildContext context) =>
                                 const [
                                   Text(
-                                    '128-bit (16 chars)',
+                                    '128-bit (24-char Base64)',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
-                                    '192-bit (24 chars)',
+                                    '192-bit (48-char Hex)',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
-                                    '256-bit (32 chars)',
+                                    '256-bit (44-char Base64)',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
@@ -175,21 +193,21 @@ class _CreateAESKeyDialogState extends ConsumerState<CreateAESKeyDialog> {
                               DropdownMenuItem(
                                 value: 16,
                                 child: Text(
-                                  '128-bit (16 chars)',
+                                  '128-bit (24-char Base64)',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               DropdownMenuItem(
                                 value: 24,
                                 child: Text(
-                                  '192-bit (24 chars)',
+                                  '192-bit (48-char Hex)',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               DropdownMenuItem(
                                 value: 32,
                                 child: Text(
-                                  '256-bit (32 chars) - Recommended',
+                                  '256-bit (44-char Base64) - Recommended',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),

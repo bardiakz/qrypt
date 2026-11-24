@@ -6,10 +6,17 @@ import 'package:qrypt/services/compression.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/oqs_loader.dart';
 import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
+import 'package:qrypt/services/screen_security_service.dart';
+import 'package:qrypt/services/settings/settings_storage_service.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (ScreenSecurityService.isSupported) {
+    final screenSecurityEnabled =
+        await SettingsStorageService.isScreenSecurityEnabled();
+    await ScreenSecurityService.setSecureScreen(screenSecurityEnabled);
+  }
   await Obfuscate.setAllMaps();
   Compression.setNativeLibPaths();
   TagManager.initializeTags();

@@ -5,13 +5,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/obfuscation_profile.dart';
 import 'package:qrypt/resources/obfuscation/built_in_obfuscation_maps.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
 
 class ObfuscationMapRepository {
   ObfuscationMapRepository._();
 
   static final ObfuscationMapRepository instance = ObfuscationMapRepository._();
 
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = qryptSecureStorage;
   static const String _customProfilesKey = 'custom_obfuscation_profiles_v1';
 
   final Map<ObfuscationMethod, Map<String, String>> _resolvedMaps =

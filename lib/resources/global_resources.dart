@@ -56,6 +56,19 @@ String? validateAesKey(String key) {
 
   final trimmed = key.trim();
 
+  // Accept 24-character Base64 ending in '==' (decodes to 16 bytes for 128-bit key)
+  if (trimmed.length == 24 && trimmed.endsWith('==')) {
+    try {
+      final bytes = base64.decode(trimmed);
+      if (bytes.length == 16) return null;
+    } catch (_) {}
+  }
+
+  // Accept 48-character Hex (decodes to 24 bytes for 192-bit key)
+  if (trimmed.length == 48 && RegExp(r'^[0-9a-fA-F]{48}$').hasMatch(trimmed)) {
+    return null;
+  }
+
   // Accept 44-character Base64 (decodes to 32 bytes for 256-bit key)
   if (trimmed.length == 44) {
     try {
@@ -71,22 +84,34 @@ String? validateAesKey(String key) {
 
   final byteLength = utf8.encode(trimmed).length;
   if (byteLength != 16 && byteLength != 24 && byteLength != 32) {
-    return 'AES key must be 16, 24, or 32 characters (or 44-char Base64 / 64-char Hex for 256-bit)';
+    return 'AES key must be 16, 24, or 32 bytes (or 24-char Base64, 48-char Hex, 44-char Base64, or 64-char Hex)';
   }
   return null;
 }
 
+/// Generates a full-entropy cryptographic AES key for [length] raw bytes:
+/// - 16 bytes (128-bit) -> 24-char Base64 (ends with '==')
+/// - 24 bytes (192-bit) -> 48-char lowercase Hex (avoids 32-char Base64 collision with legacy 32-byte UTF-8 keys)
+/// - 32 bytes (256-bit) -> 44-char Base64 (ends with '=')
 String generateRandomAesKey({int length = 32}) {
-  const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  if (length != 16 && length != 24 && length != 32) {
+    throw ArgumentError.value(
+      length,
+      'length',
+      'AES key byte length must be 16, 24, or 32',
+    );
+  }
+
   final random = Random.secure();
   final bytes = Uint8List(length);
   for (int i = 0; i < length; i++) {
     bytes[i] = random.nextInt(256);
   }
-  // 64-character alphabet: taking the bottom 6 bits (byte & 0x3F) guarantees
-  // an exact uniform distribution (256 / 64 = 4 hits per slot) with zero modulo bias.
-  return List.generate(length, (i) => chars[bytes[i] & 0x3F]).join();
+
+  if (length == 24) {
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+  return base64.encode(bytes);
 }
 
 void copyToClipboard(String text, BuildContext context) async {

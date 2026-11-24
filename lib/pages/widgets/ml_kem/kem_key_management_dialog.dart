@@ -170,57 +170,97 @@ class KemKeyManagementDialog extends ConsumerWidget {
   }
 
   void _exportKeyPair(BuildContext context, QryptKEMKeyPair keyPair) {
+    bool showSecretKey = false;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Export ${keyPair.name}'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Public Key:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Export ${keyPair.name}'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Public Key:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.qr_code_2, size: 20),
+                      tooltip: 'Show Public Key QR',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        showQrShareDialog(
+                          context: context,
+                          title: 'ML-KEM Public Key: ${keyPair.name}',
+                          data: base64Encode(keyPair.kemKeyPair.publicKey),
+                          kind: QrPayloadKind.publicKey,
+                          subtitle: 'Share this public key for encapsulation',
+                          primaryColor: primaryColor,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SelectableText(base64Encode(keyPair.kemKeyPair.publicKey)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Secret Key:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextButton.icon(
+                      icon: Icon(
+                        showSecretKey
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        showSecretKey ? 'Hide Secret Key' : 'Reveal Secret Key',
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          showSecretKey = !showSecretKey;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (showSecretKey)
+                  SelectableText(base64Encode(keyPair.kemKeyPair.secretKey))
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Hidden to protect against shoulder-surfing. Reveal only in a private environment.',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.qr_code_2, size: 20),
-                    tooltip: 'Show Public Key QR',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      showQrShareDialog(
-                        context: context,
-                        title: 'ML-KEM Public Key: ${keyPair.name}',
-                        data: base64Encode(keyPair.kemKeyPair.publicKey),
-                        kind: QrPayloadKind.publicKey,
-                        subtitle: 'Share this public key for encapsulation',
-                        primaryColor: primaryColor,
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SelectableText(base64Encode(keyPair.kemKeyPair.publicKey)),
-              const SizedBox(height: 16),
-              const Text(
-                'Secret Key:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              SelectableText(base64Encode(keyPair.kemKeyPair.secretKey)),
-            ],
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

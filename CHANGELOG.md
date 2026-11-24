@@ -19,6 +19,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enforced a minimum 2048-bit RSA modulus (`RSAKeyService.minKeyBits`) on key generation, import, validation, and encryption while keeping decryption and verification permissive for legacy keys.
 - **Prevent Silent Keystore Wipes on Read/Parse Errors**:
   - Hardened AES, RSA, ML-KEM, ML-DSA, and custom obfuscation storage services (`AesKeyStorageService`, `RSAKeyStorageService`, `KemKeyStorageService`, `MlDsaKeyStorageService`, `ObfuscationMapRepository`, and `CustomMapStorageService`) to use strict read paths before mutating storage, failing closed instead of overwriting existing keys or profiles when transient keyring or JSON parse errors occur.
+- **Full-Entropy Random AES Key Generation (128 / 192 / 256-bit)**:
+  - Upgraded `generateRandomAesKey()` to generate full cryptographically random raw key bytes (8 bits/byte via `Random.secure()`) across all key sizes instead of 6-bit/char ASCII strings (which previously yielded 96 / 144 / 192 bits of entropy):
+    - **AES-128** (16 raw bytes) → `24`-char Base64 (ends with `==`).
+    - **AES-192** (24 raw bytes) → `48`-char Hex (avoids colliding with legacy 32-byte UTF-8 AES-256 keys).
+    - **AES-256** (32 raw bytes) → `44`-char Base64 (ends with `=`).
+  - *Backward Compatibility Note*: All previously created 16/24/32-character UTF-8 keys continue to decrypt and validate identically. Newly generated **256-bit** keys (`44`-char Base64) are 100% compatible with older v5.x builds; newly generated **128-bit** (`24`-char Base64) and **192-bit** (`48`-char Hex) keys require Qrypt `5.7.2+` on the recipient side.
+- **Hardened Secure Storage Configuration (`flutter_secure_storage` `11.2.0`)**:
+  - Upgraded `flutter_secure_storage` from `^10.0.0` (`10.3.4`) to `^11.2.0`, picking up hardened Android KeyStore ciphers (removal of legacy PKCS#1/CBC/EncryptedSharedPreferences paths), Linux fail-closed orphaned keyring handling, and Darwin cross-accessibility Keychain lookup fixes.
+  - Centralized all storage services onto `qryptSecureStorage` (`lib/services/secure_storage_config.dart`) with Android `resetOnError: false` (preventing silent keystore wipes on transient KeyStore errors) and iOS/macOS `KeychainAccessibility.unlocked_this_device` with `synchronizable: false` (hardware-bound, excluded from backups and iCloud Keychain sync).
+- **Android Platform Hardening & Configurable Screen Protection (`FLAG_SECURE`)**:
+  - Removed the unnecessary `android.permission.INTERNET` permission from the release `AndroidManifest.xml` (retained in debug manifests only) and disabled Android Auto Backup / device transfers (`android:allowBackup="false"`, `android:fullBackupContent="false"`, and `android:dataExtractionRules="@xml/data_extraction_rules"`).
+  - Added an Android `FLAG_SECURE` platform channel (`ScreenSecurityService`) and a **Settings → Security → Block Screenshots & Screen Recording** toggle (enabled by default on Android, persisted across restarts) so users can control screenshot, screen-recording, and recents-screen protection.
+- **Unencrypted Output Warning & Shoulder-Surfing Protections**:
+  - Added a clear warning banner in manual mode whenever `Encryption: None` is selected alongside an obfuscation method, clarifying that obfuscation does not provide cryptographic confidentiality (while preserving the existing Base64 fallback warning when both encryption and obfuscation are `None`).
+  - Hid RSA private keys and ML-KEM/ML-DSA secret keys by default behind an explicit **Reveal Private/Secret Key** toggle in key export dialogs (keeping QR codes strictly limited to public keys), and obscured manual secret key inputs by default with visibility toggle buttons across AES, RSA, ML-KEM, and ML-DSA key creation dialogs.
 - **Release Logging Hygiene & Dead Code Removal**:
   - Removed unused `lib/services/pqc.dart` and guarded all remaining diagnostic logs in `lib/` behind `kDebugMode` / `debugPrint`.
 - **Unpredictable ML-KEM Key Identifiers**:

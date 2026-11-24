@@ -191,7 +191,9 @@ void main() {
       final savedKeys = await storageService.getKeys();
       expect(savedKeys.length, equals(1));
       expect(savedKeys.first.name, equals('My Custom AES Key'));
-      expect(savedKeys.first.key.length, equals(32));
+      expect(savedKeys.first.key.length, equals(44));
+      expect(savedKeys.first.byteLength, equals(32));
+      expect(savedKeys.first.bitLength, equals(256));
     });
 
     testWidgets(
@@ -214,23 +216,26 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('256-bit (32 chars)'), findsOneWidget);
+        expect(find.text('256-bit (44-char Base64)'), findsOneWidget);
 
         // Open the dropdown menu
-        await tester.tap(find.text('256-bit (32 chars)'));
+        await tester.tap(find.text('256-bit (44-char Base64)'));
         await tester.pumpAndSettle();
 
         // Recommended label is shown in the open menu item
-        expect(find.text('256-bit (32 chars) - Recommended'), findsOneWidget);
-        expect(find.text('128-bit (16 chars)'), findsOneWidget);
-        expect(find.text('192-bit (24 chars)'), findsOneWidget);
+        expect(
+          find.text('256-bit (44-char Base64) - Recommended'),
+          findsOneWidget,
+        );
+        expect(find.text('128-bit (24-char Base64)'), findsOneWidget);
+        expect(find.text('192-bit (48-char Hex)'), findsOneWidget);
 
         // Select 128-bit
-        await tester.tap(find.text('128-bit (16 chars)').last);
+        await tester.tap(find.text('128-bit (24-char Base64)').last);
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('128-bit (16 chars)'), findsOneWidget);
+        expect(find.text('128-bit (24-char Base64)'), findsOneWidget);
       },
     );
   });

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/providers/kem_providers.dart';
 import 'package:qrypt/providers/ml_dsa_providers.dart';
 import 'package:qrypt/services/obfuscation/custom_map_storage_service.dart';
 import 'package:qrypt/services/obfuscation/v2_map_generator.dart';
+import 'package:qrypt/services/screen_security_service.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
+import 'package:qrypt/services/settings/settings_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'widgets/disclaimer_dialog.dart';
@@ -45,10 +47,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           _buildObfuscationMapSettings(context),
           const SizedBox(height: 24),
 
-          // Security Section
-          // _buildSectionHeader('Security'),
-          // _buildSecuritySettings(context, ref),
-          // const SizedBox(height: 24),
+          // Security Section (Android FLAG_SECURE toggle)
+          if (ScreenSecurityService.isSupported) ...[
+            _buildSectionHeader('Security'),
+            _buildSecuritySettings(context, ref),
+            const SizedBox(height: 24),
+          ],
 
           // Data Management Section
           // _buildSectionHeader('Data Management'),
@@ -111,6 +115,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 }
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecuritySettings(BuildContext context, WidgetRef ref) {
+    final screenSecurityEnabled = ref.watch(screenSecurityProvider);
+
+    return Card(
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: const Icon(Icons.security_outlined),
+            title: const Text('Block Screenshots & Screen Recording'),
+            subtitle: const Text(
+              'Prevents screenshots, screen recording, and recents-screen previews (Android FLAG_SECURE).',
+            ),
+            value: screenSecurityEnabled,
+            onChanged: (bool value) async {
+              await ref.read(screenSecurityProvider.notifier).setEnabled(value);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      value
+                          ? 'Screenshot & screen-recording protection enabled'
+                          : 'Screenshot & screen-recording protection disabled',
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -550,12 +587,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              const storage = FlutterSecureStorage();
-              await storage.deleteAll();
+              await qryptSecureStorage.deleteAll();
               ref.invalidate(rsaKeyPairsProvider);
               ref.invalidate(kemKeyPairsProvider);
               ref.invalidate(mlDsaKeyPairsProvider);
               ref.invalidate(aesKeysProvider);
+              ref.invalidate(screenSecurityProvider);
+              if (ScreenSecurityService.isSupported) {
+                await ScreenSecurityService.setSecureScreen(true);
+              }
               ref.read(selectedAESEncryptKeyProvider.notifier).state = null;
               ref.read(selectedAESDecryptKeyProvider.notifier).state = null;
               ref.read(selectedCustomMapProvider.notifier).state = null;

@@ -1765,14 +1765,29 @@ class InputHandler {
                         decoration: InputDecoration(
                           labelText: 'Enter Custom AES Key',
                           hintText:
-                              '16, 24, 32 characters, or 44-char Base64 / 64-char Hex',
+                              '16/24/32 chars, or 24/44 Base64, 48/64 Hex',
                           prefixIcon: const Icon(Icons.vpn_key),
                           border: const OutlineInputBorder(),
                           errorText: errorText,
                           helperText: keyController.text.isEmpty ||
                                   validateAesKey(keyController.text) != null
                               ? null
-                              : 'Valid AES key (${keyController.text.trim().length == 44 ? "256-bit Base64" : keyController.text.trim().length == 64 ? "256-bit Hex" : "${utf8.encode(keyController.text.trim()).length * 8}-bit"})',
+                              : () {
+                                  final t = keyController.text.trim();
+                                  if (t.length == 24 && t.endsWith('==')) {
+                                    return 'Valid AES key (128-bit Base64)';
+                                  }
+                                  if (t.length == 48) {
+                                    return 'Valid AES key (192-bit Hex)';
+                                  }
+                                  if (t.length == 44) {
+                                    return 'Valid AES key (256-bit Base64)';
+                                  }
+                                  if (t.length == 64) {
+                                    return 'Valid AES key (256-bit Hex)';
+                                  }
+                                  return 'Valid AES key (${utf8.encode(t).length * 8}-bit)';
+                                }(),
                         ),
                         obscureText: true, // Obscure input for security
                         maxLines: 1,
@@ -1786,7 +1801,7 @@ class InputHandler {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '• AES-128: 16 bytes\n• AES-192: 24 bytes\n• AES-256: 32 bytes (or 44-char Base64 / 64-char Hex)',
+                        '• AES-128: 16 bytes (or 24-char Base64)\n• AES-192: 24 bytes (or 48-char Hex)\n• AES-256: 32 bytes (or 44-char Base64 / 64-char Hex)',
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],

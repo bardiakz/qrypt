@@ -3,18 +3,42 @@ import 'package:qrypt/models/encryption_method.dart';
 import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
+import 'package:qrypt/services/screen_security_service.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
 import '../../models/compression_method.dart';
 import '../../models/sign_method.dart';
 
 // Storage service for persisting settings
 class SettingsStorageService {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = qryptSecureStorage;
 
   static const String _defaultEncryptionKey = 'default_encryption_method';
   static const String _defaultObfuscationKey = 'default_obfuscation_method';
   static const String _defaultCompressionKey = 'default_compression_method';
   static const String _defaultSignKey = 'default_sign_method';
   static const String _disclaimerAcceptedKey = 'disclaimer_accepted_v1';
+  static const String _screenSecurityKey = 'android_flag_secure_enabled';
+
+  /// Whether Android screenshot/screen-recording protection (`FLAG_SECURE`)
+  /// is enabled. Defaults to `true` (secure by default) until toggled off.
+  static Future<bool> isScreenSecurityEnabled() async {
+    try {
+      final value = await _storage.read(key: _screenSecurityKey);
+      if (value == null) return true;
+      return value != 'false';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  static Future<void> setScreenSecurityEnabled(bool enabled) async {
+    try {
+      await _storage.write(
+        key: _screenSecurityKey,
+        value: enabled ? 'true' : 'false',
+      );
+    } catch (_) {}
+  }
 
   static Future<bool> isDisclaimerAccepted() async {
     try {
@@ -179,3 +203,34 @@ class DefaultEncryptionSettingsNotifier
     }
   }
 }
+
+/// Manages Android `FLAG_SECURE` (screenshot & screen-recording protection) state.
+class ScreenSecurityNotifier extends Notifier<bool> {
+  bool _userUpdated = false;
+
+  @override
+  bool build() {
+    _userUpdated = false;
+    _load();
+    return true;
+  }
+
+  Future<void> _load() async {
+    final enabled = await SettingsStorageService.isScreenSecurityEnabled();
+    if (!_userUpdated && ref.mounted) {
+      state = enabled;
+      await ScreenSecurityService.setSecureScreen(enabled);
+    }
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    _userUpdated = true;
+    state = enabled;
+    await SettingsStorageService.setScreenSecurityEnabled(enabled);
+    await ScreenSecurityService.setSecureScreen(enabled);
+  }
+}
+
+final screenSecurityProvider = NotifierProvider<ScreenSecurityNotifier, bool>(
+  ScreenSecurityNotifier.new,
+);

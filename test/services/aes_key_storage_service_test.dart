@@ -213,13 +213,15 @@ void main() {
       expect((await service.getKeys()), isEmpty);
     });
 
-    test('createRandomKey generates a valid 32-character AESKey', () {
+    test('createRandomKey generates a valid full-entropy 256-bit AESKey', () {
       const service = AesKeyStorageService();
       final key = service.createRandomKey(name: 'Generated Key', length: 32);
 
       expect(key.id, isNotEmpty);
       expect(key.name, equals('Generated Key'));
-      expect(key.key.length, equals(32));
+      expect(key.key.length, equals(44));
+      expect(key.byteLength, equals(32));
+      expect(key.bitLength, equals(256));
       expect(validateAesKey(key.key), isNull);
     });
 
@@ -269,10 +271,13 @@ void main() {
   });
 
   group('AES Key Validation', () {
-    test('validates 16, 24, and 32 byte keys as valid', () {
+    test('validates 16, 24, and 32 byte keys plus encoded full-entropy formats as valid', () {
       expect(validateAesKey('1234567890123456'), isNull);
       expect(validateAesKey('123456789012345678901234'), isNull);
       expect(validateAesKey('12345678901234567890123456789012'), isNull);
+      expect(validateAesKey('AAAAAAAAAAAAAAAAAAAAAA=='), isNull); // 128-bit Base64
+      expect(validateAesKey('a' * 48), isNull); // 192-bit Hex
+      expect(validateAesKey('a' * 64), isNull); // 256-bit Hex
     });
 
     test('rejects keys of invalid lengths', () {

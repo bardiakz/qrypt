@@ -2,13 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:qrypt/models/ml_dsa_key_pair.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
 
 class MlDsaKeyStorageService {
   final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'mldsa_key_pairs';
 
   const MlDsaKeyStorageService({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = qryptSecureStorage,
   }) : _storage = storage;
 
   /// Strictly reads stored ML-DSA key pairs, throwing on storage or JSON errors

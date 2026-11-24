@@ -2,13 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../models/rsa_key_pair.dart';
+import '../secure_storage_config.dart';
 
 class RSAKeyStorageService {
   final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'rsa_key_pairs';
 
   const RSAKeyStorageService({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = qryptSecureStorage,
   }) : _storage = storage;
 
   /// Strictly reads stored RSA key pairs, throwing on storage or JSON errors

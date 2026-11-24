@@ -1014,6 +1014,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         message:
                             'Warning: No encryption or obfuscation is selected. Output will be Base64-encoded by default.',
                       ),
+                    ] else if (selectedEncryption == EncryptionMethod.none) ...[
+                      const SizedBox(height: AppConstants.smallPadding),
+                      _buildDefaultAesKeyWarning(
+                        context: context,
+                        message:
+                            'Warning: Encryption is disabled. Obfuscation only disguises format and does not provide cryptographic confidentiality.',
+                      ),
                     ],
                   ],
 

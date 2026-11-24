@@ -4,11 +4,32 @@ import 'package:flutter/foundation.dart';
 import '../models/encryption_method.dart';
 
 /// Converts any stored or entered key string into an encrypt.Key.
+/// - 24-char Base64 ending in '==' decoding to 16 bytes -> encrypt.Key(bytes) (128-bit key)
+/// - 48-char Hex string decoding to 24 bytes -> encrypt.Key(bytes) (192-bit key)
 /// - 44-char Base64 string decoding to 32 bytes -> encrypt.Key(bytes) (256-bit key)
 /// - 64-char Hex string decoding to 32 bytes -> encrypt.Key(bytes) (256-bit key)
-/// - Otherwise -> encrypt.Key.fromUtf8(trimmed) (standard text key)
+/// - Otherwise -> encrypt.Key.fromUtf8(trimmed) (legacy raw text key)
 encrypt.Key parseAesKey(String keyString) {
   final trimmed = keyString.trim();
+  if (trimmed.length == 24 && trimmed.endsWith('==')) {
+    try {
+      final bytes = base64.decode(trimmed);
+      if (bytes.length == 16) {
+        return encrypt.Key(Uint8List.fromList(bytes));
+      }
+    } catch (_) {}
+  }
+  if (trimmed.length == 48 && RegExp(r'^[0-9a-fA-F]{48}$').hasMatch(trimmed)) {
+    try {
+      final bytes = Uint8List.fromList(
+        List.generate(
+          24,
+          (i) => int.parse(trimmed.substring(i * 2, i * 2 + 2), radix: 16),
+        ),
+      );
+      return encrypt.Key(bytes);
+    } catch (_) {}
+  }
   if (trimmed.length == 44) {
     try {
       final bytes = base64.decode(trimmed);

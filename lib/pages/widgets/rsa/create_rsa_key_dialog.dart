@@ -20,6 +20,7 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
   final _privateKeyController = TextEditingController();
   bool _isGenerating = false;
   bool _useManualInput = false;
+  bool _obscurePrivateKey = true;
   int _selectedKeySize = 3072;
 
   static const List<int> _keySizeOptions = [2048, 3072, 4096];
@@ -100,12 +101,27 @@ class _CreateRSAKeyDialogState extends ConsumerState<CreateRSAKeyDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _privateKeyController,
-                decoration: const InputDecoration(
+                obscureText: _obscurePrivateKey,
+                maxLines: _obscurePrivateKey ? 1 : 4,
+                decoration: InputDecoration(
                   labelText: 'Private Key',
                   hintText: 'Paste private key here',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePrivateKey
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    tooltip: _obscurePrivateKey
+                        ? 'Show private key'
+                        : 'Hide private key',
+                    onPressed: () {
+                      setState(() {
+                        _obscurePrivateKey = !_obscurePrivateKey;
+                      });
+                    },
+                  ),
                 ),
-                maxLines: 4,
-                // obscureText: true,
               ),
             ],
           ],

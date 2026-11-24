@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/providers/simple_state_provider.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
 
 enum AppMode { encrypt, decrypt }
 
@@ -19,7 +19,7 @@ final isDarkModeProvider = simpleStateProvider<bool>(false);
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   static const String _themeKey = 'app_theme_mode';
-  static const _storage = FlutterSecureStorage();
+  static const _storage = qryptSecureStorage;
 
   @override
   ThemeMode build() {

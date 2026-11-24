@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:qrypt/models/custom_obfuscation_profile.dart';
 import 'package:qrypt/resources/obfuscation/v2_map_pools.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
+import 'package:qrypt/services/secure_storage_config.dart';
 import 'package:qrypt/services/tag_manager.dart';
 
 class CustomMapStorageService {
@@ -11,7 +12,7 @@ class CustomMapStorageService {
 
   static final CustomMapStorageService instance = CustomMapStorageService._();
 
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = qryptSecureStorage;
   static const String _storageKey = 'custom_v2_obfuscation_profiles';
 
   List<CustomObfuscationProfile> _cachedProfiles = [];

@@ -3,13 +3,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 
 import '../../models/kem_key_pair.dart';
+import '../secure_storage_config.dart';
 
 class KemKeyStorageService {
   final FlutterSecureStorage _storage;
   static const String _keyPairsKey = 'kem_key_pairs';
 
   const KemKeyStorageService({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = qryptSecureStorage,
   }) : _storage = storage;
 
   /// Strictly reads stored KEM key pairs, throwing on storage or JSON errors

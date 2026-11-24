@@ -24,6 +24,7 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
   final _privateKeyController = TextEditingController();
   bool _isGenerating = false;
   bool _useManualInput = false;
+  bool _obscureSecretKey = true;
   MLKemKeySize _selectedKeySize = MLKemKeySize.kem768;
 
   @override
@@ -102,12 +103,27 @@ class _CreateKemKeyDialogState extends ConsumerState<CreateKemKeyDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _privateKeyController,
-                decoration: const InputDecoration(
+                obscureText: _obscureSecretKey,
+                maxLines: _obscureSecretKey ? 1 : 4,
+                decoration: InputDecoration(
                   labelText: 'Secret Key',
                   hintText: 'Paste Secret key here',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureSecretKey
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    tooltip: _obscureSecretKey
+                        ? 'Show secret key'
+                        : 'Hide secret key',
+                    onPressed: () {
+                      setState(() {
+                        _obscureSecretKey = !_obscureSecretKey;
+                      });
+                    },
+                  ),
                 ),
-                maxLines: 4,
-                // obscureText: true,
               ),
             ],
           ],
