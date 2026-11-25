@@ -10,7 +10,9 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
 import 'package:qrypt/pages/encryption_page.dart';
 import 'package:qrypt/pages/widgets/encryption_output_panel.dart';
+import 'package:qrypt/pages/widgets/mode_switch.dart';
 import 'package:qrypt/providers/encryption_providers.dart';
+import 'package:qrypt/providers/resource_providers.dart';
 import 'package:qrypt/providers/simple_state_provider.dart';
 import 'package:qrypt/services/clipboard_security_service.dart';
 
@@ -165,7 +167,7 @@ void main() {
 
   group('Narrow Screen Action Button Overflow', () {
     testWidgets(
-      'Encapsulate & Encrypt action button fits narrow 400px viewport without RenderFlex overflow',
+      'Encapsulate & Encrypt and modeSwitch fit narrow viewports without RenderFlex overflow',
       (WidgetTester tester) async {
         tester.view.physicalSize = const Size(400, 900);
         tester.view.devicePixelRatio = 1.0;
@@ -195,6 +197,60 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Encapsulate & Encrypt'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Verify the header modeSwitch scales cleanly even on ultra-narrow 320px screens
+        final encCtrl = TextEditingController();
+        final decCtrl = TextEditingController();
+        addTearDown(encCtrl.dispose);
+        addTearDown(decCtrl.dispose);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            key: const ValueKey('mode-switch-320'),
+            child: MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: SizedBox(
+                    width: 320,
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        return Row(
+                          children: [
+                            const IconButton(
+                              onPressed: null,
+                              icon: Icon(Icons.vpn_key_outlined),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: modeSwitch(
+                                  context,
+                                  AppMode.encrypt,
+                                  Colors.blue,
+                                  ref,
+                                  encCtrl,
+                                  decCtrl,
+                                ),
+                              ),
+                            ),
+                            const IconButton(
+                              onPressed: null,
+                              icon: Icon(Icons.settings),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Encrypt'), findsOneWidget);
+        expect(find.text('Decrypt'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );

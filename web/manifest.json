@@ -1,11 +1,11 @@
 {
-    "name": "qrypt",
-    "short_name": "qrypt",
+    "name": "Qrypt",
+    "short_name": "Qrypt",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Qrypt - Offline hybrid post-quantum and classical encryption, signing, compression, and obfuscation.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

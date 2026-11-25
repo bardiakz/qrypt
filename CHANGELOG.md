@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.1] - 2026-11-25
+
+### Changed & Fixed
+- **Output Panel Refactoring (`lib/pages/widgets/encryption_output_panel.dart`)**:
+  - Extracted `EncryptionOutputPanel` and `DecryptPipelineSummary` from `EncryptionPage` into dedicated, focused widgets.
+- **Narrow Screen & Font-Scaling Resilience**:
+  - Constrained `Encapsulate & Encrypt`, `Encrypt`, and `Decrypt` action button labels cleanly to prevent horizontal RenderFlex overflow on narrow screens.
+  - Added `FittedBox` downscaling to `modeSwitch` labels so the Encrypt/Decrypt header pill adapts cleanly below `380px` and under enlarged system text scaling.
+- **Release Packaging & Web Metadata**:
+  - Updated macOS CI packaging in `.github/workflows/release.yml` to ad-hoc sign `liboqs.dylib` and re-seal the `.app` bundle with `Release.entitlements` after embedding the dylib.
+  - Updated `web/manifest.json` app name and description for Qrypt PWA metadata.
+  - Cleaned up unused test variable/import lints (`ml_kem_pipeline_test.dart`, `create_kem_key_dialog_test.dart`).
+
 ## [5.8.0] - 2026-11-25
 
 ### Added

@@ -74,7 +74,6 @@ void main() {
         final isValid = await kemService.validateKeyPair(keyPair.kemKeyPair);
         expect(isValid, isTrue);
 
-        final expectedSizes = kemService.getAlgorithmInfo();
         // Check size according to NIST spec
         if (size == MLKemKeySize.kem512) {
           expect(keyPair.publicKey.length, equals(800));

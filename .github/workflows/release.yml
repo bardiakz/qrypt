@@ -429,6 +429,12 @@ jobs:
             elif [ -f "liboqs-0.16.0/macos/x86_64/liboqs.dylib" ]; then
               cp "liboqs-0.16.0/macos/x86_64/liboqs.dylib" "$APP_NAME/Contents/Frameworks/"
             fi
+            if [ -f "$APP_NAME/Contents/Frameworks/liboqs.dylib" ]; then
+              codesign --force --sign - --timestamp=none "$APP_NAME/Contents/Frameworks/liboqs.dylib"
+            fi
+            # Re-seal the bundle after embedding liboqs.dylib so sandboxed execution stays valid.
+            codesign --force --deep --sign - --timestamp=none \
+              --entitlements macos/Runner/Release.entitlements "$APP_NAME"
           fi
 
       - name: Package macOS app

@@ -82,15 +82,20 @@ Widget modeSwitch(
                       },
                       child: Container(
                         alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         height: 48,
-                        child: Text(
-                          mode == AppMode.encrypt ? 'Encrypt' : 'Decrypt',
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : inactiveTextColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            mode == AppMode.encrypt ? 'Encrypt' : 'Decrypt',
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : inactiveTextColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
