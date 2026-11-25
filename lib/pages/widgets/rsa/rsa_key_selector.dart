@@ -30,7 +30,7 @@ class RSAKeySelector extends ConsumerWidget {
       decoration: BoxDecoration(
         color: getContainerBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: getBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,16 +38,20 @@ class RSAKeySelector extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
                 onPressed: () => _showKeyManagementDialog(context, ref),
                 icon: Icon(Icons.key, color: primaryColor),
+                tooltip: 'Manage RSA Keys',
               ),
             ],
           ),
@@ -105,6 +109,7 @@ class RSAKeySelector extends ConsumerWidget {
 
               return DropdownButtonFormField<RSAKeyPair>(
                 initialValue: currentSelectedKeyPair,
+                isExpanded: true,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(
@@ -118,7 +123,10 @@ class RSAKeySelector extends ConsumerWidget {
                 items: deduplicatedKeyPairs.map((keyPair) {
                   return DropdownMenuItem<RSAKeyPair>(
                     value: keyPair,
-                    child: Text(keyPair.name),
+                    child: Text(
+                      keyPair.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
                 }).toList(),
                 onChanged: (keyPair) {
@@ -128,7 +136,12 @@ class RSAKeySelector extends ConsumerWidget {
                 },
               );
             },
-            loading: () => const CircularProgressIndicator(),
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
             error: (error, stack) => Text('Error: $error'),
           ),
         ],
@@ -180,15 +193,20 @@ class RSAKeySelector extends ConsumerWidget {
 
 class RSAEncryptKeySelector extends StatelessWidget {
   final Color primaryColor;
+  final String title;
 
-  const RSAEncryptKeySelector({super.key, required this.primaryColor});
+  const RSAEncryptKeySelector({
+    super.key,
+    required this.primaryColor,
+    this.title = 'RSA Key Pair (Encrypt)',
+  });
 
   @override
   Widget build(BuildContext context) {
     return RSAKeySelector(
       primaryColor: primaryColor,
       keyType: RSAKeyType.encrypt,
-      title: 'RSA Key Pair (Encrypt)',
+      title: title,
     );
   }
 }

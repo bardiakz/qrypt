@@ -11,7 +11,8 @@ class KeyManagementPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final primaryColor = Theme.of(context).primaryColor;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SafeArea(
       child: Scaffold(
@@ -21,11 +22,19 @@ class KeyManagementPage extends ConsumerWidget {
           backgroundColor: Theme.of(context).colorScheme.surface,
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth > 840
+                ? (constraints.maxWidth - 840) / 2 + 16.0
+                : 16.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 16.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // Header Section
               Container(
                 padding: const EdgeInsets.all(16.0),
@@ -84,7 +93,10 @@ class KeyManagementPage extends ConsumerWidget {
                 primaryColor,
               ),
               const SizedBox(height: 12),
-              RSAEncryptKeySelector(primaryColor: primaryColor),
+              RSAEncryptKeySelector(
+                primaryColor: primaryColor,
+                title: 'Saved RSA Key Pairs',
+              ),
 
               const SizedBox(height: 32),
 
@@ -97,7 +109,10 @@ class KeyManagementPage extends ConsumerWidget {
                 primaryColor,
               ),
               const SizedBox(height: 12),
-              KemEncryptKeySelector(primaryColor: primaryColor),
+              KemEncryptKeySelector(
+                primaryColor: primaryColor,
+                title: 'Saved ML-KEM Key Pairs',
+              ),
 
               const SizedBox(height: 32),
 
@@ -110,7 +125,10 @@ class KeyManagementPage extends ConsumerWidget {
                 primaryColor,
               ),
               const SizedBox(height: 12),
-              MlDsaSignKeySelector(primaryColor: primaryColor),
+              MlDsaSignKeySelector(
+                primaryColor: primaryColor,
+                title: 'Saved ML-DSA Key Pairs',
+              ),
 
               const SizedBox(height: 32),
 
@@ -185,16 +203,20 @@ class KeyManagementPage extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: Colors.amber[50],
+                  color: isDark
+                      ? Colors.amber.shade900.withValues(alpha: 0.25)
+                      : Colors.amber[50],
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber[200]!),
+                  border: Border.all(
+                    color: isDark ? Colors.amber.shade700 : Colors.amber[200]!,
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
                       Icons.warning_amber,
-                      color: Colors.amber[700],
+                      color: isDark ? Colors.amber.shade300 : Colors.amber[700],
                       size: 24,
                     ),
                     const SizedBox(width: 12),
@@ -206,14 +228,18 @@ class KeyManagementPage extends ConsumerWidget {
                             'Security Notice',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.amber[800],
+                              color: isDark
+                                  ? Colors.amber.shade200
+                                  : Colors.amber[800],
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Keep your private keys secure and never share them. Consider backing up your keys in a secure location.',
                             style: TextStyle(
-                              color: Colors.amber[700],
+                              color: isDark
+                                  ? Colors.amber.shade100
+                                  : Colors.amber[700],
                               fontSize: 13,
                             ),
                           ),
@@ -225,6 +251,8 @@ class KeyManagementPage extends ConsumerWidget {
               ),
             ],
           ),
+        );
+          },
         ),
       ),
     );

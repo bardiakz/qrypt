@@ -20,7 +20,7 @@ extension EncryptionMethodName on EncryptionMethod {
       case EncryptionMethod.rsaSign:
         return 'RSA-PSS256-OAEP1 (with sign)';
       case EncryptionMethod.mlKem:
-        return 'ml-kem (Kyber)';
+        return 'ML-KEM (Kyber)';
     }
   }
 }

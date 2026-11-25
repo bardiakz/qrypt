@@ -64,6 +64,9 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
   MLKemKeySize _selectedMLKemKeySize = MLKemKeySize.kem768;
   String _mlKemSharedSecret = '';
 
+  // Metadata from the most recent successful decryption (reset on input edit/clear/error)
+  Qrypt? _lastDecryptSummary;
+
   @override
   void dispose() {
     _encryptTextController.dispose();
@@ -150,6 +153,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         obscureText: isObscured,
         onChanged: (value) {
           ref.read(keyProvider.notifier).state = value;
+          setState(() {});
         },
         decoration: buildInputDecoration(
           context: context,
@@ -320,6 +324,188 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
+  Widget _buildAutoDetectAesKeyChip({
+    required BuildContext context,
+    required Color primaryColor,
+  }) {
+    final selectedDecrypt = ref.watch(selectedAESDecryptKeyProvider);
+    final selectedEncrypt = ref.watch(selectedAESEncryptKeyProvider);
+    final typedDecrypt = ref.watch(customDecryptAesKeyProvider).trim();
+
+    String keyLabel;
+    if (selectedDecrypt != null && !selectedDecrypt.isCustom) {
+      keyLabel = '${selectedDecrypt.name} (${selectedDecrypt.bitLength}-bit)';
+    } else if (typedDecrypt.isNotEmpty) {
+      keyLabel = 'Custom key';
+    } else if (selectedEncrypt != null && !selectedEncrypt.isCustom) {
+      keyLabel =
+          '${selectedEncrypt.name} (${selectedEncrypt.bitLength}-bit, active)';
+    } else {
+      keyLabel = 'Auto (last used / prompt)';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: getContainerBackgroundColor(context),
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          border: Border.all(color: getBorderColor(context)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.vpn_key_outlined, size: 16, color: primaryColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'AES key (if AES-tagged): $keyLabel',
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AESKeyManagementDialog(
+                    primaryColor: primaryColor,
+                    onKeySelected: (key) {
+                      ref.read(selectedAESDecryptKeyProvider.notifier).state =
+                          key;
+                      _customDecryptAesKeyController.text = key.key;
+                      ref.read(customDecryptAesKeyProvider.notifier).state =
+                          key.key;
+                    },
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: const Text('Change'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDecryptPipelineSummary({
+    required BuildContext context,
+    required Qrypt summary,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isVerified =
+        summary.sign != SignMethod.none ||
+        summary.encryption == EncryptionMethod.rsaSign;
+
+    final String sigLabel;
+    if (summary.sign == SignMethod.mlDsa) {
+      sigLabel = 'Signature Verified (ML-DSA)';
+    } else if (summary.sign == SignMethod.rsaPss) {
+      sigLabel = 'Signature Verified (RSA-PSS)';
+    } else if (summary.encryption == EncryptionMethod.rsaSign) {
+      sigLabel = 'Signature Verified (RSA Legacy)';
+    } else {
+      sigLabel = 'Unsigned';
+    }
+
+    final pipelineLabel =
+        '${summary.encryption.displayName} • ${summary.compression.name.toUpperCase()} • ${summary.obfuscation.displayName}';
+
+    final badgeBg = isVerified
+        ? (isDark
+              ? Colors.green.shade900.withValues(alpha: 0.35)
+              : Colors.green.shade50)
+        : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+    final badgeBorder = isVerified
+        ? (isDark ? Colors.green.shade500 : Colors.green.shade600)
+        : getBorderColor(context);
+    final badgeFg = isVerified
+        ? (isDark ? Colors.green.shade200 : Colors.green.shade800)
+        : (isDark ? Colors.grey.shade300 : Colors.grey.shade700);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.defaultPadding,
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: badgeBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: badgeBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isVerified ? Icons.verified_outlined : Icons.info_outline,
+                  size: 14,
+                  color: badgeFg,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  sigLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: badgeFg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: getContainerBackgroundColor(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: getBorderColor(context)),
+            ),
+            child: Text(
+              pipelineLabel,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearCurrentOutput(bool isEncryptMode) {
+    final empty = Qrypt(
+      text: '',
+      encryption: EncryptionMethod.aesGcm,
+      obfuscation: ObfuscationService.defaultMethod,
+      compression: CompressionMethod.gZip,
+      sign: SignMethod.none,
+    );
+    if (isEncryptMode) {
+      ref.read(processedEncryptProvider.notifier).state = empty;
+    } else {
+      ref.read(processedDecryptProvider.notifier).state = empty;
+    }
+    setState(() {
+      _mlKemSharedSecret = '';
+      if (!isEncryptMode) {
+        _lastDecryptSummary = null;
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -446,6 +632,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
       ref.read(inputTextProvider.notifier).state = '';
       setState(() {
         _mlKemSharedSecret = '';
+        _lastDecryptSummary = null;
       });
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -584,73 +771,80 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
         autofocus: true,
         child: SafeArea(
           child: Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.all(AppConstants.smallPadding),
-              child: GestureDetector(
-            onHorizontalDragEnd: (DragEndDetails details) {
-              const double sensitivity = 100.0;
-              if (details.primaryVelocity != null) {
-                if (details.primaryVelocity! > sensitivity) {
-                  _onSwipeRight();
-                } else if (details.primaryVelocity! < -sensitivity) {
-                  _onSwipeLeft();
-                }
-              }
-            },
-            child: ListView(
-              children: [
-                // Header with mode switch and settings
-                Padding(
-                  padding: const EdgeInsets.symmetric(
+            body: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalMargin = constraints.maxWidth > 840
+                    ? (constraints.maxWidth - 840) / 2 +
+                          AppConstants.smallPadding
+                    : AppConstants.smallPadding;
+                return ListView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalMargin,
                     vertical: AppConstants.smallPadding,
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const KeyManagementPage(),
+                  children: [
+                    // Header with mode switch and settings (swipe restricted to header bar)
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (DragEndDetails details) {
+                        const double sensitivity = 100.0;
+                        if (details.primaryVelocity != null) {
+                          if (details.primaryVelocity! > sensitivity) {
+                            _onSwipeRight();
+                          } else if (details.primaryVelocity! < -sensitivity) {
+                            _onSwipeLeft();
+                          }
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.smallPadding,
+                          vertical: AppConstants.smallPadding,
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              tooltip: 'Key Management',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const KeyManagementPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.vpn_key_outlined),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: modeSwitch(
+                                  context,
+                                  appMode,
+                                  primaryColor,
+                                  ref,
+                                  _encryptTextController,
+                                  _decryptTextController,
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.admin_panel_settings),
-                          ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Settings',
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SettingsPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.settings),
+                            ),
+                          ],
                         ),
                       ),
-                      Center(
-                        child: modeSwitch(
-                          appMode,
-                          primaryColor,
-                          ref,
-                          _encryptTextController,
-                          _decryptTextController,
-                        ),
-                      ),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const SettingsPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.settings),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                const WebStorageNoticeBanner(),
+                    const WebStorageNoticeBanner(),
 
                 // ML-KEM Info Container (only show in ML-KEM mode)
                 if (isMLKemMode) ...[
@@ -684,6 +878,7 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                           ref.read(inputTextProvider.notifier).state = '';
                           setState(() {
                             _mlKemSharedSecret = '';
+                            _lastDecryptSummary = null;
                           });
                         }
                       },
@@ -704,6 +899,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             _decryptTextController.text = pastedText;
                             ref.read(inputTextProvider.notifier).state =
                                 _decryptTextController.text;
+                            if (_lastDecryptSummary != null) {
+                              setState(() {
+                                _lastDecryptSummary = null;
+                              });
+                            }
                           }
                         }
                       },
@@ -723,6 +923,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   child: TextField(
                     onChanged: (text) {
                       ref.read(inputTextProvider.notifier).state = text;
+                      if (!isEncryptMode && _lastDecryptSummary != null) {
+                        setState(() {
+                          _lastDecryptSummary = null;
+                        });
+                      }
                     },
                     controller: isEncryptMode
                         ? _encryptTextController
@@ -733,7 +938,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       context: context,
                       primaryColor: primaryColor,
                       hintText: _getInputFieldHint(isEncryptMode, isMLKemMode),
-                      labelText: _getInputFieldLabel(isEncryptMode, isMLKemMode),
                     ),
                   ),
                 ),
@@ -1103,6 +1307,13 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         ref.read(autoDetectTagProvider.notifier).state = val,
                     primaryColor: primaryColor,
                   ),
+                  if (autoDetectTag) ...[
+                    const SizedBox(height: AppConstants.smallPadding),
+                    _buildAutoDetectAesKeyChip(
+                      context: context,
+                      primaryColor: primaryColor,
+                    ),
+                  ],
                   const SizedBox(height: AppConstants.defaultPadding),
 
                   if (!autoDetectTag) ...[
@@ -1397,13 +1608,20 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             .length
                             .toString(),
                   actions: [
+                    buildActionButton(
+                      icon: Icons.clear_all,
+                      color: primaryColor,
+                      onTap: () => _clearCurrentOutput(isEncryptMode),
+                      semanticLabel: 'Clear output',
+                      tooltip: 'Clear output',
+                    ),
                     if (isEncryptMode)
                       buildActionButton(
                         icon: Icons.qr_code_2,
                         color: primaryColor,
                         onTap: () {
                           final outputText =
-                              ref.watch(processedEncryptProvider).text;
+                              ref.read(processedEncryptProvider).text;
                           if (outputText.isNotEmpty) {
                             showQrShareDialog(
                               context: context,
@@ -1430,8 +1648,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                       color: primaryColor,
                       onTap: () async {
                         final outputText = isEncryptMode
-                            ? ref.watch(processedEncryptProvider).text
-                            : ref.watch(processedDecryptProvider).text;
+                            ? ref.read(processedEncryptProvider).text
+                            : ref.read(processedDecryptProvider).text;
                         if (outputText.isNotEmpty) {
                           copyToClipboard(
                             outputText,
@@ -1452,44 +1670,74 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   ],
                 ),
 
+                if (!isEncryptMode && _lastDecryptSummary != null) ...[
+                  const SizedBox(height: AppConstants.smallPadding),
+                  _buildDecryptPipelineSummary(
+                    context: context,
+                    summary: _lastDecryptSummary!,
+                  ),
+                ],
+
                 const SizedBox(height: AppConstants.smallPadding),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.defaultPadding,
-                  ),
-                  child: Container(
-                    height: screenHeight * AppConstants.outputHeightRatio,
-                    padding: const EdgeInsets.all(
-                      AppConstants.defaultPadding,
-                    ),
-                    constraints: const BoxConstraints(minHeight: 120),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: getTextFieldBackgroundColor(context),
-                      border: Border.all(color: getBorderColor(context)),
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.borderRadius,
+                Builder(
+                  builder: (context) {
+                    final outputText = isEncryptMode
+                        ? ref.watch(processedEncryptProvider).text
+                        : ref.watch(processedDecryptProvider).text;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.defaultPadding,
                       ),
-                    ),
-                    child: SelectableText(
-                      isEncryptMode
-                          ? ref.watch(processedEncryptProvider).text
-                          : ref.watch(processedDecryptProvider).text,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
+                      child: Container(
+                        height: screenHeight * AppConstants.outputHeightRatio,
+                        padding: const EdgeInsets.all(
+                          AppConstants.defaultPadding,
+                        ),
+                        constraints: const BoxConstraints(minHeight: 120),
+                        width: double.infinity,
+                        alignment: Alignment.topLeft,
+                        decoration: BoxDecoration(
+                          color: getTextFieldBackgroundColor(context),
+                          border: Border.all(color: getBorderColor(context)),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.borderRadius,
+                          ),
+                        ),
+                        child: outputText.isEmpty
+                            ? Text(
+                                isEncryptMode
+                                    ? 'Encrypted output will appear here...'
+                                    : 'Decrypted output will appear here...',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: SelectableText(
+                                  outputText,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: AppConstants.defaultPadding),
               ],
+            );
+              },
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   void _encrypt(
@@ -1801,6 +2049,11 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     }
 
     ref.read(isProcessingProvider.notifier).state = true;
+    if (_lastDecryptSummary != null) {
+      setState(() {
+        _lastDecryptSummary = null;
+      });
+    }
 
     try {
       AESKey? selectedDecryptKey = ref.read(selectedAESDecryptKeyProvider);
@@ -1921,16 +2174,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             .handleDeProcess(context, ref.read(inputQryptProvider), false);
         if (!mounted) return;
         ref.read(processedDecryptProvider.notifier).state = deProcessed;
-        if (deProcessed.kemSharedSecret != null &&
-            deProcessed.kemSharedSecret!.isNotEmpty) {
-          setState(() {
+        setState(() {
+          _lastDecryptSummary = deProcessed;
+          if (deProcessed.kemSharedSecret != null &&
+              deProcessed.kemSharedSecret!.isNotEmpty) {
             _mlKemSharedSecret = base64.encode(deProcessed.kemSharedSecret!);
-          });
-        } else if (_mlKemSharedSecret.isNotEmpty) {
-          setState(() {
+          } else {
             _mlKemSharedSecret = '';
-          });
-        }
+          }
+        });
       } else {
         final autoQrypt = Qrypt.autoDecrypt(text: cleanDecryptText);
         if (decryptKeyToUse.isNotEmpty) {
@@ -1944,19 +2196,21 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             .handleDeProcess(context, ref.read(inputQryptProvider), true);
         if (!mounted) return;
         ref.read(processedDecryptProvider.notifier).state = deProcessed;
-        if (deProcessed.kemSharedSecret != null &&
-            deProcessed.kemSharedSecret!.isNotEmpty) {
-          setState(() {
+        setState(() {
+          _lastDecryptSummary = deProcessed;
+          if (deProcessed.kemSharedSecret != null &&
+              deProcessed.kemSharedSecret!.isNotEmpty) {
             _mlKemSharedSecret = base64.encode(deProcessed.kemSharedSecret!);
-          });
-        } else if (_mlKemSharedSecret.isNotEmpty) {
-          setState(() {
+          } else {
             _mlKemSharedSecret = '';
-          });
-        }
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _lastDecryptSummary = null;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Decryption failed: ${e.toString()}')),
         );

@@ -30,7 +30,7 @@ class MlDsaKeySelector extends ConsumerWidget {
       decoration: BoxDecoration(
         color: getContainerBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: getBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,16 +38,20 @@ class MlDsaKeySelector extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
                 onPressed: () => _showKeyManagementDialog(context, ref),
                 icon: Icon(Icons.key, color: primaryColor),
+                tooltip: 'Manage ML-DSA Keys',
               ),
             ],
           ),
@@ -105,6 +109,7 @@ class MlDsaKeySelector extends ConsumerWidget {
 
               return DropdownButtonFormField<QryptMLDSAKeyPair>(
                 initialValue: currentSelectedKeyPair,
+                isExpanded: true,
                 decoration: InputDecoration(
                   hintText: 'Select key pair',
                   border: OutlineInputBorder(
@@ -118,7 +123,10 @@ class MlDsaKeySelector extends ConsumerWidget {
                 items: deduplicatedKeyPairs.map((keyPair) {
                   return DropdownMenuItem<QryptMLDSAKeyPair>(
                     value: keyPair,
-                    child: Text(keyPair.name),
+                    child: Text(
+                      keyPair.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
                 }).toList(),
                 onChanged: (keyPair) {
@@ -128,7 +136,12 @@ class MlDsaKeySelector extends ConsumerWidget {
                 },
               );
             },
-            loading: () => const CircularProgressIndicator(),
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
             error: (error, stack) => Text('Error: $error'),
           ),
         ],
@@ -176,15 +189,20 @@ class MlDsaKeySelector extends ConsumerWidget {
 
 class MlDsaSignKeySelector extends StatelessWidget {
   final Color primaryColor;
+  final String title;
 
-  const MlDsaSignKeySelector({super.key, required this.primaryColor});
+  const MlDsaSignKeySelector({
+    super.key,
+    required this.primaryColor,
+    this.title = 'ML-DSA Key Pair (Sign)',
+  });
 
   @override
   Widget build(BuildContext context) {
     return MlDsaKeySelector(
       primaryColor: primaryColor,
       keyType: MlDsaKeyType.sign,
-      title: 'ML-DSA Key Pair (Sign)',
+      title: title,
     );
   }
 }

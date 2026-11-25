@@ -35,7 +35,7 @@ class AESKeySelector extends ConsumerWidget {
       decoration: BoxDecoration(
         color: getContainerBackgroundColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: getBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,11 +43,14 @@ class AESKeySelector extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
@@ -144,7 +147,12 @@ class AESKeySelector extends ConsumerWidget {
                 },
               );
             },
-            loading: () => const CircularProgressIndicator(),
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
             error: (error, stack) => Text('Error: $error'),
           ),
         ],

@@ -37,9 +37,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontalPadding = constraints.maxWidth > 840
+              ? (constraints.maxWidth - 840) / 2 + 16.0
+              : 16.0;
+          return ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 16.0,
+            ),
+            children: [
           // App Theme Section
           _buildSectionHeader('Appearance'),
           _buildThemeSelector(context, ref),
@@ -68,6 +76,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           _buildSectionHeader('Danger Zone'),
           _buildDangerZone(context, ref),
         ],
+      );
+        },
       ),
     );
   }
@@ -206,7 +216,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       future: PackageInfo.fromPlatform(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const CircularProgressIndicator();
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
         final info = snapshot.data!;
@@ -274,18 +289,36 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildDangerZone(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dangerBg = isDark
+        ? Colors.red.shade900.withValues(alpha: 0.25)
+        : Colors.red.shade50;
+    final dangerBorder = isDark ? Colors.red.shade700 : Colors.red.shade200;
+    final dangerFg = isDark ? Colors.red.shade200 : Colors.red.shade700;
+
     return Card(
-      color: Colors.red.shade50,
+      color: dangerBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: dangerBorder),
+      ),
       child: Column(
         children: [
           ListTile(
-            leading: Icon(Icons.delete_forever, color: Colors.red.shade700),
+            leading: Icon(Icons.delete_forever, color: dangerFg),
             title: Text(
               'Clear All Saved Data',
-              style: TextStyle(color: Colors.red.shade700),
+              style: TextStyle(color: dangerFg, fontWeight: FontWeight.w600),
             ),
-            subtitle: const Text('This action cannot be undone'),
-            trailing: Icon(Icons.chevron_right, color: Colors.red.shade700),
+            subtitle: Text(
+              'This action cannot be undone',
+              style: TextStyle(
+                color: isDark
+                    ? Colors.red.shade100.withValues(alpha: 0.85)
+                    : Colors.red.shade900.withValues(alpha: 0.75),
+              ),
+            ),
+            trailing: Icon(Icons.chevron_right, color: dangerFg),
             onTap: () {
               _showClearDataDialog(context, ref);
             },
@@ -593,7 +626,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Clear All Data'),
         content: const Text(
-          'This will permanently delete all your saved passwords, notes, and settings. '
+          'This will permanently delete all your saved cryptographic keys, custom obfuscation maps, and settings. '
           'This action cannot be undone.\n\n'
           'Are you sure you want to continue?',
         ),
@@ -624,7 +657,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Final Confirmation'),
         content: const Text(
-          'are you sure you want to permanently delete all secure storage data?',
+          'Are you sure you want to permanently delete all secure storage data?',
         ),
         actions: [
           TextButton(

@@ -189,6 +189,10 @@ Widget buildSectionHeader({
   required String characterCount,
   required List<Widget> actions,
 }) {
+  final countDisplay = RegExp(r'^\d+$').hasMatch(characterCount)
+      ? '$characterCount chars'
+      : characterCount;
+
   return Padding(
     padding: const EdgeInsets.only(
       left: AppConstants.defaultPadding + 2,
@@ -197,20 +201,23 @@ Widget buildSectionHeader({
     ),
     child: Row(
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         Text(
-          characterCount,
+          countDisplay,
           style: const TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w300,
+            fontWeight: FontWeight.w400,
             color: Colors.blueGrey,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         ...actions,
       ],
     ),
@@ -264,7 +271,9 @@ Widget buildSwitchContainer({
               if (states.contains(WidgetState.selected)) {
                 return primaryColor;
               }
-              return Colors.grey.shade300;
+              return Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey.shade700
+                  : Colors.grey.shade300;
             }),
             value: value,
             onChanged: onChanged,
@@ -288,49 +297,35 @@ Widget buildPublicKeyField({
     padding: const EdgeInsets.symmetric(
       horizontal: AppConstants.defaultPadding,
     ),
-    child: Stack(
-      children: [
-        TextField(
-          controller: controller,
-          onChanged: onChanged,
-          decoration: buildInputDecoration(
-            context: context,
-            primaryColor: primaryColor,
-            labelText: labelText ?? 'Public Key',
-            errorText: controller.text.isEmpty
-                ? null
-                : (RegExp(validationPattern).hasMatch(controller.text)
-                      ? null
-                      : 'Invalid key format'),
+    child: TextField(
+      controller: controller,
+      onChanged: onChanged,
+      decoration: buildInputDecoration(
+        context: context,
+        primaryColor: primaryColor,
+        labelText: labelText ?? 'Public Key',
+        errorText: controller.text.isEmpty
+            ? null
+            : (RegExp(validationPattern).hasMatch(controller.text)
+                  ? null
+                  : 'Invalid key format'),
+        suffixIcon: IconButton(
+          icon: const Icon(
+            Icons.content_paste_go,
+            color: Colors.blueGrey,
+            size: AppConstants.iconSize + 2,
           ),
-          maxLines: 3,
+          tooltip: 'Paste from clipboard',
+          onPressed: () async {
+            final pastedText = await pasteFromClipboard(context);
+            if (pastedText != null) {
+              controller.text = pastedText;
+              onChanged(pastedText);
+            }
+          },
         ),
-        Positioned(
-          top: 25,
-          right: 5,
-          child: InkWell(
-            onTap: () async {
-              final pastedText = await pasteFromClipboard(context);
-              if (pastedText != null) {
-                controller.text = pastedText;
-                onChanged(pastedText);
-              }
-            },
-            borderRadius: BorderRadius.circular(
-              AppConstants.switchBorderRadius,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppConstants.smallPadding),
-              child: Icon(
-                Icons.content_paste_go,
-                color: Colors.blueGrey,
-                size: AppConstants.iconSize + 5,
-                semanticLabel: 'Paste from clipboard',
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
+      maxLines: 3,
     ),
   );
 }

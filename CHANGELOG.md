@@ -54,6 +54,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Idempotent Linux Desktop Integration Tests**:
   - Updated `integration_test/desktop_codecs_test.dart` to use in-memory KEM/ML-DSA storage doubles and deterministic `dispose()` cleanup so desktop integration tests never mutate or collide with the host OS keyring.
 
+### UI & UX Improvements
+- **Dark Mode Contrast & Theme Consistency**:
+  - Fixed Dark Mode contrast across Settings Danger Zone, Key Management Security Notice and accent icons (`colorScheme.primary`), the Encrypt/Decrypt mode switch track, and key selector/dialog borders.
+- **Scrollable Output, Clear Output & Decrypt Verification Summary**:
+  - Made the Output box scrollable (`SingleChildScrollView`), added empty-state placeholder hints, and added a one-tap **Clear Output** action (`Icons.clear_all`) that also resets ephemeral ML-KEM shared secret and decrypt metadata state.
+  - Added a Decrypt pipeline & signature verification summary strip (`Signature Verified (ML-DSA / RSA-PSS / RSA Legacy)` vs `Unsigned` plus detected algorithm/compression/obfuscation) that clears immediately on input edit, clear, or decryption failure.
+  - Added a non-intrusive active AES key indicator chip in Auto-Detect Decrypt mode that preserves the smart active-key / last-used fallback while letting users switch keys before decrypting.
+- **Desktop/Web Ergonomics & Input Polish**:
+  - Added scrollbar-safe centered max-width (`840px`) padding on Encryption, Settings, and Key Management screens while keeping mobile viewports (`<360px`) overflow-free.
+  - Restricted the horizontal swipe-to-switch-mode gesture to the top header bar so text selection in Input/Output fields never accidentally toggles modes.
+  - Fixed live validation on the Custom AES Key field, moved the public key Paste button to `suffixIcon` so it never overlaps pasted keys, added dropdown overflow protection (`isExpanded` + ellipsis), updated header icons/tooltips (`Key Management`, `Settings`, `Ctrl+M`), standardized `ML-KEM (Kyber)` and Settings Clear Data copy, and formatted character counters with units (`chars`).
+
 ## [5.7.1] - 2026-11-21
 
 ### Fixed
