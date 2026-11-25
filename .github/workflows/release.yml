@@ -15,7 +15,7 @@ name: Release
         description: 'Create draft release'
         required: false
         type: boolean
-        default: false
+        default: true
       prerelease:
         description: 'Mark as prerelease'
         required: false
@@ -143,14 +143,15 @@ jobs:
 
       - name: Package Android artifacts
         run: |
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           mkdir -p android-out
           for abi in arm64-v8a armeabi-v7a x86_64; do
             SRC="build/app/outputs/flutter-apk/app-${abi}-release.apk"
             if [ -f "$SRC" ]; then
-              cp "$SRC" "android-out/qrypt-android-${abi}.apk"
+              cp "$SRC" "android-out/qrypt-v${APP_VERSION}-android-${abi}.apk"
             fi
           done
-          cp build/app/outputs/bundle/release/app-release.aab android-out/qrypt-android.aab
+          cp build/app/outputs/bundle/release/app-release.aab "android-out/qrypt-v${APP_VERSION}-android.aab"
           ls -lh android-out
 
       - name: Upload Android artifact
@@ -203,7 +204,7 @@ jobs:
           echo "Packaging version: ${APP_VERSION}"
 
           # 1. Tarball
-          tar -czf qrypt-linux-x64.tar.gz -C build/linux/x64/release bundle
+          tar -czf "qrypt-v${APP_VERSION}-linux-x64.tar.gz" -C build/linux/x64/release bundle
 
           # 2. Debian package (.deb)
           DEB_DIR="deb_staging"
@@ -286,7 +287,7 @@ jobs:
           EOF
           chmod 755 "$DEB_DIR/DEBIAN/postrm"
 
-          dpkg-deb --build --root-owner-group "$DEB_DIR" qrypt-linux-amd64.deb
+          dpkg-deb --build --root-owner-group "$DEB_DIR" "qrypt-v${APP_VERSION}-linux-amd64.deb"
           rm -rf "$DEB_DIR"
 
           # 3. RPM package (.rpm)
@@ -383,7 +384,7 @@ jobs:
           sed -i 's/^[ \t]*//' "$RPM_TOPDIR/SPECS/qrypt.spec"
 
           QA_RPATHS=2 rpmbuild --define "_topdir $RPM_TOPDIR" -bb "$RPM_TOPDIR/SPECS/qrypt.spec"
-          cp "$RPM_TOPDIR"/RPMS/x86_64/*.rpm qrypt-linux-x86_64.rpm
+          cp "$RPM_TOPDIR"/RPMS/x86_64/*.rpm "qrypt-v${APP_VERSION}-linux-x86_64.rpm"
           rm -rf "$RPM_TOPDIR"
 
       - name: Upload Linux artifacts
@@ -391,9 +392,9 @@ jobs:
         with:
           name: qrypt-linux
           path: |
-            qrypt-linux-x64.tar.gz
-            qrypt-linux-amd64.deb
-            qrypt-linux-x86_64.rpm
+            qrypt-v*-linux-x64.tar.gz
+            qrypt-v*-linux-amd64.deb
+            qrypt-v*-linux-x86_64.rpm
           if-no-files-found: error
 
   build-macos:
@@ -432,19 +433,20 @@ jobs:
 
       - name: Package macOS app
         run: |
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           cd build/macos/Build/Products/Release
           if [ -d "qrypt.app" ]; then
-            zip -r -y "${GITHUB_WORKSPACE}/qrypt-macos.zip" qrypt.app
+            zip -r -y "${GITHUB_WORKSPACE}/qrypt-v${APP_VERSION}-macos.zip" qrypt.app
           else
             APP_NAME=$(ls -d *.app | head -n 1)
-            zip -r -y "${GITHUB_WORKSPACE}/qrypt-macos.zip" "$APP_NAME"
+            zip -r -y "${GITHUB_WORKSPACE}/qrypt-v${APP_VERSION}-macos.zip" "$APP_NAME"
           fi
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v7
         with:
           name: qrypt-macos
-          path: qrypt-macos.zip
+          path: qrypt-v*-macos.zip
           if-no-files-found: error
 
   build-windows:
@@ -474,10 +476,12 @@ jobs:
       - name: Package Windows app
         shell: pwsh
         run: |
+          $rawVersion = Select-String -Path "pubspec.yaml" -Pattern "^version:\s*(\S+)" | ForEach-Object { $_.Matches.Groups[1].Value.Split('+')[0] }
+          if (-not $rawVersion) { throw "Could not determine version from pubspec.yaml" }
           if (Test-Path "liboqs-0.16.0\windows\x86_64\oqs.dll") {
             Copy-Item "liboqs-0.16.0\windows\x86_64\oqs.dll" -Destination "build\windows\x64\runner\Release\" -Force
           }
-          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-windows-x64.zip" -Force
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "qrypt-v$rawVersion-windows-x64.zip" -Force
 
       - name: Build Windows installer
         shell: pwsh
@@ -487,7 +491,7 @@ jobs:
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           }
           $rawVersion = Select-String -Path "pubspec.yaml" -Pattern "^version:\s*(\S+)" | ForEach-Object { $_.Matches.Groups[1].Value.Split('+')[0] }
-          if (-not $rawVersion) { $rawVersion = "5.3.3" }
+          if (-not $rawVersion) { throw "Could not determine version from pubspec.yaml" }
           Write-Host "Building Windows Inno Setup installer for version $rawVersion"
           $isccCmd = Get-Command iscc -ErrorAction SilentlyContinue
           if ($isccCmd) {
@@ -497,14 +501,15 @@ jobs:
           } else {
             throw "Inno Setup compiler (ISCC.exe) not found!"
           }
+          Move-Item "qrypt-windows-x64-setup.exe" "qrypt-v$rawVersion-windows-x64-setup.exe" -Force
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v7
         with:
           name: qrypt-windows
           path: |
-            qrypt-windows-x64.zip
-            qrypt-windows-x64-setup.exe
+            qrypt-v*-windows-x64.zip
+            qrypt-v*-windows-x64-setup.exe
           if-no-files-found: error
 
   release:
@@ -527,8 +532,10 @@ jobs:
 
       - name: Generate checksums
         run: |
+          APP_VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
           cd release-artifacts
-          sha256sum * > SHA256SUMS.txt
+          sha256sum * > "../qrypt-v${APP_VERSION}-SHA256SUMS.txt"
+          mv "../qrypt-v${APP_VERSION}-SHA256SUMS.txt" .
           ls -lh
 
       - name: Determine Release Tag
@@ -556,13 +563,13 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Publish GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.release_tag.outputs.tag }}
           files: release-artifacts/*
-          draft: ${{ inputs.draft || false }}
+          draft: ${{ github.event_name == 'push' || inputs.draft }}
           prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true
