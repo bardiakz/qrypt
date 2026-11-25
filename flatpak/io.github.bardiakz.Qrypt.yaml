@@ -10,20 +10,14 @@ id: io.github.bardiakz.Qrypt
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm20
 command: qrypt
 finish-args:
   - --share=ipc
-  - --socket=wayland
   - --socket=fallback-x11
+  - --socket=wayland
   - --device=dri
-cleanup:
-  - /include
-  - /lib/pkgconfig
-  - /man
-  - /share/doc
-  - /share/man
-  - '*.a'
-  - '*.la'
 modules:
   - name: liboqs
     buildsystem: cmake-ninja
@@ -36,28 +30,33 @@ modules:
         url: https://github.com/open-quantum-safe/liboqs.git
         tag: 0.16.0
         commit: 5a1a854b0dc9f2141bdc771c555ee60c37950183
-  - name: qrypt
+  - name: Qrypt
     buildsystem: simple
+    build-options:
+      arch:
+        x86_64:
+          env:
+            BUNDLE_PATH: build/linux/x64/release/bundle
+        aarch64:
+          env:
+            BUNDLE_PATH: build/linux/arm64/release/bundle
+      append-path: /usr/lib/sdk/llvm20/bin:/var/lib/flutter/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      env:
+        PUB_CACHE: /run/build/Qrypt/.pub-cache
     build-commands:
       - setup-flutter.sh
       - flutter build linux --release --no-pub
-      - mkdir -p /app/qrypt /app/bin
-      - cp -r build/linux/*/release/bundle/* /app/qrypt/
-      - cp -P /app/lib/liboqs.so* /app/qrypt/lib/
-      - ln -s /app/qrypt/qrypt /app/bin/qrypt
+      - cp -r $BUNDLE_PATH /app/io.github.bardiakz.Qrypt
+      - cp -P /app/lib/liboqs.so* /app/io.github.bardiakz.Qrypt/lib/
+      - mkdir -p /app/bin && ln -s /app/io.github.bardiakz.Qrypt/qrypt /app/bin/qrypt
       - install -Dm644 data/${FLATPAK_ID}.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - install -Dm644 data/${FLATPAK_ID}.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - "for size in 16 32 64 128 256 512; do\n  install -Dm644 \"macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_${size}.png\"\
-        \ \\\n    \"${FLATPAK_DEST}/share/icons/hicolor/${size}x${size}/apps/${FLATPAK_ID}.png\"\
-        \ndone\n"
+      - install -Dm644 assets/icon/qrypt_icon.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
     sources:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
-        tag: v5.8.2
-        commit: 1a74ec30bd4ce14516ad2c68b9adf10510a8ebf7
-        x-checker-data:
-          type: git
-          tag-pattern: ^v([\d.]+)$
+        commit: b62da1f31a2eca472ce9492e6d8fa6d2af16dae1
       - generated/sources/pubspec.json
     modules:
-      - generated/modules/flutter-sdk-3.44.1.json
+      - generated/modules/flutter-sdk-3.50.0.json
