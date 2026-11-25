@@ -1,26 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
     <id>io.github.bardiakz.Qrypt</id>
-    <developer id="github.com/bardiakz">
+    <developer id="io.github.bardiakz">
         <name>Bardia Kz</name>
     </developer>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <name>Qrypt</name>
-    <summary>Flexible and privacy-first app for manual text encryption, compression, and obfuscation</summary>
+    <summary>Privacy-first text encryption, compression, and obfuscation</summary>
     <description>
-        <p>Qrypt is a comprehensive Flutter application for text encryption, compression, obfuscation, and digital signing, with support for multiple algorithms, customizable processing pipelines, and quantum-safe cryptography. It puts full control in the hands of the user, enabling secure message sharing across any medium (e.g., SMS, chat, email) when encryption is restricted or unavailable.</p>
+        <p>Qrypt is a flexible, privacy-first application for manual text encryption, compression, digital signing, and obfuscation. Designed for scenarios where end-to-end encryption is missing, restricted, or unavailable, Qrypt puts full control in the user's hands to exchange messages securely across any communication channel.</p>
         <p>Key Features:</p>
         <ul>
-            <li>Encryption Methods: AES-CBC, AES-CTR, AES-GCM, RSA, RSA+Sign, ML-KEM (Kyber).</li>
-            <li>Quantum-Safe Cryptography: ML-KEM for key encapsulation, ML-DSA for digital signatures.</li>
-            <li>Compression Algorithms: GZip, LZ4, Brotli, Zstd.</li>
-            <li>Obfuscation Techniques: Character Mapping (EN1/EN2, FA1/FA2), Base64, ROT13, XOR.</li>
-            <li>Smart Tagging System: Automatic method detection and version-aware parsing.</li>
-            <li>Key Management: Generate and manage RSA, ML-KEM, and ML-DSA key pairs.</li>
-            <li>Security: Quantum resistance, hybrid security, message integrity, and more.</li>
+            <li>Encryption Methods: AES-GCM (recommended default), AES-CBC, AES-CTR, RSA-OAEP-256, and post-quantum ML-KEM (512, 768, and 1024).</li>
+            <li>Digital Signatures: Post-quantum ML-DSA (Dilithium) and RSASSA-PSS (SHA-256) using Encrypt-then-Sign.</li>
+            <li>Compression Algorithms: GZip, LZ4, Brotli, and Zstandard (Zstd) with decompression bomb protection.</li>
+            <li>Obfuscation Techniques: Natural-language character mapping (EN1/EN2, FA1/FA2), custom QR-shareable profiles, Base64, ROT13, and XOR.</li>
+            <li>Smart Tagging System: Deterministic routing tags with single-tap auto-detection and verification.</li>
+            <li>Key Management: Generate, store, and share RSA, ML-KEM, ML-DSA, and AES keys locally with air-gapped QR sharing.</li>
         </ul>
     </description>
+    <branding>
+        <color type="primary" scheme_preference="light">#90caf9</color>
+        <color type="primary" scheme_preference="dark">#1565c0</color>
+    </branding>
     <categories>
         <category>Utility</category>
         <category>Security</category>
@@ -36,7 +39,7 @@
         </screenshot>
         <screenshot>
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/3.png</image>
-            <caption>ML-KEM pqc algorithm</caption>
+            <caption>ML-KEM post-quantum encryption</caption>
         </screenshot>
         <screenshot>
             <image>https://raw.githubusercontent.com/bardiakz/qrypt/main/flatpak/screenshots/4.png</image>
@@ -45,6 +48,21 @@
     </screenshots>
     <launchable type="desktop-id">io.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
+        <release version="5.8.2" date="2026-11-25">
+            <description>
+                <p>Updated core dependencies including oqs 4.3.0, asn1lib 1.6.9, and cupertino_icons 2.0.0.</p>
+            </description>
+        </release>
+        <release version="5.8.1" date="2026-11-25">
+            <description>
+                <p>Extracted dedicated output panel widgets, improved narrow-screen and text-scaling layout resilience, and refined release packaging.</p>
+            </description>
+        </release>
+        <release version="5.8.0" date="2026-11-25">
+            <description>
+                <p>Added direct 1-tap public key QR sharing shortcuts and expandable public key share cards for asymmetric and post-quantum algorithms.</p>
+            </description>
+        </release>
         <release version="5.7.0" date="2026-11-19">
             <description>
                 <p>Post-quantum cryptographic expansion, QR code viewing improvements, and custom map stability:</p>
@@ -76,4 +94,5 @@
     <content_rating type="oars-1.1" />
     <url type="homepage">https://github.com/bardiakz/qrypt</url>
     <url type="bugtracker">https://github.com/bardiakz/qrypt/issues</url>
+    <url type="vcs-browser">https://github.com/bardiakz/qrypt</url>
 </component>
