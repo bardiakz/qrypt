@@ -137,6 +137,7 @@ class _QrShareDialogState extends State<QrShareDialog> {
             child: Text(
               widget.title,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

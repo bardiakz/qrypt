@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/rsa_key_pair.dart';
 import '../../../providers/rsa_providers.dart';
 import '../../../resources/global_resources.dart';
+import '../asymmetric_selector_header.dart';
+import '../qr/qr_share_dialog.dart';
 import 'create_rsa_key_dialog.dart';
 import 'rsa_key_management_dialog.dart';
 
@@ -23,7 +25,15 @@ class RSAKeySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keyPairsAsync = ref.watch(rsaKeyPairsProvider);
-    final selectedKeyPair = ref.watch(_getSelectedProvider());
+    final RSAKeyPair? selectedKeyPair = ref.watch(_getSelectedProvider());
+    final resolved = keyPairsAsync.whenOrNull(
+      data: (keyPairs) => resolveSelectedKeyPair<RSAKeyPair>(
+        keyPairs,
+        selectedKeyPair,
+        (kp) => kp.id,
+      ),
+    );
+    final effectiveSelected = resolved?.selected;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -35,25 +45,17 @@ class RSAKeySelector extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                onPressed: () => _showKeyManagementDialog(context, ref),
-                icon: Icon(Icons.key, color: primaryColor),
-                tooltip: 'Manage RSA Keys',
-              ),
-            ],
+          AsymmetricSelectorHeader(
+            title: title,
+            primaryColor: primaryColor,
+            manageTooltip: 'Manage RSA Keys',
+            shareTooltip: effectiveSelected == null
+                ? 'Share Public Key'
+                : 'Share Public Key (${effectiveSelected.name})',
+            onManagePressed: () => _showKeyManagementDialog(context, ref),
+            onSharePublicKey: effectiveSelected == null
+                ? null
+                : () => _sharePublicKey(context, effectiveSelected),
           ),
           const SizedBox(height: 12),
           keyPairsAsync.when(
@@ -75,35 +77,15 @@ class RSAKeySelector extends ConsumerWidget {
                 );
               }
 
-              // Remove duplicates based on id to prevent dropdown issues
-              final uniqueKeyPairs = <String, RSAKeyPair>{};
-              for (final keyPair in keyPairs) {
-                uniqueKeyPairs[keyPair.id] = keyPair;
-              }
-              final deduplicatedKeyPairs = uniqueKeyPairs.values.toList();
+              final currentResolved = resolved!;
+              final deduplicatedKeyPairs = currentResolved.items;
+              final currentSelectedKeyPair = currentResolved.selected;
 
-              // Find the currently selected key pair by ID in the fresh list
-              RSAKeyPair? currentSelectedKeyPair;
-
-              if (selectedKeyPair != null) {
-                // Look for a key pair with the same ID in the current list
-                try {
-                  currentSelectedKeyPair = deduplicatedKeyPairs.firstWhere(
-                    (kp) => kp.id == selectedKeyPair.id,
-                  );
-                } catch (e) {
-                  // If the selected key pair is not found, it might have been deleted
-                  currentSelectedKeyPair = null;
-                }
-              }
-
-              // If no valid selection, default to the first key pair
-              if (currentSelectedKeyPair == null &&
-                  deduplicatedKeyPairs.isNotEmpty) {
-                currentSelectedKeyPair = deduplicatedKeyPairs.first;
+              if (currentResolved.defaultedToFirst &&
+                  currentSelectedKeyPair != null) {
                 // Update the provider to reflect this default selection
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _updateSelectedProvider(ref, deduplicatedKeyPairs.first);
+                  _updateSelectedProvider(ref, currentSelectedKeyPair);
                 });
               }
 
@@ -174,6 +156,17 @@ class RSAKeySelector extends ConsumerWidget {
         ref.read(selectedRSASignKeyPairProvider.notifier).state = keyPair;
         break;
     }
+  }
+
+  void _sharePublicKey(BuildContext context, RSAKeyPair keyPair) {
+    showQrShareDialog(
+      context: context,
+      title: 'RSA Public Key: ${keyPair.name}',
+      data: keyPair.publicKey,
+      kind: QrPayloadKind.publicKey,
+      subtitle: 'Share this public key with senders',
+      primaryColor: primaryColor,
+    );
   }
 
   void _showKeyManagementDialog(BuildContext context, WidgetRef ref) {

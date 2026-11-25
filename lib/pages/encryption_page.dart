@@ -21,7 +21,9 @@ import 'package:qrypt/providers/rsa_providers.dart';
 import 'package:qrypt/services/obfuscation/obfuscation_service.dart';
 import '../models/aes_key.dart';
 import '../models/encryption_method.dart';
+import '../models/kem_key_pair.dart';
 import '../models/kyber_models.dart';
+import '../models/ml_dsa_key_pair.dart';
 import '../models/rsa_key_pair.dart';
 import '../models/sign_method.dart';
 import '../providers/resource_providers.dart';
@@ -32,8 +34,12 @@ import 'key_management_page.dart';
 import 'widgets/aes/aes_key_management_dialog.dart';
 import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
+import 'widgets/asymmetric_selector_header.dart';
 import 'widgets/disclaimer_dialog.dart';
+import 'widgets/ml_dsa/ml_dsa_key_management_dialog.dart';
+import 'widgets/ml_kem/kem_key_management_dialog.dart';
 import 'widgets/qr/qr_share_dialog.dart';
+import 'widgets/rsa/rsa_key_management_dialog.dart';
 import 'widgets/web_storage_notice_banner.dart';
 import '../services/settings/settings_storage_service.dart';
 
@@ -390,6 +396,364 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  ({List<RSAKeyPair> items, RSAKeyPair? selected, bool defaultedToFirst})
+  _resolveRsaKeys(List<RSAKeyPair> keys) {
+    final preferred =
+        ref.watch(selectedRSADecryptKeyPairProvider) ??
+        ref.watch(selectedRSAEncryptKeyPairProvider);
+    return resolveSelectedKeyPair<RSAKeyPair>(keys, preferred, (kp) => kp.id);
+  }
+
+  ({
+    List<QryptKEMKeyPair> items,
+    QryptKEMKeyPair? selected,
+    bool defaultedToFirst,
+  })
+  _resolveKemKeys(List<QryptKEMKeyPair> keys) {
+    final preferred =
+        ref.watch(selectedKemDecryptKeyPairProvider) ??
+        ref.watch(selectedKemEncryptKeyPairProvider);
+    return resolveSelectedKeyPair<QryptKEMKeyPair>(
+      keys,
+      preferred,
+      (kp) => kp.id,
+    );
+  }
+
+  ({
+    List<QryptMLDSAKeyPair> items,
+    QryptMLDSAKeyPair? selected,
+    bool defaultedToFirst,
+  })
+  _resolveMlDsaKeys(List<QryptMLDSAKeyPair> keys) {
+    final preferred =
+        ref.watch(selectedMlDsaSignKeyPairProvider) ??
+        ref.watch(selectedMlDsaVerifyKeyPairProvider);
+    return resolveSelectedKeyPair<QryptMLDSAKeyPair>(
+      keys,
+      preferred,
+      (kp) => kp.id,
+    );
+  }
+
+  String _rsaKeySubtitle(RSAKeyPair kp) =>
+      'RSA • Created ${formatPublicKeyCreatedDate(kp.createdAt)}';
+
+  String _kemKeySubtitle(QryptKEMKeyPair kp) {
+    final alg =
+        kp.algorithm ??
+        MLKemKeySizeExtension.fromPublicKeyLength(
+          kp.publicKey.length,
+        )?.displayName ??
+        'ML-KEM';
+    return '$alg • Created ${formatPublicKeyCreatedDate(kp.createdAt)}';
+  }
+
+  String _mlDsaKeySubtitle(QryptMLDSAKeyPair kp) =>
+      '${kp.algorithm} • Created ${formatPublicKeyCreatedDate(kp.createdAt)}';
+
+  void _openRsaPublicKeyShare(
+    BuildContext context,
+    Color primaryColor,
+    RSAKeyPair kp,
+  ) {
+    showQrShareDialog(
+      context: context,
+      title: 'RSA Public Key: ${kp.name}',
+      data: kp.publicKey,
+      kind: QrPayloadKind.publicKey,
+      subtitle: 'Share this public key with senders',
+      primaryColor: primaryColor,
+    );
+  }
+
+  void _openKemPublicKeyShare(
+    BuildContext context,
+    Color primaryColor,
+    QryptKEMKeyPair kp,
+  ) {
+    showQrShareDialog(
+      context: context,
+      title: 'ML-KEM Public Key: ${kp.name}',
+      data: base64Encode(kp.kemKeyPair.publicKey),
+      kind: QrPayloadKind.publicKey,
+      subtitle: 'Share this public key for encapsulation',
+      primaryColor: primaryColor,
+    );
+  }
+
+  void _openMlDsaPublicKeyShare(
+    BuildContext context,
+    Color primaryColor,
+    QryptMLDSAKeyPair kp,
+  ) {
+    showQrShareDialog(
+      context: context,
+      title: 'ML-DSA Public Key: ${kp.name}',
+      data: base64Encode(kp.publicKey),
+      kind: QrPayloadKind.publicKey,
+      subtitle: 'Share this verification key with recipients',
+      primaryColor: primaryColor,
+    );
+  }
+
+  Widget _buildPublicKeyShareRow<T>({
+    required BuildContext context,
+    required Color primaryColor,
+    required String algorithmLabel,
+    required List<T> items,
+    required T? activeKey,
+    required String Function(T) getId,
+    required String Function(T) getName,
+    required String Function(T) getSubtitle,
+    required ValueChanged<T> onSelected,
+    required void Function(T) onShare,
+    required VoidCallback onManage,
+  }) {
+    return PublicKeyShareRow(
+      primaryColor: primaryColor,
+      algorithmLabel: algorithmLabel,
+      selectedKeyName: activeKey != null ? getName(activeKey) : null,
+      canSwitch: items.length > 1,
+      onChooseKey: items.length > 1
+          ? () async {
+              final chosen = await showPublicKeyChoiceDialog<T>(
+                context: context,
+                primaryColor: primaryColor,
+                title: 'Select $algorithmLabel Key',
+                keyPairs: items,
+                getId: getId,
+                getName: getName,
+                getSubtitle: getSubtitle,
+                selectedKeyPair: activeKey,
+                onManageKeys: onManage,
+              );
+              if (chosen != null && context.mounted) {
+                onSelected(chosen);
+              }
+            }
+          : null,
+      onSharePublicKey: activeKey != null ? () => onShare(activeKey) : null,
+      onCreateKey: onManage,
+    );
+  }
+
+  Widget _buildRsaPublicKeyRow({
+    required BuildContext context,
+    required Color primaryColor,
+    required List<RSAKeyPair> items,
+    required RSAKeyPair? activeKey,
+  }) {
+    return _buildPublicKeyShareRow<RSAKeyPair>(
+      context: context,
+      primaryColor: primaryColor,
+      algorithmLabel: 'RSA',
+      items: items,
+      activeKey: activeKey,
+      getId: (kp) => kp.id,
+      getName: (kp) => kp.name,
+      getSubtitle: _rsaKeySubtitle,
+      onSelected: (kp) {
+        ref.read(selectedRSADecryptKeyPairProvider.notifier).state = kp;
+      },
+      onShare: (kp) => _openRsaPublicKeyShare(context, primaryColor, kp),
+      onManage: () => showDialog(
+        context: context,
+        builder: (ctx) => RSAKeyManagementDialog(primaryColor: primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildKemPublicKeyRow({
+    required BuildContext context,
+    required Color primaryColor,
+    required List<QryptKEMKeyPair> items,
+    required QryptKEMKeyPair? activeKey,
+  }) {
+    return _buildPublicKeyShareRow<QryptKEMKeyPair>(
+      context: context,
+      primaryColor: primaryColor,
+      algorithmLabel: 'ML-KEM',
+      items: items,
+      activeKey: activeKey,
+      getId: (kp) => kp.id,
+      getName: (kp) => kp.name,
+      getSubtitle: _kemKeySubtitle,
+      onSelected: (kp) {
+        ref.read(selectedKemDecryptKeyPairProvider.notifier).state = kp;
+      },
+      onShare: (kp) => _openKemPublicKeyShare(context, primaryColor, kp),
+      onManage: () => showDialog(
+        context: context,
+        builder: (ctx) => KemKeyManagementDialog(primaryColor: primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildMlDsaPublicKeyRow({
+    required BuildContext context,
+    required Color primaryColor,
+    required List<QryptMLDSAKeyPair> items,
+    required QryptMLDSAKeyPair? activeKey,
+  }) {
+    return _buildPublicKeyShareRow<QryptMLDSAKeyPair>(
+      context: context,
+      primaryColor: primaryColor,
+      algorithmLabel: 'ML-DSA',
+      items: items,
+      activeKey: activeKey,
+      getId: (kp) => kp.id,
+      getName: (kp) => kp.name,
+      getSubtitle: _mlDsaKeySubtitle,
+      onSelected: (kp) {
+        ref.read(selectedMlDsaSignKeyPairProvider.notifier).state = kp;
+      },
+      onShare: (kp) => _openMlDsaPublicKeyShare(context, primaryColor, kp),
+      onManage: () => showDialog(
+        context: context,
+        builder: (ctx) => MlDsaKeyManagementDialog(primaryColor: primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildEncryptMyPublicKeyChip({
+    required BuildContext context,
+    required Color primaryColor,
+    required EncryptionMethod method,
+  }) {
+    if (method == EncryptionMethod.mlKem) {
+      final resolved = ref
+          .watch(kemKeyPairsProvider)
+          .whenOrNull(data: _resolveKemKeys);
+      final items = resolved?.items ?? const <QryptKEMKeyPair>[];
+      final activeKey = resolved?.selected;
+
+      return PublicKeyShareCard(
+        title: 'Your ML-KEM Public Key',
+        collapsedSummary: activeKey?.name ?? 'No keys saved',
+        trailingAction: IconButton(
+          onPressed: () => showDialog(
+            context: context,
+            builder: (ctx) =>
+                KemKeyManagementDialog(primaryColor: primaryColor),
+          ),
+          icon: Icon(Icons.key, size: 18, color: primaryColor),
+          tooltip: 'Manage ML-KEM Keys',
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        ),
+        rows: [
+          _buildKemPublicKeyRow(
+            context: context,
+            primaryColor: primaryColor,
+            items: items,
+            activeKey: activeKey,
+          ),
+        ],
+      );
+    }
+
+    final resolved = ref
+        .watch(rsaKeyPairsProvider)
+        .whenOrNull(data: _resolveRsaKeys);
+    final items = resolved?.items ?? const <RSAKeyPair>[];
+    final activeKey = resolved?.selected;
+
+    return PublicKeyShareCard(
+      title: 'Your RSA Public Key',
+      collapsedSummary: activeKey?.name ?? 'No keys saved',
+      trailingAction: IconButton(
+        onPressed: () => showDialog(
+          context: context,
+          builder: (ctx) => RSAKeyManagementDialog(primaryColor: primaryColor),
+        ),
+        icon: Icon(Icons.key, size: 18, color: primaryColor),
+        tooltip: 'Manage RSA Keys',
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      ),
+      rows: [
+        _buildRsaPublicKeyRow(
+          context: context,
+          primaryColor: primaryColor,
+          items: items,
+          activeKey: activeKey,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAutoDetectPublicKeyBar({
+    required BuildContext context,
+    required Color primaryColor,
+  }) {
+    final rsaResolved = ref
+        .watch(rsaKeyPairsProvider)
+        .whenOrNull(data: _resolveRsaKeys);
+    final kemResolved = ref
+        .watch(kemKeyPairsProvider)
+        .whenOrNull(data: _resolveKemKeys);
+    final dsaResolved = ref
+        .watch(mlDsaKeyPairsProvider)
+        .whenOrNull(data: _resolveMlDsaKeys);
+
+    final rows = <Widget>[];
+    final algoLabels = <String>[];
+
+    if (rsaResolved != null &&
+        rsaResolved.items.isNotEmpty &&
+        rsaResolved.selected != null) {
+      algoLabels.add('RSA');
+      rows.add(
+        _buildRsaPublicKeyRow(
+          context: context,
+          primaryColor: primaryColor,
+          items: rsaResolved.items,
+          activeKey: rsaResolved.selected,
+        ),
+      );
+    }
+    if (kemResolved != null &&
+        kemResolved.items.isNotEmpty &&
+        kemResolved.selected != null) {
+      algoLabels.add('ML-KEM');
+      rows.add(
+        _buildKemPublicKeyRow(
+          context: context,
+          primaryColor: primaryColor,
+          items: kemResolved.items,
+          activeKey: kemResolved.selected,
+        ),
+      );
+    }
+    if (dsaResolved != null &&
+        dsaResolved.items.isNotEmpty &&
+        dsaResolved.selected != null) {
+      algoLabels.add('ML-DSA');
+      rows.add(
+        _buildMlDsaPublicKeyRow(
+          context: context,
+          primaryColor: primaryColor,
+          items: dsaResolved.items,
+          activeKey: dsaResolved.selected,
+        ),
+      );
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppConstants.smallPadding),
+      child: PublicKeyShareCard(
+        title: 'Share Public Key',
+        collapsedSummary: algoLabels.join(' • '),
+        rows: rows,
       ),
     );
   }
@@ -1109,6 +1473,12 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         isEncryptMode: true,
                         labelText: 'Recipient\'s ML-KEM Public Key',
                       ),
+                      const SizedBox(height: AppConstants.defaultPadding),
+                      _buildEncryptMyPublicKeyChip(
+                        context: context,
+                        primaryColor: primaryColor,
+                        method: EncryptionMethod.mlKem,
+                      ),
                     ],
 
                     // RSA specific fields
@@ -1149,6 +1519,14 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                             r'^-----BEGIN PUBLIC KEY-----\n[A-Za-z0-9+/=\n]+\n-----END PUBLIC KEY-----',
                         isEncryptMode: true,
                       ),
+                      if (selectedEncryption == EncryptionMethod.rsa) ...[
+                        const SizedBox(height: AppConstants.defaultPadding),
+                        _buildEncryptMyPublicKeyChip(
+                          context: context,
+                          primaryColor: primaryColor,
+                          method: EncryptionMethod.rsa,
+                        ),
+                      ],
                     ],
 
                     // Signs dropdown (for all except rsaSign)
@@ -1310,6 +1688,10 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                   if (autoDetectTag) ...[
                     const SizedBox(height: AppConstants.smallPadding),
                     _buildAutoDetectAesKeyChip(
+                      context: context,
+                      primaryColor: primaryColor,
+                    ),
+                    _buildAutoDetectPublicKeyBar(
                       context: context,
                       primaryColor: primaryColor,
                     ),

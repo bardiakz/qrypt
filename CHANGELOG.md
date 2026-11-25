@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-11-25
+
+### Added
+- **Direct Public Key QR Sharing Shortcuts (Asymmetric Algorithms)**:
+  - Added a 1-tap **Share Public Key** QR shortcut (`Icons.qr_code_2`) in the header of asymmetric key selector cards (`RSAKeySelector`, `KemKeySelector`, `MlDsaKeySelector`) with key-pair name tooltips, automatically hidden when no key pair is available (keeping symmetric `AESKeySelector` strictly excluded).
+  - Added an expandable/retractable **Public Key Share Card** (`PublicKeyShareCard`) to `EncryptionPage` (retracted by default with summary labels):
+    - **Auto-Detect Decrypt mode**: Displays aligned rows for algorithms with saved key pairs (`RSA`, `ML-KEM`, `ML-DSA`), lets users switch the active key pair via `showPublicKeyChoiceDialog` (synced with the active decrypt/sign key providers and featuring a `Manage Keys` action), and shares the chosen public key via QR/clipboard in 1 tap.
+    - **Manual Encrypt mode (`ML-KEM` / `RSA`)**: Lets users inspect, switch, or create their own key pair directly below the recipient public key field and share its public key via QR without leaving the Encryption page.
+  - Updated `QrShareDialog` titles to support up to 2 lines so full key pair names stay readable without truncation.
+
 ## [5.7.3] - 2026-11-25
 
 ### UI & UX Improvements
