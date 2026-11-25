@@ -36,6 +36,7 @@ import 'widgets/aes/aes_key_selector.dart';
 import 'widgets/aes/create_aes_key_dialog.dart';
 import 'widgets/asymmetric_selector_header.dart';
 import 'widgets/disclaimer_dialog.dart';
+import 'widgets/encryption_output_panel.dart';
 import 'widgets/ml_dsa/ml_dsa_key_management_dialog.dart';
 import 'widgets/ml_kem/kem_key_management_dialog.dart';
 import 'widgets/qr/qr_share_dialog.dart';
@@ -758,97 +759,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
     );
   }
 
-  Widget _buildDecryptPipelineSummary({
-    required BuildContext context,
-    required Qrypt summary,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool isVerified =
-        summary.sign != SignMethod.none ||
-        summary.encryption == EncryptionMethod.rsaSign;
-
-    final String sigLabel;
-    if (summary.sign == SignMethod.mlDsa) {
-      sigLabel = 'Signature Verified (ML-DSA)';
-    } else if (summary.sign == SignMethod.rsaPss) {
-      sigLabel = 'Signature Verified (RSA-PSS)';
-    } else if (summary.encryption == EncryptionMethod.rsaSign) {
-      sigLabel = 'Signature Verified (RSA Legacy)';
-    } else {
-      sigLabel = 'Unsigned';
-    }
-
-    final pipelineLabel =
-        '${summary.encryption.displayName} • ${summary.compression.name.toUpperCase()} • ${summary.obfuscation.displayName}';
-
-    final badgeBg = isVerified
-        ? (isDark
-              ? Colors.green.shade900.withValues(alpha: 0.35)
-              : Colors.green.shade50)
-        : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
-    final badgeBorder = isVerified
-        ? (isDark ? Colors.green.shade500 : Colors.green.shade600)
-        : getBorderColor(context);
-    final badgeFg = isVerified
-        ? (isDark ? Colors.green.shade200 : Colors.green.shade800)
-        : (isDark ? Colors.grey.shade300 : Colors.grey.shade700);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: badgeBg,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: badgeBorder),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isVerified ? Icons.verified_outlined : Icons.info_outline,
-                  size: 14,
-                  color: badgeFg,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  sigLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: badgeFg,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: getContainerBackgroundColor(context),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: getBorderColor(context)),
-            ),
-            child: Text(
-              pipelineLabel,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _clearCurrentOutput(bool isEncryptMode) {
     final empty = Qrypt(
       text: '',
@@ -1036,7 +946,6 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final appMode = ref.watch(appModeProvider);
     final isEncryptMode = appMode == AppMode.encrypt;
     final Color primaryColor = ref.watch(primaryColorProvider);
@@ -1636,8 +1545,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppConstants.defaultPadding,
+                          padding: const EdgeInsets.all(
+                            AppConstants.defaultPadding,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -1661,13 +1570,17 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   const SizedBox(
                                     width: AppConstants.smallPadding,
                                   ),
-                                  Text(
-                                    isMLKemMode
-                                        ? "Encapsulate & Encrypt"
-                                        : "Encrypt",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                  Flexible(
+                                    child: Text(
+                                      isMLKemMode
+                                          ? "Encapsulate & Encrypt"
+                                          : "Encrypt",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                 ],
@@ -1909,8 +1822,8 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppConstants.defaultPadding,
+                          padding: const EdgeInsets.all(
+                            AppConstants.defaultPadding,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -1934,11 +1847,15 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                                   SizedBox(
                                     width: AppConstants.smallPadding,
                                   ),
-                                  Text(
-                                    "Decrypt",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                  Flexible(
+                                    child: Text(
+                                      "Decrypt",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                 ],
@@ -1949,169 +1866,16 @@ class _EncryptionPageState extends ConsumerState<EncryptionPage> {
                 ],
 
                 // Output section
-                const SizedBox(height: AppConstants.defaultPadding),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.defaultPadding,
-                  ),
-                  child: const Divider(),
+                EncryptionOutputPanel(
+                  primaryColor: primaryColor,
+                  isEncryptMode: isEncryptMode,
+                  isMLKemMode: isMLKemMode,
+                  shouldShowKemSecret: shouldShowKemSecret,
+                  mlKemSharedSecret: _mlKemSharedSecret,
+                  lastDecryptSummary: _lastDecryptSummary,
+                  onClearOutput: () => _clearCurrentOutput(isEncryptMode),
+                  onKemKeySaved: () => setState(() {}),
                 ),
-
-                const SizedBox(height: AppConstants.defaultPadding),
-
-                // ML-KEM Shared Secret Card (shown whenever a shared secret is encapsulated or decapsulated)
-                if (shouldShowKemSecret) ...[
-                  MLKemSharedSecretCard(
-                    context: context,
-                    primaryColor: primaryColor,
-                    sharedSecretBase64: _mlKemSharedSecret,
-                    isSender: isEncryptMode,
-                    onKeySaved: () {
-                      setState(() {});
-                    },
-                  ),
-                  const SizedBox(height: AppConstants.defaultPadding),
-                ],
-
-                // Output section (holds the tagged/obfuscated ciphertext on encrypt, or output text on decrypt)
-                buildSectionHeader(
-                  title: isEncryptMode && isMLKemMode
-                      ? "Ciphertext Output (send to recipient)"
-                      : "Output",
-                  characterCount: isEncryptMode
-                      ? ref
-                            .watch(processedEncryptProvider)
-                            .text
-                            .length
-                            .toString()
-                      : ref
-                            .watch(processedDecryptProvider)
-                            .text
-                            .length
-                            .toString(),
-                  actions: [
-                    buildActionButton(
-                      icon: Icons.clear_all,
-                      color: primaryColor,
-                      onTap: () => _clearCurrentOutput(isEncryptMode),
-                      semanticLabel: 'Clear output',
-                      tooltip: 'Clear output',
-                    ),
-                    if (isEncryptMode)
-                      buildActionButton(
-                        icon: Icons.qr_code_2,
-                        color: primaryColor,
-                        onTap: () {
-                          final outputText =
-                              ref.read(processedEncryptProvider).text;
-                          if (outputText.isNotEmpty) {
-                            showQrShareDialog(
-                              context: context,
-                              title: 'Ciphertext QR Code',
-                              data: outputText,
-                              kind: QrPayloadKind.ciphertext,
-                              subtitle:
-                                  'Scan with another device to import ciphertext',
-                              primaryColor: primaryColor,
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('No output to display as QR code'),
-                              ),
-                            );
-                          }
-                        },
-                        semanticLabel: 'Share ciphertext as QR code',
-                        tooltip: 'Share ciphertext as QR code',
-                      ),
-                    buildActionButton(
-                      icon: Icons.content_copy,
-                      color: primaryColor,
-                      onTap: () async {
-                        final outputText = isEncryptMode
-                            ? ref.read(processedEncryptProvider).text
-                            : ref.read(processedDecryptProvider).text;
-                        if (outputText.isNotEmpty) {
-                          copyToClipboard(
-                            outputText,
-                            context,
-                            isSensitive: !isEncryptMode,
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('No output to copy'),
-                            ),
-                          );
-                        }
-                      },
-                      semanticLabel: 'Copy output to clipboard',
-                      tooltip: 'Copy output (Ctrl+Shift+C)',
-                    ),
-                  ],
-                ),
-
-                if (!isEncryptMode && _lastDecryptSummary != null) ...[
-                  const SizedBox(height: AppConstants.smallPadding),
-                  _buildDecryptPipelineSummary(
-                    context: context,
-                    summary: _lastDecryptSummary!,
-                  ),
-                ],
-
-                const SizedBox(height: AppConstants.smallPadding),
-
-                Builder(
-                  builder: (context) {
-                    final outputText = isEncryptMode
-                        ? ref.watch(processedEncryptProvider).text
-                        : ref.watch(processedDecryptProvider).text;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                      ),
-                      child: Container(
-                        height: screenHeight * AppConstants.outputHeightRatio,
-                        padding: const EdgeInsets.all(
-                          AppConstants.defaultPadding,
-                        ),
-                        constraints: const BoxConstraints(minHeight: 120),
-                        width: double.infinity,
-                        alignment: Alignment.topLeft,
-                        decoration: BoxDecoration(
-                          color: getTextFieldBackgroundColor(context),
-                          border: Border.all(color: getBorderColor(context)),
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.borderRadius,
-                          ),
-                        ),
-                        child: outputText.isEmpty
-                            ? Text(
-                                isEncryptMode
-                                    ? 'Encrypted output will appear here...'
-                                    : 'Decrypted output will appear here...',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontStyle: FontStyle.italic,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                child: SelectableText(
-                                  outputText,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: AppConstants.defaultPadding),
               ],
             );
               },
