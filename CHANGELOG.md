@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.2] - 2026-11-25
+
+### Changed
+- **Dependency upgrades** (all direct dependencies updated to latest compatible versions):
+  - `cupertino_icons` 1.0.9 → 2.0.0 (asset-only, no code changes)
+  - `asn1lib` 1.6.8 → 1.6.9 (patch fix)
+  - `oqs` 4.2.0 → 4.3.0 (zero-length message fix in signature verification)
+- **Skipped / blocked upgrades** (reported drawbacks):
+  - `pointycastle` stays at `^3.9.1` — `encrypt ^5.0.3` (AES-CBC wrapper) is unmaintained and pins pointycastle 3.x; upgrading to 4.0.0 risks runtime mismatches in AES operations.
+  - `qr_flutter` stays at `^4.1.0` — upgrading the underlying `qr` package to 4.x requires migrating `QrErrorCorrectLevel` from integer constants to a Dart enum (`low`/`medium`/`quartile`/`high`), a non-trivial breaking change deferred to a dedicated migration.
+  - `cupertino_icons` 2.0.0 migration from `flutter/material.dart` to `material_ui/material_ui.dart` is a breaking Flutter 3.47+ change; infos suppressed with `--no-fatal-infos` pending official migration guide.
+
 ## [5.8.1] - 2026-11-25
 
 ### Changed & Fixed
