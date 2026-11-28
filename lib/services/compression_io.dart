@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -100,25 +101,51 @@ class Compression {
     return File(execPath).parent.path;
   }
 
-  static void setNativeLibPaths() {
-    if (Platform.isAndroid || Platform.isIOS) return;
+  static List<String> _expectedNativeLibsForPlatform({
+    required bool isWindows,
+    required bool isMacOS,
+    required bool isLinux,
+  }) {
+    if (isWindows) {
+      return const ['eslz4-win64.dll', 'esbrotli-win64.dll', 'eszstd-win64.dll'];
+    }
+    if (isMacOS) {
+      return const ['eslz4-mac64.dylib', 'esbrotli-mac64.dylib', 'eszstd-mac64.dylib'];
+    }
+    if (isLinux) {
+      return const ['eslz4-linux64.so', 'esbrotli-linux64.so', 'eszstd-linux64.so'];
+    }
+    throw UnsupportedError('Unsupported platform');
+  }
 
-    final execDir = getExecutableDir();
+  /// Resolves the directory containing native compression shared libraries.
+  ///
+  /// Prefers `execDir/lib` so distribution/Flatpak packages can provide
+  /// natively built libraries ahead of bundled Flutter assets.
+  @visibleForTesting
+  static String resolveNativeLibBasePath({
+    required String execDir,
+    required List<String> expectedLibs,
+    bool includeCurrentDirFallback = false,
+    String? currentDir,
+    bool isLinuxArm64 = false,
+  }) {
     final List<String> candidatePaths = [
+      path.join(execDir, 'lib'),
+      if (isLinuxArm64) ...[
+        path.join(execDir, 'data', 'flutter_assets', 'native_libs', 'linux-arm64'),
+        path.join(execDir, 'native_libs', 'linux-arm64'),
+        if (includeCurrentDirFallback && currentDir != null)
+          path.join(currentDir, 'native_libs', 'linux-arm64'),
+      ],
       path.join(execDir, 'data', 'flutter_assets', 'native_libs'),
       path.join(execDir, 'native_libs'),
-      if (kDebugMode || Platform.environment.containsKey('FLUTTER_TEST'))
-        path.join(Directory.current.path, 'native_libs'),
+      if (includeCurrentDirFallback && currentDir != null)
+        path.join(currentDir, 'native_libs'),
       execDir,
     ];
 
-    final List<String> expectedLibs = Platform.isWindows
-        ? const ['eslz4-win64.dll', 'esbrotli-win64.dll', 'eszstd-win64.dll']
-        : Platform.isMacOS
-            ? const ['eslz4-mac64.dylib', 'esbrotli-mac64.dylib', 'eszstd-mac64.dylib']
-            : const ['eslz4-linux64.so', 'esbrotli-linux64.so', 'eszstd-linux64.so'];
-
-    final String basePath = candidatePaths.firstWhere(
+    return candidatePaths.firstWhere(
       (dir) => expectedLibs.every((lib) => File(path.join(dir, lib)).existsSync()),
       orElse: () => candidatePaths.firstWhere(
         (dir) => File(path.join(dir, expectedLibs.first)).existsSync(),
@@ -128,42 +155,29 @@ class Compression {
         ),
       ),
     );
+  }
 
-    String lz4LibPath;
-    if (Platform.isWindows) {
-      lz4LibPath = path.join(basePath, 'eslz4-win64.dll');
-    } else if (Platform.isLinux) {
-      lz4LibPath = path.join(basePath, 'eslz4-linux64.so');
-    } else if (Platform.isMacOS) {
-      lz4LibPath = path.join(basePath, 'eslz4-mac64.dylib');
-    } else {
-      throw UnsupportedError('Unsupported platform');
-    }
-    Lz4Codec.libraryPath = lz4LibPath;
+  static void setNativeLibPaths() {
+    if (Platform.isAndroid || Platform.isIOS) return;
 
-    String brotliLibPath;
-    if (Platform.isWindows) {
-      brotliLibPath = path.join(basePath, 'esbrotli-win64.dll');
-    } else if (Platform.isLinux) {
-      brotliLibPath = path.join(basePath, 'esbrotli-linux64.so');
-    } else if (Platform.isMacOS) {
-      brotliLibPath = path.join(basePath, 'esbrotli-mac64.dylib');
-    } else {
-      throw UnsupportedError('Unsupported platform');
-    }
-    BrotliCodec.libraryPath = brotliLibPath;
+    final expectedLibs = _expectedNativeLibsForPlatform(
+      isWindows: Platform.isWindows,
+      isMacOS: Platform.isMacOS,
+      isLinux: Platform.isLinux,
+    );
 
-    String zstdLibPath;
-    if (Platform.isWindows) {
-      zstdLibPath = path.join(basePath, 'eszstd-win64.dll');
-    } else if (Platform.isLinux) {
-      zstdLibPath = path.join(basePath, 'eszstd-linux64.so');
-    } else if (Platform.isMacOS) {
-      zstdLibPath = path.join(basePath, 'eszstd-mac64.dylib');
-    } else {
-      throw UnsupportedError('Unsupported platform');
-    }
-    ZstdCodec.libraryPath = zstdLibPath;
+    final basePath = resolveNativeLibBasePath(
+      execDir: getExecutableDir(),
+      expectedLibs: expectedLibs,
+      includeCurrentDirFallback:
+          kDebugMode || Platform.environment.containsKey('FLUTTER_TEST'),
+      currentDir: Directory.current.path,
+      isLinuxArm64: Platform.isLinux && Abi.current() == Abi.linuxArm64,
+    );
+
+    Lz4Codec.libraryPath = path.join(basePath, expectedLibs[0]);
+    BrotliCodec.libraryPath = path.join(basePath, expectedLibs[1]);
+    ZstdCodec.libraryPath = path.join(basePath, expectedLibs[2]);
   }
 }
 

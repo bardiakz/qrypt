@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:qrypt/models/Qrypt.dart';
 import 'package:qrypt/models/compression_method.dart';
 import 'package:qrypt/models/encryption_method.dart';
@@ -9,6 +11,7 @@ import 'package:qrypt/models/obfuscation_method.dart';
 import 'package:qrypt/models/sign_method.dart';
 import 'package:qrypt/services/aes_encryption.dart';
 import 'package:qrypt/services/compression.dart';
+import 'package:qrypt/services/compression_io.dart' as compression_io;
 import 'package:qrypt/services/input_handler.dart';
 import 'package:qrypt/services/obfuscate.dart';
 import 'package:qrypt/services/tag_manager.dart';
@@ -265,6 +268,72 @@ void main() {
 
         final zsOut = Compression.zstdDeCompress(zsTrunc);
         expect(zsOut.length, lessThan(original.length));
+      });
+    });
+
+    group('Native Library Path Resolution', () {
+      const expectedLinuxLibs = [
+        'eslz4-linux64.so',
+        'esbrotli-linux64.so',
+        'eszstd-linux64.so',
+      ];
+
+      void createDummyLibs(String dir, List<String> libs) {
+        Directory(dir).createSync(recursive: true);
+        for (final lib in libs) {
+          File(path.join(dir, lib)).writeAsBytesSync(const []);
+        }
+      }
+
+      test('prefers execDir/lib over bundled flutter_assets/native_libs', () {
+        final root = Directory.systemTemp.createTempSync('qrypt_native_lib_');
+        addTearDown(() => root.deleteSync(recursive: true));
+
+        final libDir = path.join(root.path, 'lib');
+        final assetsDir = path.join(root.path, 'data', 'flutter_assets', 'native_libs');
+        createDummyLibs(libDir, expectedLinuxLibs);
+        createDummyLibs(assetsDir, expectedLinuxLibs);
+
+        final resolved = compression_io.Compression.resolveNativeLibBasePath(
+          execDir: root.path,
+          expectedLibs: expectedLinuxLibs,
+        );
+        expect(resolved, libDir);
+      });
+
+      test('falls back to flutter_assets/native_libs when lib lacks codecs', () {
+        final root = Directory.systemTemp.createTempSync('qrypt_native_lib_');
+        addTearDown(() => root.deleteSync(recursive: true));
+
+        final libDir = path.join(root.path, 'lib');
+        Directory(libDir).createSync(recursive: true);
+        File(path.join(libDir, 'liboqs.so')).writeAsBytesSync(const []);
+
+        final assetsDir = path.join(root.path, 'data', 'flutter_assets', 'native_libs');
+        createDummyLibs(assetsDir, expectedLinuxLibs);
+
+        final resolved = compression_io.Compression.resolveNativeLibBasePath(
+          execDir: root.path,
+          expectedLibs: expectedLinuxLibs,
+        );
+        expect(resolved, assetsDir);
+      });
+
+      test('prefers linux-arm64 subdir over generic native_libs when isLinuxArm64 is true', () {
+        final root = Directory.systemTemp.createTempSync('qrypt_native_lib_');
+        addTearDown(() => root.deleteSync(recursive: true));
+
+        final assetsDir = path.join(root.path, 'data', 'flutter_assets', 'native_libs');
+        final armAssetsDir = path.join(assetsDir, 'linux-arm64');
+        createDummyLibs(assetsDir, expectedLinuxLibs);
+        createDummyLibs(armAssetsDir, expectedLinuxLibs);
+
+        final resolved = compression_io.Compression.resolveNativeLibBasePath(
+          execDir: root.path,
+          expectedLibs: expectedLinuxLibs,
+          isLinuxArm64: true,
+        );
+        expect(resolved, armAssetsDir);
       });
     });
   });

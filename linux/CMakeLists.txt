@@ -107,10 +107,19 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
-# Install liboqs if present
-set(LIBOQS_LINUX_X64 "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/linux/x86_64/liboqs.so")
-if(EXISTS "${LIBOQS_LINUX_X64}")
-  install(FILES "${LIBOQS_LINUX_X64}"
+# Install liboqs for the target Linux architecture if present
+if(FLUTTER_TARGET_PLATFORM STREQUAL "linux-arm64")
+  set(LIBOQS_LINUX_ARCH "aarch64")
+elseif(FLUTTER_TARGET_PLATFORM STREQUAL "linux-x64")
+  set(LIBOQS_LINUX_ARCH "x86_64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+  set(LIBOQS_LINUX_ARCH "aarch64")
+else()
+  set(LIBOQS_LINUX_ARCH "x86_64")
+endif()
+set(LIBOQS_LINUX_SO "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/linux/${LIBOQS_LINUX_ARCH}/liboqs.so")
+if(EXISTS "${LIBOQS_LINUX_SO}")
+  install(FILES "${LIBOQS_LINUX_SO}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
