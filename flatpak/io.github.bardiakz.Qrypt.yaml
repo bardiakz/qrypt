@@ -5,6 +5,7 @@ sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm23
 command: qrypt
+rename-icon: qrypt_icon
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -42,13 +43,13 @@ modules:
       - cp -r $BUNDLE_PATH /app/io.github.bardiakz.Qrypt
       - cp -P /app/lib/liboqs.so* /app/io.github.bardiakz.Qrypt/lib/
       - mkdir -p /app/bin && ln -s /app/io.github.bardiakz.Qrypt/qrypt /app/bin/qrypt
-      - install -Dm644 data/${FLATPAK_ID}.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
-      - install -Dm644 data/${FLATPAK_ID}.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 assets/icon/qrypt_icon.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
+      - install -Dm644 data/${FLATPAK_ID}.desktop -t /app/share/applications/
+      - install -Dm644 data/${FLATPAK_ID}.metainfo.xml -t /app/share/metainfo/
+      - install -Dm644 assets/icon/qrypt_icon.png -t /app/share/icons/hicolor/512x512/apps/
     sources:
       - type: git
         url: https://github.com/bardiakz/qrypt.git
-        commit: b62da1f31a2eca472ce9492e6d8fa6d2af16dae1
+        commit: 1d4185cb890d58c068c31c51e7e2d79c8f9bf98a
       - generated/sources/pubspec.json
     modules:
       - generated/modules/flutter-sdk-3.50.0.json

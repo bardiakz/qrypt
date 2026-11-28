@@ -107,22 +107,38 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     COMPONENT Runtime)
 endforeach(bundled_library)
 
-# Install liboqs for the target Linux architecture if present
+# Select target Linux architecture
 if(FLUTTER_TARGET_PLATFORM STREQUAL "linux-arm64")
-  set(LIBOQS_LINUX_ARCH "aarch64")
+  set(QRYPT_LINUX_ARCH "aarch64")
 elseif(FLUTTER_TARGET_PLATFORM STREQUAL "linux-x64")
-  set(LIBOQS_LINUX_ARCH "x86_64")
+  set(QRYPT_LINUX_ARCH "x86_64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
-  set(LIBOQS_LINUX_ARCH "aarch64")
+  set(QRYPT_LINUX_ARCH "aarch64")
 else()
-  set(LIBOQS_LINUX_ARCH "x86_64")
+  set(QRYPT_LINUX_ARCH "x86_64")
 endif()
-set(LIBOQS_LINUX_SO "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/linux/${LIBOQS_LINUX_ARCH}/liboqs.so")
+
+# Install liboqs for the target Linux architecture if present
+set(LIBOQS_LINUX_SO "${CMAKE_CURRENT_SOURCE_DIR}/../liboqs-0.16.0/linux/${QRYPT_LINUX_ARCH}/liboqs.so")
 if(EXISTS "${LIBOQS_LINUX_SO}")
   install(FILES "${LIBOQS_LINUX_SO}"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Install architecture-specific native compression libraries if present
+if(QRYPT_LINUX_ARCH STREQUAL "aarch64")
+  set(ES_COMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../native_libs/linux-arm64")
+else()
+  set(ES_COMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../native_libs")
+endif()
+foreach(es_lib esbrotli-linux64.so eslz4-linux64.so eszstd-linux64.so)
+  if(EXISTS "${ES_COMP_DIR}/${es_lib}")
+    install(FILES "${ES_COMP_DIR}/${es_lib}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+      COMPONENT Runtime)
+  endif()
+endforeach()
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")

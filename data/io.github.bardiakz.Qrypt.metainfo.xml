@@ -48,6 +48,11 @@
     </screenshots>
     <launchable type="desktop-id">io.github.bardiakz.Qrypt.desktop</launchable>
     <releases>
+        <release version="5.8.3" date="2026-11-28">
+            <description>
+                <p>Added Linux aarch64 native compression and liboqs bundling support, updated Linux Zstd to v1.6.0, and prioritized executable-relative lib/ native library resolution.</p>
+            </description>
+        </release>
         <release version="5.8.2" date="2026-11-25">
             <description>
                 <p>Updated core dependencies including oqs 4.3.0, asn1lib 1.6.9, and cupertino_icons 2.0.0.</p>

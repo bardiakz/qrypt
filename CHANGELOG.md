@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.3] - 2026-11-28
+
+### Added & Fixed
+- **Linux `aarch64` Native Codec & `liboqs` Support**:
+  - Bundled `aarch64` Linux shared libraries (`esbrotli-linux64.so`, `eslz4-linux64.so`, `eszstd-linux64.so`) in `native_libs/linux-arm64/` and updated the `x86_64` Linux binaries in `native_libs/` to matching `compression-binaries v1.0.1` builds (Brotli `v1.2.1`, LZ4 `v1.9.4`, Zstd `v1.6.0` with `-Wl,-Bsymbolic` and RELRO/BIND_NOW hardening).
+  - Updated `linux/CMakeLists.txt` to select `liboqs.so` and native compression libraries by target Linux architecture (`FLUTTER_TARGET_PLATFORM` / `CMAKE_SYSTEM_PROCESSOR`) and install them into `bundle/lib/`.
+  - Updated `Compression.setNativeLibPaths()` (`lib/services/compression_io.dart`) to prefer `execDir/lib` ahead of bundled Flutter assets (with `linux-arm64` path preference on `Abi.linuxArm64`), with regression tests in `test/services/compression_hardening_test.dart`.
+
 ## [5.8.2] - 2026-11-25
 
 ### Changed
